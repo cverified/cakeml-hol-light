@@ -3,7 +3,7 @@
     compiler/backend/bvi_tailrecScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 35
     theorems.  Needed by bvi_tailrecProof.ml, bvl_to_bvi.ml,
-    bvl_to_bviProof.ml and word_bignum.ml.  *)
+    bvl_to_bviProof.ml, to_data_cv.ml and word_bignum.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -21,7 +21,7 @@ let _ = cake_theory "bvi_tailrec"
 let _ = do_list hide_constant ["pmatch"];;
 
 let dummy_def = new_definition
-  `dummy = bvi_Var 1234567890`;;
+  `bvi_tailrec_dummy = bvi_Var 1234567890`;;
 
 make_size "bvi_exp";;
 let MEM_exp_size_imp = prove
@@ -138,7 +138,7 @@ let id_from_op_def = define_cases
    (id_from_op bvi_tailrec_Times = bvi_Op (clos_IntOp (clos_Const (&1))) []) /\
    (id_from_op bvi_tailrec_Append = bvi_Op (clos_BlockOp (clos_Cons
     nil_tag)) []) /\
-   (id_from_op bvi_tailrec_Noop = dummy)`;;
+   (id_from_op bvi_tailrec_Noop = bvi_tailrec_dummy)`;;
 
 let index_of_def = new_definition
   `index_of x1 =
@@ -329,7 +329,7 @@ let term_ok_any_ind = SIMP_RULE [is_op_thms] term_ok_any_ind;;
 (* HOL4 bvi_tailrecScript.sml:324-346: code that the source has in a comment *)
 
 let term_ok_def = new_definition
-  `term_ok ts ty expr =
+  `bvi_tailrec_term_ok ts ty expr =
      match ty with
        bvi_tailrec_Any -> term_ok_any ts F expr
      | bvi_tailrec_Int -> term_ok_int ts expr
@@ -354,7 +354,8 @@ let check_op_def = new_definition
      match opbinargs opr (try_swap loc opr exp) with
        NONE -> NONE
      | SOME (xs,f) ->
-         if bvi_tailrec_is_rec loc f /\ term_ok ts (op_type opr) xs then
+         if bvi_tailrec_is_rec loc f /\ bvi_tailrec_term_ok ts (op_type opr)
+           xs then
            SOME (apply_op opr xs f)
          else NONE`;;
 
@@ -530,7 +531,7 @@ let scan_expr_def,scan_expr_ind = assume_definition_rec_clauses
               // Things we can optimize
               if IS_SOME (check_op ts opr loc (bvi_Op op xs)) then
                 [(ts,opt,F,SOME opr)]
-              else if term_ok ts opt (bvi_Op op xs) then
+              else if bvi_tailrec_term_ok ts opt (bvi_Op op xs) then
                 match get_bin_args (bvi_Op op xs) with
                   NONE -> [(ts,bvi_tailrec_Any,F,NONE)]
                 | SOME (x,y) ->
@@ -595,7 +596,7 @@ let scan_expr_sing_def,scan_expr_sing_ind = define_rec_clauses
               // Things we can optimize
               if IS_SOME (check_op ts opr loc (bvi_Op op xs)) then
                 (ts,opt,F,SOME opr)
-              else if term_ok ts opt (bvi_Op op xs) then
+              else if bvi_tailrec_term_ok ts opt (bvi_Op op xs) then
                 match get_bin_args (bvi_Op op xs) with
                   NONE -> (ts,bvi_tailrec_Any,F,NONE)
                 | SOME (x,y) ->
@@ -619,7 +620,7 @@ let push_call_def = new_definition
        SOME (ticks,dest,args,handler) ->
        bvi_Call ticks (SOME n) (APPEND args [apply_op op (bvi_Var acc) exp])
          handler
-     | _ -> dummy`;;
+     | _ -> bvi_tailrec_dummy`;;
 
 let rewrite_def,rewrite_ind = define_shaped_rec
   "match"
@@ -762,12 +763,12 @@ let check_exp_eq =
   SIMP_RULE [scan_expr_eq; has_rec1_def; has_rec_eq] check_exp_def;;
 
 let let_wrap_def = new_definition
-  `let_wrap arity id' exp =
-     bvi_Let (APPEND (list_of_seq (\i. bvi_Var i) arity) [id']) exp`;;
+  `let_wrap arity id exp =
+     bvi_Let (APPEND (list_of_seq (\i. bvi_Var i) arity) [id]) exp`;;
 
 let mk_aux_call_def = new_definition
-  `mk_aux_call loc arity id' =
-     bvi_Call 0 (SOME loc) (CONS id' (list_of_seq (\i. bvi_Var i) arity))
+  `mk_aux_call loc arity id =
+     bvi_Call 0 (SOME loc) (CONS id (list_of_seq (\i. bvi_Var i) arity))
        NONE`;;
 
 let bvi_tailrec_compile_exp_def = new_definition

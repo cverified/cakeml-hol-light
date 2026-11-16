@@ -2,7 +2,7 @@
 (*  namespaceProps: ported from HOL4's
     semantics/proofs/namespacePropsScript.sml
     A proof theory about namespace.ml, with 3 definitions and 96
-    theorems.  Needed by 18 files of the port.  *)
+    theorems.  Needed by 29 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -34,18 +34,18 @@ let id_to_namemods_mk_id = prove
 add_simp id_to_namemods_mk_id;;
 
 let mk_id_surj = prove
- (`!id'. ?p n. id' = mk_id p n`,
+ (`!id. ?p n. id = mk_id p n`,
   CHEAT_TAC);;
 
 let mk_id_thm = prove
- (`!id'. mk_id (id_to_mods id') (id_to_n id') = id'`,
+ (`!id. mk_id (id_to_mods id) (id_to_n id) = id`,
   CHEAT_TAC);;
 
 (* ----------- Monotonicity for ind rel ------------ *)
 
 (* [mono] *)
 let nsAll_mono = prove
- (`(!id' x. P id' x ==> Q id' x) ==> nsAll P e ==> nsAll Q e`,
+ (`(!id x. P id x ==> Q id x) ==> nsAll P e ==> nsAll Q e`,
   CHEAT_TAC);;
 
 (* [mono] *)
@@ -66,7 +66,7 @@ let nsAll2_mono = prove
 (* ---------- Automatic simps involving empty envs -------------- *)
 
 let nsLookup_nsEmpty = prove
- (`!id'. nsLookup nsEmpty id' = NONE`,
+ (`!id. nsLookup nsEmpty id = NONE`,
   CHEAT_TAC);;
 add_simp nsLookup_nsEmpty;;
 
@@ -161,8 +161,7 @@ let nsAppend_nsSing = prove
 add_simp nsAppend_nsSing;;
 
 let nsLookup_nsSing = prove
- (`!n v id'. nsLookup (nsSing n v) id' = if id' = Short n then SOME v else
-  NONE`,
+ (`!n v id. nsLookup (nsSing n v) id = if id = Short n then SOME v else NONE`,
   CHEAT_TAC);;
 add_simp nsLookup_nsSing;;
 
@@ -236,12 +235,12 @@ let nsLookup_to_nsLookupMod = prove
 (* -------------- alist_to_ns --------------- *)
 
 let nsLookup_alist_to_ns_some = prove
- (`!l id' v. nsLookup (alist_to_ns l) id' = SOME v <=> (?x'. id' = Short x'
+ (`!l id v. nsLookup (alist_to_ns l) id = SOME v <=> (?x'. id = Short x'
   /\ ALOOKUP l x' = SOME v)`,
   CHEAT_TAC);;
 
 let nsLookup_alist_to_ns_none = prove
- (`!l id'. nsLookup (alist_to_ns l) id' = NONE <=> (!x'. id' = Short x' ==>
+ (`!l id. nsLookup (alist_to_ns l) id = NONE <=> (!x'. id = Short x' ==>
   ALOOKUP l x' = NONE)`,
   CHEAT_TAC);;
 
@@ -253,9 +252,9 @@ add_simp nsDom_alist_to_ns;;
 (* -------------- nsLift --------------- *)
 
 let nsLookup_nsLift = prove
- (`!mn e id'.
-    nsLookup (nsLift mn e) id' =
-    match id' with Long mn' id' ->
+ (`!mn e id.
+    nsLookup (nsLift mn e) id =
+    match id with Long mn' id' ->
       if mn = mn' then
         nsLookup e id'
       else NONE
@@ -263,9 +262,9 @@ let nsLookup_nsLift = prove
   CHEAT_TAC);;
 
 let nsLookupMod_nsLift = prove
- (`!mn e path'.
-    nsLookupMod (nsLift mn e) path' =
-    match path' with [] -> SOME (nsLift mn e)
+ (`!mn e path.
+    nsLookupMod (nsLift mn e) path =
+    match path with [] -> SOME (nsLift mn e)
     | (CONS mn' path') ->
       if mn = mn' then
         nsLookupMod e path'
@@ -273,31 +272,31 @@ let nsLookupMod_nsLift = prove
   CHEAT_TAC);;
 
 let nsLookup_nsLift_append = prove
- (`!m ns ns' m' id' n.
+ (`!m ns ns' m' id n.
    nsLookup (nsAppend (nsLift m ns) ns') (Short n) = nsLookup ns' (Short n)
      /\
-   nsLookup (nsAppend (nsLift m ns) ns') (Long m' id') =
-     (if m = m' then nsLookup ns id' else nsLookup ns' (Long m' id'))`,
+   nsLookup (nsAppend (nsLift m ns) ns') (Long m' id) =
+     (if m = m' then nsLookup ns id else nsLookup ns' (Long m' id))`,
   CHEAT_TAC);;
 add_simp nsLookup_nsLift_append;;
 
 (* --------------- nsAppend ------------- *)
 
 let nsLookup_nsAppend_none = prove
- (`!e1 id' e2.
-    nsLookup (nsAppend e1 e2) id' = NONE <=>
-    (nsLookup e1 id' = NONE /\
-     (nsLookup e2 id' = NONE \/
-      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2
+ (`!e1 id e2.
+    nsLookup (nsAppend e1 e2) id = NONE <=>
+    (nsLookup e1 id = NONE /\
+     (nsLookup e2 id = NONE \/
+      (?p1 p2 e3. ~(p1 = []) /\ id_to_mods id = APPEND p1 p2
         /\ nsLookupMod e1 p1 = SOME e3)))`,
   CHEAT_TAC);;
 
 let nsLookup_nsAppend_some = prove
- (`!e1 id' e2 v.
-    nsLookup (nsAppend e1 e2) id' = SOME v <=>
-    nsLookup e1 id' = SOME v \/
-    (nsLookup e1 id' = NONE /\ nsLookup e2 id' = SOME v /\
-     (!p1 p2. ~(p1 = []) /\ id_to_mods id' = APPEND p1 p2 ==> nsLookupMod
+ (`!e1 id e2 v.
+    nsLookup (nsAppend e1 e2) id = SOME v <=>
+    nsLookup e1 id = SOME v \/
+    (nsLookup e1 id = NONE /\ nsLookup e2 id = SOME v /\
+     (!p1 p2. ~(p1 = []) /\ id_to_mods id = APPEND p1 p2 ==> nsLookupMod
        e1 p1 = NONE))`,
   CHEAT_TAC);;
 
@@ -306,22 +305,22 @@ let nsAppend_to_nsBindList = prove
   CHEAT_TAC);;
 
 let nsLookupMod_nsAppend_none = prove
- (`!e1 e2 path'.
-    nsLookupMod (nsAppend e1 e2) path' = NONE <=>
-    (nsLookupMod e1 path' = NONE /\
-     (nsLookupMod e2 path' = NONE \/
-      (?p1 p2 e3. ~(p1 = []) /\ path' = APPEND p1 p2 /\ nsLookupMod e1 p1
-        = SOME e3)))`,
+ (`!e1 e2 path.
+    nsLookupMod (nsAppend e1 e2) path = NONE <=>
+    (nsLookupMod e1 path = NONE /\
+     (nsLookupMod e2 path = NONE \/
+      (?p1 p2 e3. ~(p1 = []) /\ path = APPEND p1 p2 /\ nsLookupMod e1 p1 =
+        SOME e3)))`,
   CHEAT_TAC);;
 
 let nsLookupMod_nsAppend_some = prove
- (`!e1 e2 path'.
+ (`!e1 e2 path.
     (
-     nsLookupMod (nsAppend e1 e2) path' = SOME x <=>
-     (if path' = [] then x = nsAppend e1 e2 else nsLookupMod e1 path' = SOME
-       x \/
-      (nsLookupMod e2 path' = SOME x /\
-      (!p1 p2. ~(p1 = []) /\ path' = APPEND p1 p2 ==> nsLookupMod e1 p1 =
+     nsLookupMod (nsAppend e1 e2) path = SOME x <=>
+     (if path = [] then x = nsAppend e1 e2 else nsLookupMod e1 path = SOME x
+       \/
+      (nsLookupMod e2 path = SOME x /\
+      (!p1 p2. ~(p1 = []) /\ path = APPEND p1 p2 ==> nsLookupMod e1 p1 =
         NONE))))`,
   CHEAT_TAC);;
 
@@ -360,7 +359,7 @@ let nsAll_alist_to_ns = prove
   CHEAT_TAC);;
 
 let nsAll_nsLift = prove
- (`!R mn e. nsAll R (nsLift mn e) <=> nsAll (\id'. R (Long mn id')) e`,
+ (`!R mn e. nsAll R (nsLift mn e) <=> nsAll (\id. R (Long mn id)) e`,
   CHEAT_TAC);;
 add_simp nsAll_nsLift;;
 
@@ -371,8 +370,7 @@ let nsAll_nsAppend_left = prove
 (* -------------- nsSub ---------------- *)
 
 let nsSub_conj = prove
- (`!P Q e1 e2. nsSub (\id' x y. P id' x y /\ Q id' x y) e1 e2 <=> nsSub P e1 e2
-  /\
+ (`!P Q e1 e2. nsSub (\id x y. P id x y /\ Q id x y) e1 e2 <=> nsSub P e1 e2 /\
    nsSub Q e1 e2`,
   CHEAT_TAC);;
 
@@ -393,7 +391,7 @@ let nsSub_nsAppend2 = prove
 
 let nsSub_nsAppend_lift = prove
  (`!R mn e1 e1' e2 e2'.
-    nsSub (\id'. R (Long mn id')) e1 e1' /\
+    nsSub (\id. R (Long mn id)) e1 e1' /\
     nsSub R e2 e2' ==>
     nsSub R (nsAppend (nsLift mn e1) e2) (nsAppend (nsLift mn e1') e2')`,
   CHEAT_TAC);;
@@ -434,19 +432,19 @@ let alistSub_cong = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
-  `nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
-     alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V /\
-     alistSub (\k v1 v2. nsSub_compute (CONS k path') R v1 v2) e1M e2M`;;
+  `nsSub_compute path R (Bind e1V e1M) (Bind e2V e2M) <=>
+     alistSub (\k v1 v2. R (mk_id (REVERSE path) k) v1 v2) e1V e2V /\
+     alistSub (\k v1 v2. nsSub_compute (CONS k path) R v1 v2) e1M e2M`;;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e (Short k)`,
   CHEAT_TAC);;
 
 let nsLookup_FOLDR_nsLift_some = prove
- (`!e p id' v.
-    nsLookup (ITLIST nsLift p e) id' = SOME v <=>
-    (p = [] /\ nsLookup e id' = SOME v) \/
-    (~(p = []) /\ (?p2 n. id' = mk_id (APPEND p p2) n /\ nsLookup e (mk_id
+ (`!e p id v.
+    nsLookup (ITLIST nsLift p e) id = SOME v <=>
+    (p = [] /\ nsLookup e id = SOME v) \/
+    (~(p = []) /\ (?p2 n. id = mk_id (APPEND p p2) n /\ nsLookup e (mk_id
       p2 n) = SOME v))`,
   CHEAT_TAC);;
 
@@ -462,8 +460,8 @@ let nsLookupMod_FOLDR_nsLift_none = prove
 (* -------------- nsAll2 ---------------- *)
 
 let nsAll2_conj = prove
- (`!P Q e1 e2. nsAll2 (\id' x y. P id' x y /\ Q id' x y) e1 e2 <=> nsAll2 P
-  e1 e2 /\ nsAll2 Q e1 e2`,
+ (`!P Q e1 e2. nsAll2 (\id x y. P id x y /\ Q id x y) e1 e2 <=> nsAll2 P e1
+  e2 /\ nsAll2 Q e1 e2`,
   CHEAT_TAC);;
 
 let nsAll2_nsLookup1 = prove
@@ -511,8 +509,8 @@ let nsAll2_alist_to_ns = prove
   CHEAT_TAC);;
 
 let nsAll2_nsLift = prove
- (`!R mn e1 e2. nsAll2 R (nsLift mn e1) (nsLift mn e2) <=> nsAll2 (\id'. R
-  (Long mn id')) e1 e2`,
+ (`!R mn e1 e2. nsAll2 R (nsLift mn e1) (nsLift mn e2) <=> nsAll2 (\id. R
+  (Long mn id)) e1 e2`,
   CHEAT_TAC);;
 add_simp nsAll2_nsLift;;
 
@@ -554,7 +552,7 @@ let nsLift_nsMap = prove
 
 let nsSub_nsMap = prove
  (`!R f n1 n2.
-    nsSub R (nsMap f n1) (nsMap f n2) <=> nsSub (\id' x y. R id' (f x) (f
+    nsSub R (nsMap f n1) (nsMap f n2) <=> nsSub (\id x y. R id (f x) (f
       y)) n1 n2`,
   CHEAT_TAC);;
 
@@ -568,8 +566,8 @@ let nsDomMod_alist_to_ns = prove
   CHEAT_TAC);;
 add_simp nsDomMod_alist_to_ns;;
 
-(* [local] *)
-let lemma = prove
+(* lemma[local] *)
+let namespaceProps_lemma = prove
  (`(?x. y = SOME x) <=> ~(y = NONE)`,
   CHEAT_TAC);;
 

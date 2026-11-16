@@ -3,7 +3,7 @@
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions and
     103 theorems that CakeML needs, 88 of them from LightCake.
-    Needed by 106 files of the port.  *)
+    Needed by 132 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/indexedLists.ml";;
@@ -200,14 +200,14 @@ make_size "spt";;
    what the port found for it *)
 let domain_def,domain_ind = define_wf
   `MEASURE (\x0. spt_size (\x. 0) x0)`
-  `(domain LN = {}) /\
-   (domain (LS _) = {0}) /\
-   (domain (BN t1 t2) =
-       IMAGE (\n. 2 * n + 2) (domain t1) UNION
-       IMAGE (\n. 2 * n + 1) (domain t2)) /\
-   (domain (BS t1 _ t2) =
-       {0} UNION IMAGE (\n. 2 * n + 2) (domain t1) UNION
-       IMAGE (\n. 2 * n + 1) (domain t2))`;;
+  `(sptree_domain LN = {}) /\
+   (sptree_domain (LS _) = {0}) /\
+   (sptree_domain (BN t1 t2) =
+       IMAGE (\n. 2 * n + 2) (sptree_domain t1) UNION
+       IMAGE (\n. 2 * n + 1) (sptree_domain t2)) /\
+   (sptree_domain (BS t1 _ t2) =
+       {0} UNION IMAGE (\n. 2 * n + 2) (sptree_domain t1) UNION
+       IMAGE (\n. 2 * n + 1) (sptree_domain t2))`;;
 add_simp domain_def;;
 
 let foldi_def,foldi_ind = define_rec

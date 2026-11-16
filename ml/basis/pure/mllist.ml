@@ -2,7 +2,7 @@
 (*  mllist: ported from HOL4's
     basis/pure/mllistScript.sml
     A definition theory, with 26 definitions and 43 theorems.
-    Needed by 16 files of the port.  *)
+    Needed by 26 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -123,7 +123,7 @@ let getItem_def = define_cases
    (getItem (CONS h t) = SOME (h,t))`;;
 
 let nth_def = new_definition
-  `nth l i = EL i l`;;
+  `mllist_nth l i = EL i l`;;
 
 let take_def = new_definition
   `take l i = TAKE i l`;;

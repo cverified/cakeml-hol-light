@@ -2,8 +2,7 @@
 (*  gram: ported from HOL4's
     semantics/gramScript.sml
     A definition theory, with 7 definitions and 2 theorems.  Needed
-    by cmlNTProps.ml, cmlPEG.ml, cmlParse.ml, cmlPtreeConversion.ml,
-    gramProps.ml, pegComplete.ml, pegSound.ml and semantics.ml.  *)
+    by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -42,7 +41,7 @@ let validListSym_def = new_definition
   ":="))`;;
 
 let validPrefixSym_def = new_definition
-  `validPrefixSym s <=> s = "~" \/ "!" <<= s \/ "?" <<= s`;;
+  `gram_validPrefixSym s <=> s = "~" \/ "!" <<= s \/ "?" <<= s`;;
 
 let disjneq = prove
  (`~(x = y) \/ P <=> x = y ==> P`,
@@ -51,14 +50,14 @@ let disjneq = prove
 let validSym_incompatibility = prove
  (`~(validAddSym s /\ validRelSym s) /\
    ~(validAddSym s /\ validListSym s) /\
-   ~(validAddSym s /\ validPrefixSym s) /\
+   ~(validAddSym s /\ gram_validPrefixSym s) /\
    ~(validAddSym s /\ validMultSym s) /\
    ~(validRelSym s /\ validListSym s) /\
-   ~(validRelSym s /\ validPrefixSym s) /\
+   ~(validRelSym s /\ gram_validPrefixSym s) /\
    ~(validRelSym s /\ validMultSym s) /\
-   ~(validListSym s /\ validPrefixSym s) /\
+   ~(validListSym s /\ gram_validPrefixSym s) /\
    ~(validListSym s /\ validMultSym s) /\
-   ~(validPrefixSym s /\ validMultSym s)`,
+   ~(gram_validPrefixSym s /\ validMultSym s)`,
   CHEAT_TAC);;
 
 (* HOL4 makes the datatype of the nonterminals and the
@@ -126,50 +125,51 @@ let cmlG_def = new_definition
   /\ isAlpha (strsub s 0) /\ isUpper (strsub s 0)})) |+ (INL
   nV,({[grammar_TOK (tokens_AlphaT s)] | ~(s IN {(implode "before"),(implode
   "div"),(implode "mod"),(implode "o")}) /\ ~(s = (implode "")) /\ ~(isUpper
-  (strsub s 0))} UNION {[grammar_TOK (tokens_SymbolT s)] | validPrefixSym
-  (explode s)})) |+ (INL nFQV,({[grammar_NT (INL nV)]} UNION {[grammar_TOK
-  (tokens_LongidT str s)] | str,s | ~(s = (implode "")) /\ (isAlpha (strsub
-  s 0) ==> ~(isUpper (strsub s 0)))})) |+ (INL nOpID,(((({[grammar_TOK
-  (tokens_LongidT str s)] | str,s | ~(s = (implode ""))} UNION {[grammar_TOK
-  (tokens_AlphaT s)] | ~(s = (implode ""))}) UNION {[grammar_TOK
-  (tokens_SymbolT s)] | ~(s = (implode ""))}) UNION {[grammar_TOK
-  (tokens_StarT)]}) UNION {[grammar_TOK (tokens_EqualsT)]})) |+ (INL
-  nEliteral,(((({[grammar_TOK (tokens_IntT i)] | i | T} UNION {[grammar_TOK
-  (tokens_CharT c)] | c | T}) UNION {[grammar_TOK (tokens_StringT m)] | m |
-  T}) UNION {[grammar_TOK (tokens_WordT n)] | n | T}) UNION {[grammar_TOK
-  (tokens_FFIT m)] | m | T})) |+ (INL nEbase,((((((((({[grammar_TOK
-  (tokens_LparT); grammar_NT (INL nEseq); grammar_TOK (tokens_RparT)]} UNION
-  {[grammar_NT (INL nEtuple)]}) UNION {[grammar_TOK (tokens_LparT);
-  grammar_TOK (tokens_RparT)]}) UNION {[grammar_NT (INL nFQV)]}) UNION
-  {[grammar_NT (INL nConstructorName)]}) UNION {[grammar_NT (INL
-  nEliteral)]}) UNION {[grammar_TOK (tokens_LetT); grammar_NT (INL
-  nLetDecs); grammar_TOK (tokens_InT); grammar_NT (INL nEseq); grammar_TOK
-  (tokens_EndT)]}) UNION {[grammar_TOK (tokens_LbrackT); grammar_TOK
-  (tokens_RbrackT)]}) UNION {[grammar_TOK (tokens_LbrackT); grammar_NT (INL
-  nElist1); grammar_TOK (tokens_RbrackT)]}) UNION {[grammar_TOK
-  (tokens_OpT); grammar_NT (INL nOpID)]})) |+ (INL nEseq,({[grammar_NT (INL
-  nE); grammar_TOK (tokens_SemicolonT); grammar_NT (INL nEseq)]} UNION
-  {[grammar_NT (INL nE)]})) |+ (INL nEtuple,{[grammar_TOK (tokens_LparT);
-  grammar_NT (INL nElist2); grammar_TOK (tokens_RparT)]}) |+ (INL
-  nElist2,{[grammar_NT (INL nE); grammar_TOK (tokens_CommaT); grammar_NT
-  (INL nElist1)]}) |+ (INL nElist1,({[grammar_NT (INL nE)]} UNION
-  {[grammar_NT (INL nE); grammar_TOK (tokens_CommaT); grammar_NT (INL
-  nElist1)]})) |+ (INL nEapp,({[grammar_NT (INL nEapp); grammar_NT (INL
-  nEbase)]} UNION {[grammar_NT (INL nEbase)]})) |+ (INL
-  nMultOps,({[grammar_TOK (tokens_AlphaT (implode "div"))],[grammar_TOK
-  (tokens_AlphaT (implode "mod"))],[grammar_TOK (tokens_StarT)]} UNION
-  {[grammar_TOK (tokens_SymbolT s)] | validMultSym (explode s)})) |+ (INL
-  nAddOps,{[grammar_TOK (tokens_SymbolT s)] | validAddSym (explode s)}) |+
-  (INL nRelOps,({[grammar_TOK (tokens_SymbolT s)] | validRelSym (explode s)}
-  UNION {[grammar_TOK (tokens_EqualsT)]})) |+ (INL nCompOps,({[grammar_TOK
-  (tokens_AlphaT (implode "o"))]} UNION {[grammar_TOK (tokens_SymbolT
-  (implode ":="))]})) |+ (INL nListOps,{[grammar_TOK (tokens_SymbolT s)] |
-  validListSym (explode s)}) |+ (INL nEmult,({[grammar_NT (INL nEmult);
-  grammar_NT (INL nMultOps); grammar_NT (INL nEapp)]} UNION {[grammar_NT
-  (INL nEapp)]})) |+ (INL nEadd,({[grammar_NT (INL nEadd); grammar_NT (INL
-  nAddOps); grammar_NT (INL nEmult)]} UNION {[grammar_NT (INL nEmult)]})) |+
-  (INL nElistop,({[grammar_NT (INL nEadd); grammar_NT (INL nListOps);
-  grammar_NT (INL nElistop)]} UNION {[grammar_NT (INL nEadd)]})) |+ (INL
+  (strsub s 0))} UNION {[grammar_TOK (tokens_SymbolT s)] |
+  gram_validPrefixSym (explode s)})) |+ (INL nFQV,({[grammar_NT (INL nV)]}
+  UNION {[grammar_TOK (tokens_LongidT str s)] | str,s | ~(s = (implode ""))
+  /\ (isAlpha (strsub s 0) ==> ~(isUpper (strsub s 0)))})) |+ (INL
+  nOpID,(((({[grammar_TOK (tokens_LongidT str s)] | str,s | ~(s = (implode
+  ""))} UNION {[grammar_TOK (tokens_AlphaT s)] | ~(s = (implode ""))}) UNION
+  {[grammar_TOK (tokens_SymbolT s)] | ~(s = (implode ""))}) UNION
+  {[grammar_TOK (tokens_StarT)]}) UNION {[grammar_TOK (tokens_EqualsT)]}))
+  |+ (INL nEliteral,(((({[grammar_TOK (tokens_IntT i)] | i | T} UNION
+  {[grammar_TOK (tokens_CharT c)] | c | T}) UNION {[grammar_TOK
+  (tokens_StringT m)] | m | T}) UNION {[grammar_TOK (tokens_WordT n)] | n |
+  T}) UNION {[grammar_TOK (tokens_FFIT m)] | m | T})) |+ (INL
+  nEbase,((((((((({[grammar_TOK (tokens_LparT); grammar_NT (INL nEseq);
+  grammar_TOK (tokens_RparT)]} UNION {[grammar_NT (INL nEtuple)]}) UNION
+  {[grammar_TOK (tokens_LparT); grammar_TOK (tokens_RparT)]}) UNION
+  {[grammar_NT (INL nFQV)]}) UNION {[grammar_NT (INL nConstructorName)]})
+  UNION {[grammar_NT (INL nEliteral)]}) UNION {[grammar_TOK (tokens_LetT);
+  grammar_NT (INL nLetDecs); grammar_TOK (tokens_InT); grammar_NT (INL
+  nEseq); grammar_TOK (tokens_EndT)]}) UNION {[grammar_TOK (tokens_LbrackT);
+  grammar_TOK (tokens_RbrackT)]}) UNION {[grammar_TOK (tokens_LbrackT);
+  grammar_NT (INL nElist1); grammar_TOK (tokens_RbrackT)]}) UNION
+  {[grammar_TOK (tokens_OpT); grammar_NT (INL nOpID)]})) |+ (INL
+  nEseq,({[grammar_NT (INL nE); grammar_TOK (tokens_SemicolonT); grammar_NT
+  (INL nEseq)]} UNION {[grammar_NT (INL nE)]})) |+ (INL
+  nEtuple,{[grammar_TOK (tokens_LparT); grammar_NT (INL nElist2);
+  grammar_TOK (tokens_RparT)]}) |+ (INL nElist2,{[grammar_NT (INL nE);
+  grammar_TOK (tokens_CommaT); grammar_NT (INL nElist1)]}) |+ (INL
+  nElist1,({[grammar_NT (INL nE)]} UNION {[grammar_NT (INL nE); grammar_TOK
+  (tokens_CommaT); grammar_NT (INL nElist1)]})) |+ (INL nEapp,({[grammar_NT
+  (INL nEapp); grammar_NT (INL nEbase)]} UNION {[grammar_NT (INL nEbase)]}))
+  |+ (INL nMultOps,({[grammar_TOK (tokens_AlphaT (implode
+  "div"))],[grammar_TOK (tokens_AlphaT (implode "mod"))],[grammar_TOK
+  (tokens_StarT)]} UNION {[grammar_TOK (tokens_SymbolT s)] | validMultSym
+  (explode s)})) |+ (INL nAddOps,{[grammar_TOK (tokens_SymbolT s)] |
+  validAddSym (explode s)}) |+ (INL nRelOps,({[grammar_TOK (tokens_SymbolT
+  s)] | validRelSym (explode s)} UNION {[grammar_TOK (tokens_EqualsT)]})) |+
+  (INL nCompOps,({[grammar_TOK (tokens_AlphaT (implode "o"))]} UNION
+  {[grammar_TOK (tokens_SymbolT (implode ":="))]})) |+ (INL
+  nListOps,{[grammar_TOK (tokens_SymbolT s)] | validListSym (explode s)}) |+
+  (INL nEmult,({[grammar_NT (INL nEmult); grammar_NT (INL nMultOps);
+  grammar_NT (INL nEapp)]} UNION {[grammar_NT (INL nEapp)]})) |+ (INL
+  nEadd,({[grammar_NT (INL nEadd); grammar_NT (INL nAddOps); grammar_NT (INL
+  nEmult)]} UNION {[grammar_NT (INL nEmult)]})) |+ (INL
+  nElistop,({[grammar_NT (INL nEadd); grammar_NT (INL nListOps); grammar_NT
+  (INL nElistop)]} UNION {[grammar_NT (INL nEadd)]})) |+ (INL
   nErel,({[grammar_NT (INL nErel); grammar_NT (INL nRelOps); grammar_NT (INL
   nElistop)]} UNION {[grammar_NT (INL nElistop)]})) |+ (INL
   nEcomp,({[grammar_NT (INL nEcomp); grammar_NT (INL nCompOps); grammar_NT

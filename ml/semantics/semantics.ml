@@ -2,7 +2,7 @@
 (*  semantics: ported from HOL4's
     semantics/semanticsScript.sml
     A definition theory, with 6 definitions, 2 datatypes and no
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -26,7 +26,7 @@ let _ = cake_theory "semantics"
 let semantics_parse_def = new_definition
   `semantics_parse toks =
      match some (\pt. valid_lptree cmlG pt /\ ptree_head pt = grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
+       ((INL:MMLnonT->MMLnonT+num) gram_nTopLevelDecs) /\
                    real_fringe pt = MAP (grammar_TOK ## I) toks) with NONE
                      -> NONE
       | SOME p -> ptree_TopLevelDecs p`;;

@@ -2,7 +2,7 @@
 (*  pattern_semantics: ported from HOL4's
     compiler/backend/pattern_matching/pattern_semanticsScript.sml
     A definition theory, with 7 definitions, 5 datatypes and no
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -181,8 +181,8 @@ let dt_eval_def,dt_eval_ind = define_wf
   `(dt_eval refs _ (pattern_semantics_Leaf k) = SOME (MatchSuccess k)) /\
    (dt_eval refs _ pattern_semantics_Fail = SOME (MatchFailure)) /\
    (dt_eval refs _ pattern_semantics_TypeFail = NONE) /\
-   (dt_eval refs v (pattern_semantics_If guard' dt1 dt2) =
-         match dt_eval_guard refs v guard' with NONE -> NONE
+   (dt_eval refs v (pattern_semantics_If guard dt1 dt2) =
+         match dt_eval_guard refs v guard with NONE -> NONE
          | SOME b -> dt_eval refs v (if b then dt1 else dt2))`;;
 
 (* and the interface *)

@@ -9,6 +9,7 @@
   Properties about dataLang and its semantics
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
@@ -25,7 +26,13 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "dataProps"
   ["backendProps"; "dataLang"; "dataSem"; "semanticsProps"];;
 
-let _ = do_list hide_constant ["vars"];;
+let _ = do_list hide_constant ["exps"; "prog"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["vars","vars"];;
 
 (* [local] *)
 let OPTION_CASE_OPTION_MAP = prove
@@ -187,7 +194,7 @@ let EVERY_get_vars = prove
 
 let get_vars_IMP_domain = prove
  (`!args x s vs. MEM x args /\ (dataSem_get_vars args s = SOME vs) ==>
-                  x IN domain s`,
+                  x IN sptree_domain s`,
   CHEAT_TAC);;
 
 let cut_state_opt_with_const = prove
@@ -937,7 +944,7 @@ let locals_ok_def = new_definition
        x))`;;
 
 let locals_ok_IMP = prove
- (`locals_ok l1 l2 ==> domain l1 SUBSET domain l2`,
+ (`locals_ok l1 l2 ==> sptree_domain l1 SUBSET sptree_domain l2`,
   CHEAT_TAC);;
 
 let locals_ok_refl = prove
@@ -1397,7 +1404,7 @@ let find_code_upto_size = prove
  (`(dataSem_find_code dest x code sizes = foo) ==>
     (?other_size.
     dataSem_find_code dest x code other_sizes = OPTION_MAP
-      (\(args,exp,size'). (args,exp,other_size)) foo)`,
+      (\(args,exp,sptree__size). (args,exp,other_size)) foo)`,
   CHEAT_TAC);;
 
 
@@ -1626,7 +1633,8 @@ let evaluate_stack_max_le_stack_limit = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["vars"];;
+  ["exps";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

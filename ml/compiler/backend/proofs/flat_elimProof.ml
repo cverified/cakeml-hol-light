@@ -36,8 +36,8 @@ let is_pure_EVERY_aconv = prove
   CHEAT_TAC);;
 
 let find_lookupsL_MEM = prove
- (`!e es. MEM e es ==> domain (find_lookups e) SUBSET domain (find_lookupsL
-  es)`,
+ (`!e es. MEM e es ==> sptree_domain (find_lookups e) SUBSET sptree_domain
+  (find_lookupsL es)`,
   CHEAT_TAC);;
 
 let find_lookupsL_APPEND = prove
@@ -103,56 +103,58 @@ let find_v_globalsL_REVERSE = prove
 
 let find_v_globalsL_MEM = prove
  (`!k v vs.
-   MEM (k,v) vs ==> domain (find_v_globals v) SUBSET domain
+   MEM (k,v) vs ==> sptree_domain (find_v_globals v) SUBSET sptree_domain
      (find_v_globalsL (MAP SND vs))`,
   CHEAT_TAC);;
 
 let find_v_globalsL_EL = prove
  (`!n vs. n < LENGTH vs ==>
-   domain (find_v_globals (EL n vs)) SUBSET domain (find_v_globalsL vs)`,
+   sptree_domain (find_v_globals (EL n vs)) SUBSET sptree_domain
+     (find_v_globalsL vs)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let find_v_globalsL_EL_trans = prove
- (`n < LENGTH vs /\ domain (find_v_globalsL vs) SUBSET R ==>
-   domain (find_v_globals (EL n vs)) SUBSET R`,
+ (`n < LENGTH vs /\ sptree_domain (find_v_globalsL vs) SUBSET R ==>
+   sptree_domain (find_v_globals (EL n vs)) SUBSET R`,
   CHEAT_TAC);;
 
 let find_v_globals_MAP_Recclosure = prove
  (`!funs v l.
-   domain (find_v_globalsL (MAP (\x. flatSem_Recclosure env l (f x)) funs))
-     =
+   sptree_domain (find_v_globalsL (MAP (\x. flatSem_Recclosure env l (f x))
+     funs)) =
    (if NULL funs then {}
-       else domain (find_v_globalsL (MAP SND (flatSem_environment_v env)))
-         UNION
-           domain (find_lookupsL (MAP (SND o SND) l)))`,
+       else sptree_domain (find_v_globalsL (MAP SND (flatSem_environment_v
+         env))) UNION
+           sptree_domain (find_lookupsL (MAP (SND o SND) l)))`,
   CHEAT_TAC);;
 
 let find_v_globalsL_REPLICATE = prove
- (`!n v vs. domain (find_v_globalsL (REPLICATE n v)) SUBSET
-      domain (find_v_globals v)`,
+ (`!n v vs. sptree_domain (find_v_globalsL (REPLICATE n v)) SUBSET
+      sptree_domain (find_v_globals v)`,
   CHEAT_TAC);;
 
 let find_v_globalsL_LUPDATE = prove
  (`!n vs (reachable:1 spt) v.
    n < LENGTH vs /\
-   domain (find_v_globalsL vs) SUBSET domain reachable /\
-   domain (find_v_globals v) SUBSET domain reachable ==> domain
-     (find_v_globalsL (LUPDATE v n vs)) SUBSET domain reachable`,
+   sptree_domain (find_v_globalsL vs) SUBSET sptree_domain reachable /\
+   sptree_domain (find_v_globals v) SUBSET sptree_domain reachable ==>
+     sptree_domain (find_v_globalsL (LUPDATE v n vs)) SUBSET sptree_domain
+     reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_v_to_list = prove
  (`!x (reachable:1 spt) xs.
-      domain (find_v_globals x) SUBSET domain reachable
-        /\ flatSem_v_to_list x = SOME xs ==> domain (find_v_globalsL xs)
-        SUBSET domain reachable`,
+      sptree_domain (find_v_globals x) SUBSET sptree_domain reachable
+        /\ flatSem_v_to_list x = SOME xs ==> sptree_domain (find_v_globalsL
+        xs) SUBSET sptree_domain reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_list_to_v = prove
  (`!xs (reachable:1 spt) x.
-      domain (find_v_globalsL xs) SUBSET domain reachable
-        /\ flatSem_list_to_v xs = x ==> domain (find_v_globals x) SUBSET
-        domain reachable`,
+      sptree_domain (find_v_globalsL xs) SUBSET sptree_domain reachable
+        /\ flatSem_list_to_v xs = x ==> sptree_domain (find_v_globals x)
+        SUBSET sptree_domain reachable`,
   CHEAT_TAC);;
 
 make_size "store_v";;
@@ -175,49 +177,53 @@ let find_refs_globals_def,find_refs_globals_ind = define_wf
 
 let find_refs_globals_MEM = prove
  (`!refs (reachable:1 spt).
-      domain (find_refs_globals refs) SUBSET R ==> (!a.
-          MEM (semanticPrimitives_Refv a) refs ==> domain (find_v_globals a)
-            SUBSET R) /\
+      sptree_domain (find_refs_globals refs) SUBSET R ==> (!a.
+          MEM (semanticPrimitives_Refv a) refs ==> sptree_domain
+            (find_v_globals a) SUBSET R) /\
       (!vs.
-          MEM (semanticPrimitives_Varray vs) refs ==> domain
+          MEM (semanticPrimitives_Varray vs) refs ==> sptree_domain
             (find_v_globalsL vs) SUBSET R) /\
       (!m a.
-          MEM (semanticPrimitives_Thunk m a) refs ==> domain
+          MEM (semanticPrimitives_Thunk m a) refs ==> sptree_domain
             (find_v_globals a) SUBSET R)`,
   CHEAT_TAC);;
 
 let find_refs_globals_EL = prove
- (`n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET R ==>
+ (`n < LENGTH refs /\ sptree_domain (find_refs_globals refs) SUBSET R ==>
      (!a.
-             EL n refs = semanticPrimitives_Refv a ==> domain
+             EL n refs = semanticPrimitives_Refv a ==> sptree_domain
                (find_v_globals a) SUBSET R) /\
      (!vs.
-             EL n refs = semanticPrimitives_Varray vs ==> domain
+             EL n refs = semanticPrimitives_Varray vs ==> sptree_domain
                (find_v_globalsL vs) SUBSET R) /\
      (!m a.
-             EL n refs = semanticPrimitives_Thunk m a ==> domain
+             EL n refs = semanticPrimitives_Thunk m a ==> sptree_domain
                (find_v_globals a) SUBSET R)`,
   CHEAT_TAC);;
 
 let find_refs_globals_LUPDATE = prove
  (`!(reachable:1 spt) refs n.
-      n < LENGTH refs /\ domain (find_refs_globals refs) SUBSET domain
-        reachable ==>
+      n < LENGTH refs /\ sptree_domain (find_refs_globals refs) SUBSET
+        sptree_domain reachable ==>
       (!a.
-          domain (find_v_globals a) SUBSET domain reachable ==>
-              domain (find_refs_globals (LUPDATE (semanticPrimitives_Refv a)
-                n refs)) SUBSET domain reachable) /\
+          sptree_domain (find_v_globals a) SUBSET sptree_domain reachable
+            ==>
+              sptree_domain (find_refs_globals (LUPDATE
+                (semanticPrimitives_Refv a) n refs)) SUBSET sptree_domain
+                reachable) /\
    (!vs.
-      domain (find_v_globalsL vs) SUBSET domain reachable ==>
-          domain (find_refs_globals (LUPDATE (semanticPrimitives_Varray vs)
-            n refs)) SUBSET domain reachable) /\
+      sptree_domain (find_v_globalsL vs) SUBSET sptree_domain reachable ==>
+          sptree_domain (find_refs_globals (LUPDATE
+            (semanticPrimitives_Varray vs) n refs)) SUBSET sptree_domain
+            reachable) /\
    (!ws.
-      domain (find_refs_globals (LUPDATE (semanticPrimitives_W8array ws) n
-        refs)) SUBSET domain reachable) /\
+      sptree_domain (find_refs_globals (LUPDATE (semanticPrimitives_W8array
+        ws) n refs)) SUBSET sptree_domain reachable) /\
    (!m a.
-      domain (find_v_globals a) SUBSET domain reachable ==>
-          domain (find_refs_globals (LUPDATE (semanticPrimitives_Thunk m
-            a) n refs)) SUBSET domain reachable)`,
+      sptree_domain (find_v_globals a) SUBSET sptree_domain reachable ==>
+          sptree_domain (find_refs_globals (LUPDATE
+            (semanticPrimitives_Thunk m a) n refs)) SUBSET sptree_domain
+            reachable)`,
   CHEAT_TAC);;
 
 let find_refs_globals_APPEND = prove
@@ -276,15 +282,16 @@ let globals_rel_def = new_definition
   `globals_rel (reachable:1 spt) s_g t_g <=>
        LENGTH s_g = LENGTH t_g /\
        (!n.
-         n IN domain reachable /\ n < LENGTH t_g ==> EL n s_g = EL n t_g) /\
+         n IN sptree_domain reachable /\ n < LENGTH t_g ==> EL n s_g = EL n
+           t_g) /\
        (!n x.
          n < LENGTH t_g /\ EL n t_g = SOME x ==> EL n s_g = SOME x) /\
        (!n.
          n < LENGTH t_g /\ EL n s_g = NONE ==> EL n t_g = NONE) /\
        (!n x.
-           n IN domain reachable /\ n < LENGTH t_g /\
-         EL n t_g = SOME x ==> ~(v_has_Eval x) /\ domain (find_v_globals
-           x) SUBSET domain reachable)`;;
+           n IN sptree_domain reachable /\ n < LENGTH t_g /\
+         EL n t_g = SOME x ==> ~(v_has_Eval x) /\ sptree_domain
+           (find_v_globals x) SUBSET sptree_domain reachable)`;;
 
 let globals_rel_trans = prove
  (`!reachable s1 s2 s3.
@@ -294,10 +301,11 @@ let globals_rel_trans = prove
 
 let decs_closed_def = new_definition
   `decs_closed (reachable:1 spt) decs <=> (!r t.
-   analyse_code decs = (r,t) ==> domain r SUBSET domain reachable /\
+   analyse_code decs = (r,t) ==> sptree_domain r SUBSET sptree_domain
+     reachable /\
      (!n m.
-     n IN domain reachable /\ is_reachable t n m ==> m IN domain
-       reachable))`;;
+     n IN sptree_domain reachable /\ is_reachable t n m ==> m IN
+       sptree_domain reachable))`;;
 
 let decs_closed_reduce = prove
  (`!reachable e t. decs_closed reachable (CONS e t) ==> decs_closed reachable
@@ -317,8 +325,8 @@ let flat_state_rel_def = new_definition
        t /\ flatSem_state_ffi
      s = flatSem_state_ffi t /\ globals_rel reachable (flatSem_state_globals
        s) (flatSem_state_globals t) /\
-     domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
-       reachable /\
+     sptree_domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+       sptree_domain reachable /\
      ALL (ALL ((~) o v_has_Eval) o flatProps_store_v_vs)
        (flatSem_state_refs s)`;;
 
@@ -333,26 +341,28 @@ let flat_state_rel_trans = prove
 let pmatch_Match_reachable = prove
  (`(!(s:('c,'ffi)flatSem_state) p v l a (reachable:1 spt).
    flatSem_pmatch s p v l = Match a /\
-      domain (find_v_globals v) SUBSET domain reachable /\
-      domain (find_v_globalsL (MAP SND l)) SUBSET domain reachable /\
-      domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
-        reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET domain
-        reachable) /\
+      sptree_domain (find_v_globals v) SUBSET sptree_domain reachable /\
+      sptree_domain (find_v_globalsL (MAP SND l)) SUBSET sptree_domain
+        reachable /\
+      sptree_domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+        sptree_domain reachable ==> sptree_domain (find_v_globalsL (MAP SND a))
+        SUBSET sptree_domain reachable) /\
    (!(s:('c,'ffi)flatSem_state) p vs l a (reachable:1 spt).
       flatSem_pmatch_list s p vs l = Match a /\
-      domain (find_v_globalsL vs) SUBSET domain reachable /\
-      domain (find_v_globalsL (MAP SND l)) SUBSET domain reachable /\
-      domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
-        reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET domain
-        reachable)`,
+      sptree_domain (find_v_globalsL vs) SUBSET sptree_domain reachable /\
+      sptree_domain (find_v_globalsL (MAP SND l)) SUBSET sptree_domain
+        reachable /\
+      sptree_domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+        sptree_domain reachable ==> sptree_domain (find_v_globalsL (MAP SND
+        a)) SUBSET sptree_domain reachable)`,
   CHEAT_TAC);;
 
 let find_v_globals_list_to_v_APPEND = prove
  (`!xs (reachable:1 spt) ys.
-      domain (find_v_globalsL xs) SUBSET domain reachable /\
-      domain (find_v_globalsL ys) SUBSET domain reachable ==> domain
-        (find_v_globals (flatSem_list_to_v (APPEND xs ys))) SUBSET domain
-        reachable`,
+      sptree_domain (find_v_globalsL xs) SUBSET sptree_domain reachable /\
+      sptree_domain (find_v_globalsL ys) SUBSET sptree_domain reachable
+        ==> sptree_domain (find_v_globals (flatSem_list_to_v (APPEND xs ys)))
+        SUBSET sptree_domain reachable`,
   CHEAT_TAC);;
 
 let find_v_globals_Unitv = prove
@@ -421,7 +431,8 @@ let flat_elimProof_pair_lam_lem = prove
 
 (* [local] *)
 let fvg_v_to_flat = prove
- (`domain (find_v_globals (v_to_flat v)) SUBSET domain reachable /\
+ (`sptree_domain (find_v_globals (v_to_flat v)) SUBSET sptree_domain reachable
+  /\
    ~(v_has_Eval (v_to_flat v))`,
   CHEAT_TAC);;
 add_simp fvg_v_to_flat;;
@@ -430,16 +441,18 @@ let do_app_SOME_flat_state_rel = prove
  (`!reachable state removed_state op l new_state result new_removed_state.
       flat_state_rel reachable state removed_state /\ ~(op = flat_Src
         ast_Opapp) /\
-      domain (find_v_globalsL l) SUBSET domain reachable /\
-      domain (find_lookups (flat_App tra op [])) SUBSET domain reachable /\
+      sptree_domain (find_v_globalsL l) SUBSET sptree_domain reachable /\
+      sptree_domain (find_lookups (flat_App tra op [])) SUBSET sptree_domain
+        reachable /\
       ALL ((~) o v_has_Eval) l ==>
           flatSem_do_app state op l = SOME (new_state,result) /\ ~(result =
             Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
               flat_state_rel reachable new_state new_removed_state /\
               flatSem_do_app removed_state op l =
                   SOME (new_removed_state,result) /\
-              domain (find_sem_prim_res_globals (list_result result)) SUBSET
-                  domain reachable /\
+              sptree_domain (find_sem_prim_res_globals (list_result result))
+                SUBSET
+                  sptree_domain reachable /\
               ALL ((~) o v_has_Eval) (result_vs (list_result result)))`,
   CHEAT_TAC);;
 
@@ -465,8 +478,9 @@ let flat_state_rel_pmatch_rows = prove
 
 let pmatch_rows_find_lookups = prove
  (`pmatch_rows pes q a = Match (env',p',e') /\
-   domain (find_lookupsL (MAP SND pes)) SUBSET domain reachable ==>
-   domain (find_lookups e') SUBSET domain reachable`,
+   sptree_domain (find_lookupsL (MAP SND pes)) SUBSET sptree_domain
+     reachable ==>
+   sptree_domain (find_lookups e') SUBSET sptree_domain reachable`,
   CHEAT_TAC);;
 
 let pmatch_not_has_Eval = prove
@@ -514,16 +528,18 @@ let evaluate_keep_flat_state_rel_eq_lemma = prove
  (`(!env ((state:('c,'ffi)flatSem_state)) exprL new_state
        result (reachable:1 spt) removed_state.
        flatSem_evaluate env state exprL = (new_state,result) /\
-       domain (find_lookupsL exprL) SUBSET domain reachable /\
+       sptree_domain (find_lookupsL exprL) SUBSET sptree_domain reachable /\
        flat_state_rel reachable state removed_state /\
-       domain (find_env_globals env) SUBSET domain reachable /\
+       sptree_domain (find_env_globals env) SUBSET sptree_domain reachable
+         /\
        ALL (((~)) o v_has_Eval o SND) (flatSem_environment_v env) /\
        ALL (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort Rtype_error))
          ==> (?new_removed_state.
        flatSem_evaluate env removed_state exprL = (new_removed_state,result)
          /\
        flat_state_rel reachable new_state new_removed_state /\
-       domain (find_sem_prim_res_globals result) SUBSET domain reachable /\
+       sptree_domain (find_sem_prim_res_globals result) SUBSET sptree_domain
+         reachable /\
        ALL (((~)) o v_has_Eval) (result_vs result)))`,
   CHEAT_TAC);;
 
@@ -537,7 +553,7 @@ let evaluate_sing_keep_flat_state_rel_eq = prove
      flat_state_rel reachable state removed_state /\
      exprL = [expr] /\
      keep reachable expr /\
-     domain (find_lookups expr) SUBSET domain reachable /\
+     sptree_domain (find_lookups expr) SUBSET sptree_domain reachable /\
      ~(has_Eval expr) /\ ~(result = Rerr (Rabort Rtype_error)) ==>
        (?new_removed_state.
        flatSem_evaluate (flatSem_environment_v_fupd (K []) env)

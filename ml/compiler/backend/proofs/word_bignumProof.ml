@@ -10,6 +10,8 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "candle/standard/semantics/holAxioms.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -31,7 +33,7 @@ let _ = cake_theory "word_bignumProof"
   ["ast"; "backend_common"; "mllist"; "wordLang"; "wordProps"; "wordSem";
    "word_bignum"];;
 
-let _ = do_list hide_constant ["shift"];;
+let _ = do_list hide_constant ["prog"; "shift"];;
 
 (* HOL4 word_bignumProofScript.sml:11-12: ML code, not ported *)
 
@@ -123,18 +125,18 @@ let copy_vars_def,copy_vars_ind = define_rec
              (SOME x) t))`;;
 
 let eval = cake_inductive
-  `(!r s. word_bignumProof_Eval r s word_bignum_Skip (INR (s:'a
+  `(!r s. word_bignumProof_Eval r s word_bignum_Skip (sum_INR (s:'a
   word_bignumProof_state))) /\
-   (!r s. word_bignumProof_Eval r s word_bignum_Continue (INL s)) /\
-   (!r vs s. word_bignumProof_Eval r s (word_bignum_Delete vs) (INR
+   (!r s. word_bignumProof_Eval r s word_bignum_Continue (sum_INL s)) /\
+   (!r vs s. word_bignumProof_Eval r s (word_bignum_Delete vs) (sum_INR
      (delete_vars vs (s:'a word_bignumProof_state)))) /\
    (!r s x n.
       eval_exp_pre s x ==>
-      word_bignumProof_Eval r s (word_bignum_Assign n x) (INR (reg_write n
-        (SOME (eval_exp s x)) s))) /\
+      word_bignumProof_Eval r s (word_bignum_Assign n x) (sum_INR (reg_write
+        n (SOME (eval_exp s x)) s))) /\
    (!r s1 s2 s3 p1 p2.
-      word_bignumProof_Eval r s1 p1 (INR s2) /\ word_bignumProof_Eval r s2
-        p2 s3 ==>
+      word_bignumProof_Eval r s1 p1 (sum_INR s2) /\ word_bignumProof_Eval r
+        s2 p2 s3 ==>
       word_bignumProof_Eval r s1 (word_bignum_Seq p1 p2) s3) /\
    (!rec s1 c r ri p1 p2 s2.
       r IN FDOM (word_bignumProof_state_regs s1) /\ eval_ri_pre s1 ri /\
@@ -144,16 +146,18 @@ let eval = cake_inductive
    (!rec s r i a w.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
       w2n w < LENGTH (word_bignumProof_state_arrays s a) ==>
-      word_bignumProof_Eval rec s (word_bignum_Load r i a) (INR (reg_write r
-        (SOME (EL (w2n w) (word_bignumProof_state_arrays s a))) s))) /\
+      word_bignumProof_Eval rec s (word_bignum_Load r i a) (sum_INR
+        (reg_write r (SOME (EL (w2n w) (word_bignumProof_state_arrays s a)))
+        s))) /\
    (!rec s r i w wr.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\ (FLOOKUP
         (word_bignumProof_state_regs s) r = SOME wr) /\
       w2n w < LENGTH (word_bignumProof_state_arrays s Out) ==>
-      word_bignumProof_Eval rec s (word_bignum_Store r i) (INR (array_write
-        Out (LUPDATE wr (w2n w) (word_bignumProof_state_arrays s Out)) s))) /\
+      word_bignumProof_Eval rec s (word_bignum_Store r i) (sum_INR
+        (array_write Out (LUPDATE wr (w2n w) (word_bignumProof_state_arrays s
+        Out)) s))) /\
    (!r s.
-      word_bignumProof_Eval r s word_bignum_Swap (INR (array_write In1
+      word_bignumProof_Eval r s word_bignum_Swap (sum_INR (array_write In1
         (word_bignumProof_state_arrays s In2)
                        (array_write In2 (word_bignumProof_state_arrays s
                          In1) s)))) /\
@@ -165,7 +169,7 @@ let eval = cake_inductive
       (single_add_word (FAPPLY (word_bignumProof_state_regs s) n3) (eval_ri
         s n4) (eval_ri s n5) = (r1,r2)) ==>
       word_bignumProof_Eval r s (word_bignum_Add n1 n2 n3 n4 n5)
-       (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
+       (sum_INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4 n5 r1 r2.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s n4
         /\ eval_ri_pre s n5 /\
@@ -174,12 +178,12 @@ let eval = cake_inductive
       (single_sub_word (FAPPLY (word_bignumProof_state_regs s) n3) (eval_ri
         s n4) (eval_ri s n5) = (r1,r2)) ==>
       word_bignumProof_Eval r s (word_bignum_Sub n1 n2 n3 n4 n5)
-       (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
+       (sum_INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ n4 IN FDOM
         (word_bignumProof_state_regs s) /\ ~(n1 = n2) ==>
       word_bignumProof_Eval r s (word_bignum_Mul n1 n2 n3 n4)
-       (INR (reg_write n1 (SOME (FST (single_mul (FAPPLY
+       (sum_INR (reg_write n1 (SOME (FST (single_mul (FAPPLY
          (word_bignumProof_state_regs s) n3) (FAPPLY
          (word_bignumProof_state_regs s) n4) (n2w 0))))
             (reg_write n2 (SOME (SND (single_mul (FAPPLY
@@ -193,7 +197,7 @@ let eval = cake_inductive
         (word_bignumProof_state_regs s) n4) (FAPPLY
         (word_bignumProof_state_regs s) n5) ==>
       word_bignumProof_Eval r s (word_bignum_Div n1 n2 n3 n4 n5)
-       (INR (reg_write n1 (SOME (FST (single_div (FAPPLY
+       (sum_INR (reg_write n1 (SOME (FST (single_div (FAPPLY
          (word_bignumProof_state_regs s) n3) (FAPPLY
          (word_bignumProof_state_regs s) n4) (FAPPLY
          (word_bignumProof_state_regs s) n5))))
@@ -204,26 +208,28 @@ let eval = cake_inductive
    (!r s1 p vs s2 rec.
       word_bignumProof_Eval (if rec then SOME p else NONE) (delete_vars vs
         (word_bignumProof_dec_clock s1))
-        (word_bignum_LoopBody p) (INR s2) /\ ~(word_bignumProof_state_clock
-          s1 = 0) ==>
-      word_bignumProof_Eval r s1 (word_bignum_Loop rec vs p) (INR s2)) /\
+        (word_bignum_LoopBody p) (sum_INR s2)
+          /\ ~(word_bignumProof_state_clock s1 = 0) ==>
+      word_bignumProof_Eval r s1 (word_bignum_Loop rec vs p) (sum_INR s2))
+        /\
    (!s1 save_regs vs p s2 s3.
       word_bignumProof_Eval (SOME p) (delete_vars vs
-        (word_bignumProof_dec_clock s1)) (word_bignum_LoopBody p) (INR s2) /\
+        (word_bignumProof_dec_clock s1)) (word_bignum_LoopBody p) (sum_INR s2)
+        /\
       word_bignumProof_copy_vars save_regs (word_bignumProof_state_regs s1)
         s2 = SOME s3 /\ ~(word_bignumProof_state_clock
       s1 = 0) ==>
-      word_bignumProof_Eval (SOME p) s1 (word_bignum_Rec save_regs vs) (INR
-        s3)) /\
+      word_bignumProof_Eval (SOME p) s1 (word_bignum_Rec save_regs vs)
+        (sum_INR s3)) /\
    (!r s1 p s2.
-      word_bignumProof_Eval r s1 p (INR s2) ==>
-      word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR s2)) /\
+      word_bignumProof_Eval r s1 p (sum_INR s2) ==>
+      word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (sum_INR s2)) /\
    (!r s1 s2 s3 p.
-      word_bignumProof_Eval r s1 p (INL s2)
+      word_bignumProof_Eval r s1 p (sum_INL s2)
         /\ ~(word_bignumProof_state_clock s2 = 0) /\
       word_bignumProof_Eval r (word_bignumProof_dec_clock s2)
-        (word_bignum_LoopBody p) (INR s3) ==>
-      word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR s3))`;;
+        (word_bignum_LoopBody p) (sum_INR s3) ==>
+      word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (sum_INR s3))`;;
 
 (* HOL4 word_bignumProofScript.sml:158: ML code, not ported *)
 
@@ -433,7 +439,7 @@ let compile_IMP_code_subset = prove
 (* [local] *)
 let has_compiled_lemma = prove
  (`word_bignumProof_state_rel s1 t1 cs2 t0 frame /\
-   has_compiled p cs = INL x /\ code_subset cs cs2 ==>
+   has_compiled p cs = sum_INL x /\ code_subset cs cs2 ==>
    (?cs0 p1 l1 i1 cs' cs1.
      word_bignum_compile x 2 1 cs' p = (p1,l1,i1,cs1) /\ code_subset cs1 cs2
        /\
@@ -555,8 +561,8 @@ let evaluate_LoadRegs = prove
 
 (* [local] *)
 let domain_list_update = prove
- (`!xs ys x t. x IN domain (list_update xs ys t) <=> MEM x xs \/ x IN domain
-  t`,
+ (`!xs ys x t. x IN sptree_domain (list_update xs ys t) <=> MEM x xs \/ x IN
+  sptree_domain t`,
   CHEAT_TAC);;
 
 let list_store_def,list_store_ind = define_rec
@@ -651,22 +657,22 @@ let word_bignumProof_compile_thm = prove
                 (?l i cs p1 l1 i1 cs1.
                   word_bignum_compile n l i cs body = (p1,l1,i1,cs1) /\
                   0 < i /\ syntax_ok_aux body /\ code_subset cs1 cs2 /\
-                  sptree_lookup n (wordSem_state_code t1) = SOME
-                    (1,word_bignum_Seq p1 (word_Return 0 [0])))) /\
+                  sptree_lookup n (wordSem_state_code t1) = SOME (1,word_Seq
+                    p1 (word_Return 0 [0])))) /\
         (!body. prog = word_bignum_LoopBody body ==>
                 p9 = word_Return 0 [0] /\
-                sptree_lookup n (wordSem_state_code t1) = SOME
-                  (1,word_bignum_Seq p1 (word_Return 0 [0]))) /\
+                sptree_lookup n (wordSem_state_code t1) = SOME (1,word_Seq
+                  p1 (word_Return 0 [0]))) /\
         wordSem_get_var 0 t1 = SOME ret_val /\ good_dimindex (:'a) ==>
         (?t2 res.
-          (wordSem_evaluate (word_bignum_Seq p1 p9,t1) = res) /\
-          (match s2 with INR s -> res = wordSem_evaluate (p9,t2) /\
+          (wordSem_evaluate (word_Seq p1 p9,t1) = res) /\
+          (match s2 with sum_INR s -> res = wordSem_evaluate (p9,t2) /\
                      0 < i1 /\ wordSem_state_stack
                      t2 = wordSem_state_stack t1 /\
                      wordSem_get_var 0 t2 = SOME ret_val /\
                      word_bignumProof_state_rel s t2 cs2 t0 frame
                        /\ wordSem_state_code t2 = wordSem_state_code t1
-          | INL s -> res = wordSem_evaluate (word_Call NONE (SOME n) [0]
+          | sum_INL s -> res = wordSem_evaluate (word_Call NONE (SOME n) [0]
             NONE,t2) /\
                      0 < i1 /\ wordSem_state_stack
                      t2 = wordSem_state_stack t1 /\
@@ -715,45 +721,46 @@ let corr_def = new_definition
 
 (* [local] *)
 let Corr_Skip = prove
- (`Corr word_bignum_Skip s (INR s) T`,
+ (`Corr word_bignum_Skip s (sum_INR s) T`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Seq = prove
  (`Corr p2 s1 s2 q2 ==>
-   Corr p1 s (INR s1) q1 ==>
+   Corr p1 s (sum_INR s1) q1 ==>
    Corr (word_bignum_Seq p1 p2) s s2 (q1 /\ q2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Seq_alt = prove
  (`(b ==> Corr p2 s1 s2 q2) ==>
-   Corr p1 s (INR s1) q1 ==>
+   Corr p1 s (sum_INR s1) q1 ==>
    b ==> Corr (word_bignum_Seq p1 p2) s s2 (q1 /\ q2)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Continue = prove
- (`Corr word_bignum_Continue s (INL s) T`,
+ (`Corr word_bignum_Continue s (sum_INL s) T`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Assign = prove
  (`Corr (word_bignum_Assign n x) s
-     (INR (reg_write n (SOME (eval_exp s x)) s))
+     (sum_INR (reg_write n (SOME (eval_exp s x)) s))
      (eval_exp_pre s x)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Delete = prove
- (`Corr (word_bignum_Delete vs) s (INR (delete_vars vs s)) T`,
+ (`Corr (word_bignum_Delete vs) s (sum_INR (delete_vars vs s)) T`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Load = prove
  (`Corr (word_bignum_Load r i a) s
-       (INR (reg_write r (SOME (EL (w2n (FAPPLY (word_bignumProof_state_regs
-         s) i)) (word_bignumProof_state_arrays s a))) s))
+       (sum_INR (reg_write r (SOME (EL (w2n (FAPPLY
+         (word_bignumProof_state_regs s) i)) (word_bignumProof_state_arrays s
+         a))) s))
        (i IN FDOM (word_bignumProof_state_regs s) /\ w2n (FAPPLY
          (word_bignumProof_state_regs s) i) < LENGTH
          (word_bignumProof_state_arrays s a))`,
@@ -762,8 +769,9 @@ let Corr_Load = prove
 (* [local] *)
 let Corr_Store = prove
  (`Corr (word_bignum_Store r i) s
-       (INR (array_write Out (LUPDATE (FAPPLY (word_bignumProof_state_regs
-         s) r) (w2n (FAPPLY (word_bignumProof_state_regs s) i))
+       (sum_INR (array_write Out (LUPDATE (FAPPLY
+         (word_bignumProof_state_regs s) r) (w2n (FAPPLY
+         (word_bignumProof_state_regs s) i))
                    (word_bignumProof_state_arrays s Out)) s))
        (r IN FDOM (word_bignumProof_state_regs s) /\ i IN FDOM
          (word_bignumProof_state_regs s) /\
@@ -774,14 +782,14 @@ let Corr_Store = prove
 (* [local] *)
 let Corr_Swap = prove
  (`Corr word_bignum_Swap s
-     (INR (array_write In1 (word_bignumProof_state_arrays s In2)
+     (sum_INR (array_write In1 (word_bignumProof_state_arrays s In2)
        (array_write In2 (word_bignumProof_state_arrays s In1) s))) T`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Corr_Add = prove
  (`Corr (word_bignum_Add n1 n2 n3 ri1 ri2) s
-    (INR (reg_write n1
+    (sum_INR (reg_write n1
            (SOME (FST (single_add_word (FAPPLY (word_bignumProof_state_regs
              s) n3) (eval_ri s ri1) (eval_ri s ri2))))
          (reg_write n2
@@ -796,7 +804,7 @@ let Corr_Add = prove
 (* [local] *)
 let Corr_Sub = prove
  (`Corr (word_bignum_Sub n1 n2 n3 ri1 ri2) s
-    (INR (reg_write n1
+    (sum_INR (reg_write n1
            (SOME (FST (single_sub_word (FAPPLY (word_bignumProof_state_regs
              s) n3) (eval_ri s ri1) (eval_ri s ri2))))
          (reg_write n2
@@ -811,7 +819,7 @@ let Corr_Sub = prove
 (* [local] *)
 let Corr_Mul = prove
  (`Corr (word_bignum_Mul n1 n2 n3 n4) s
-    (INR (reg_write n1 (SOME (FST (single_mul (FAPPLY
+    (sum_INR (reg_write n1 (SOME (FST (single_mul (FAPPLY
       (word_bignumProof_state_regs s) n3) (FAPPLY (word_bignumProof_state_regs
       s) n4) (n2w 0))))
          (reg_write n2 (SOME (SND (single_mul (FAPPLY
@@ -824,7 +832,7 @@ let Corr_Mul = prove
 (* [local] *)
 let Corr_Div = prove
  (`Corr (word_bignum_Div n1 n2 n3 n4 n5) s
-    (INR (reg_write n1
+    (sum_INR (reg_write n1
             (SOME (FST (single_div (FAPPLY (word_bignumProof_state_regs s)
               n3) (FAPPLY (word_bignumProof_state_regs s) n4) (FAPPLY
               (word_bignumProof_state_regs s) n5))))
@@ -853,15 +861,15 @@ let Corr_If = prove
 
 let loop_app_def = new_definition
   `loop_app f g x =
-     match f x with INL s -> (INL (word_bignumProof_dec_clock s),(g x
-       /\ ~(word_bignumProof_state_clock s = 0)))
-     | INR s -> (INR s,g x)`;;
+     match f x with sum_INL s -> (sum_INL (word_bignumProof_dec_clock s),(g
+       x /\ ~(word_bignumProof_state_clock s = 0)))
+     | sum_INR s -> (sum_INR s,g x)`;;
 
 (* [local] *)
 let Corr_LoopBody = prove
  (`(!s. Corr p s (f s) (q s)) ==>
-   (!s. Corr (word_bignum_LoopBody p) s (INR (SHORT_TAILREC (loop_app f q)
-     s))
+   (!s. Corr (word_bignum_LoopBody p) s (sum_INR (SHORT_TAILREC (loop_app f
+     q) s))
                               (SHORT_TAILREC_PRE (loop_app f q) s))`,
   CHEAT_TAC);;
 
@@ -872,8 +880,8 @@ let tick_before_def = new_definition
 
 (* [local] *)
 let Corr_Loop_lemma = prove
- (`(!s. Corr (word_bignum_LoopBody p) s (INR (f s)) (q s)) ==>
-   Corr (word_bignum_Loop F vs p) s (INR (f (delete_vars vs
+ (`(!s. Corr (word_bignum_LoopBody p) s (sum_INR (f s)) (q s)) ==>
+   Corr (word_bignum_Loop F vs p) s (sum_INR (f (delete_vars vs
      (word_bignumProof_dec_clock s))))
      (q (delete_vars vs (word_bignumProof_dec_clock s))
        /\ ~(word_bignumProof_state_clock s = 0))`,
@@ -885,8 +893,8 @@ let Corr_Loop_lemma = prove
 let Corr_STRENGTHEN_TERM = prove
  (`Corr p s f q ==>
    (!f' q'.
-     (q' ==> (f = INR f') /\ q) ==>
-     Corr p s (INR f') q')`,
+     (q' ==> (f = sum_INR f') /\ q) ==>
+     Corr p s (sum_INR f') q')`,
   CHEAT_TAC);;
 
 
@@ -1085,9 +1093,9 @@ let corr_move_pre = prove
 
 (* [local] *)
 let loop_app_EQ = prove
- (`(loop_app f g x = (INR t,T) <=> f x = INR t /\ g x) /\
-   (loop_app f g x = (INL t,T) <=>
-      (?x'. f x = INL x' /\ word_bignumProof_dec_clock x' = t /\ g x
+ (`(loop_app f g x = (sum_INR t,T) <=> f x = sum_INR t /\ g x) /\
+   (loop_app f g x = (sum_INL t,T) <=>
+      (?x'. f x = sum_INL x' /\ word_bignumProof_dec_clock x' = t /\ g x
         /\ ~(word_bignumProof_state_clock x' = 0)))`,
   CHEAT_TAC);;
 
@@ -1203,7 +1211,8 @@ let word_bignumProof_code_subset_refl = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["shift"];;
+  ["prog";
+   "shift"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -2,7 +2,7 @@
 (*  evaluate: ported from HOL4's
     semantics/evaluateScript.sml
     A definition theory, with 6 definitions and 13 theorems.  Needed
-    by 15 files of the port.  *)
+    by 53 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -172,8 +172,8 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
          (st',Rval v1) ->
            (match do_log lop (HD v1) e2 with
               NONE -> (st',Rerr (Rabort Rtype_error))
-            | SOME (Exp e) -> evaluate st' env [e]
-            | SOME (Val v) -> (st',Rval [v]))
+            | SOME (semanticPrimitives_Exp e) -> evaluate st' env [e]
+            | SOME (semanticPrimitives_Val v) -> (st',Rval [v]))
        | (st',Rerr v9) -> (st',Rerr v9))) /\
     (evaluate (st:'ffi semanticPrimitives_state) env [ast_If e1 e2 e3] =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
@@ -231,7 +231,7 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
     (evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dlet locs p
     e] =
       (if ALL_DISTINCT (ast_pat_bindings p) /\
-          every_exp (one_con_check (sem_env_c env)) e then
+          ast_every_exp (one_con_check (sem_env_c env)) e then
          match evaluate st env [e] with
            (st',Rval v) ->
              (st',
@@ -248,8 +248,8 @@ let evaluate_def,evaluate_ind = assume_definition_rec_clauses
     funs] =
       (st,
        (if ALL_DISTINCT (MAP (\(x,y,z). x) funs) /\
-          ALL (\(f,n,e). every_exp (one_con_check (sem_env_c env)) e) funs
-              then
+          ALL (\(f,n,e). ast_every_exp (one_con_check (sem_env_c env)) e)
+              funs then
          Rval (mk_sem_env (semanticPrimitives_build_rec_env funs env
              nsEmpty) nsEmpty)
        else Rerr (Rabort Rtype_error)))) /\

@@ -177,8 +177,8 @@ let bvlSem_do_install_def = new_definition
                 let (cfg,progs) = bvlSem_state_compile_oracle s 0 in
                 let new_oracle = misc_shift_seq 1
                   (bvlSem_state_compile_oracle s) in
-                 (if DISJOINT (domain (bvlSem_state_code s)) (set_of_list
-                   (MAP FST progs)) /\
+                 (if DISJOINT (sptree_domain (bvlSem_state_code s))
+                   (set_of_list (MAP FST progs)) /\
                      ALL_DISTINCT (MAP FST progs) then
                   (match bvlSem_state_compile s cfg progs,progs with SOME
                     (bytes',data',cfg'),CONS (k,prog) _ ->
@@ -668,8 +668,8 @@ let bvlSem_do_app_def = new_definition
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result))
      | (clos_Label n,[]) ->
-         if n IN domain (bvlSem_state_code s) then Rval (bvlSem_CodePtr n,s)
-           else ((Rerr (Rabort
+         if n IN sptree_domain (bvlSem_state_code s) then Rval
+           (bvlSem_CodePtr n,s) else ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)
      | (clos_IntOp intop,vs) ->

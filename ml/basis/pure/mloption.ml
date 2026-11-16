@@ -2,7 +2,7 @@
 (*  mloption: ported from HOL4's
     basis/pure/mloptionScript.sml
     A definition theory, with 6 definitions and no theorems.  Needed
-    by presLang.ml.  *)
+    by OptionProg.ml, RuntimeProg.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -19,7 +19,7 @@ let getOpt_def = assume_definition
   `(getOpt (SOME v) a = v) /\
    (getOpt NONE a = a)`;;
 
-let filter_def = new_definition
+let mloption_filter_def = new_definition
   `mloption_filter f a = if f a then SOME (a) else NONE`;;
 
 let mloption_mapPartial_def = new_definition

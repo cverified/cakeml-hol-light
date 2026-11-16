@@ -3,7 +3,7 @@
     compiler/backend/flat_patternScript.sml
     A definition theory, with 20 definitions, 1 datatype and 5
     theorems.  Needed by backendProof.ml, backend_passes.ml,
-    flat_patternProof.ml and source_to_flat.ml.  *)
+    flat_patternProof.ml, source_to_flat.ml and to_data_cv.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -23,6 +23,7 @@ needs "compiler/backend/pattern_matching/pattern_comp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
+needs "lib/sum.ml";;
 needs "misc/misc.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -177,13 +178,13 @@ let decode_dtree_def,decode_dtree_ind = define_shaped_rec
    | pattern_semantics_Fail -> df
    | pattern_semantics_TypeFail -> flat_Var_local t (implode
      "impossible-case")
-   | pattern_semantics_If guard' dt1 dt2 ->
-   let guard' = simp_guard guard' in
+   | pattern_semantics_If guard dt1 dt2 ->
+   let guard = simp_guard guard in
    let dec1 = decode_dtree t br_spt v df dt1 in
    let dec2 = decode_dtree t br_spt v df dt2 in
-   if guard' = pattern_semantics_True then dec1
-   else if guard' = pattern_semantics_Not pattern_semantics_True then dec2
-   else SmartIf t (decode_guard t v guard') dec1 dec2`;;
+   if guard = pattern_semantics_True then dec1
+   else if guard = pattern_semantics_Not pattern_semantics_True then dec2
+   else SmartIf t (decode_guard t v guard) dec1 dec2`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE flat_pat_size

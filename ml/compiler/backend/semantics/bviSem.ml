@@ -29,8 +29,8 @@ let _ = cake_theory "bviSem"
 
 let exn_or_ret_INDUCT,exn_or_ret_RECURSION = define_datatype
   "exn_or_ret =
-     Exn bvlSem_v
-   | Ret (bvlSem_v list)
+     bviSem_Exn bvlSem_v
+   | bviSem_Ret (bvlSem_v list)
      // exception or multi-value return
   ";;
 
@@ -101,7 +101,7 @@ let do_app_aux_def = new_definition
        if small_enough_int i /\ NULL xs then
          SOME (SOME (bvlSem_Number i,s))
        else NONE
-     | (clos_Label l,xs) -> (match xs with [] -> if l IN domain
+     | (clos_Label l,xs) -> (match xs with [] -> if l IN sptree_domain
        (bviSem_state_code s) then
                               SOME (SOME (bvlSem_CodePtr l,s))
                               else NONE
@@ -193,8 +193,9 @@ let bviSem_do_install_def = new_definition
                   bviSem_state_compile_oracle s 0 in
                 let new_oracle = misc_shift_seq 1
                   (bviSem_state_compile_oracle s) in
-                  if DISJOINT (domain (bviSem_state_code s)) (set_of_list
-                    (MAP FST progs)) /\ ALL_DISTINCT (MAP FST progs) then
+                  if DISJOINT (sptree_domain (bviSem_state_code s))
+                    (set_of_list (MAP FST progs)) /\ ALL_DISTINCT (MAP FST
+                    progs) then
                   (match bviSem_state_compile s cfg progs,progs with SOME
                     (bytes',data',cfg'),CONS (k,prog) _ ->
                        if bytes = bytes' /\ data = data' /\ FST (new_oracle
@@ -218,7 +219,7 @@ let bviSem_do_app_def = new_definition
      | SOME NONE -> (match bvlSem_do_app op vs (bvi_to_bvl s) with Rval
        (v,t) -> Rval (v,bvl_to_bvi t s)
                      | Rerr (Rabort a) -> Rerr (Rabort a)
-                     | Rerr (Rraise v) -> Rerr (Rraise (Exn v)))`;;
+                     | Rerr (Rraise v) -> Rerr (Rraise (bviSem_Exn v)))`;;
 
 let bviSem_dest_thunk_ret_INDUCT,bviSem_dest_thunk_ret_RECURSION =
   define_datatype
@@ -303,11 +304,11 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
          | res -> res) /\
     (bviSem_evaluate ([bvi_Raise x1],env,s) =
          match bviSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
-             (Rraise (Exn (HD vs))),s)
+             (Rraise (bviSem_Exn (HD vs))),s)
          | res -> res) /\
     (bviSem_evaluate ([bvi_Return xs],env,s) =
          match bviSem_evaluate (xs,env,s) with (Rval vs,s) -> (Rerr (Rraise
-             (Ret vs)),s)
+             (bviSem_Ret vs)),s)
          | res -> res) /\
     (bviSem_evaluate ([bvi_Op op xs],env,s) =
          match bviSem_fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
@@ -337,7 +338,7 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                             Rtimeout_error),bviSem_state_clock_fupd (K 0) s)
                       else (match bviSem_evaluate
                           ([exp],args,bviSem_dec_clock 1 s) with (Rerr (Rraise
-                          (Ret _)),s1) -> (Rerr (Rabort Rtype_error),s1)
+                          (bviSem_Ret _)),s1) -> (Rerr (Rabort Rtype_error),s1)
                          | res -> res)))) /\
     (bviSem_evaluate ([bvi_Call ticks dest xs handler],env,s1) =
          if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
@@ -350,13 +351,13 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                       Rtimeout_error),bviSem_state_clock_fupd (K 0) s) else
                       match bviSem_fix_clock (bviSem_dec_clock (ticks + 1) s)
                       (bviSem_evaluate ([exp],args,bviSem_dec_clock (ticks + 1)
-                      s)) with (Rerr (Rraise (Exn v)),s) ->
+                      s)) with (Rerr (Rraise (bviSem_Exn v)),s) ->
                          (match handler with SOME x ->
                               (match bviSem_evaluate ([x],CONS v env,s)
-                                  with (Rerr (Rraise (Ret _)),s1) -> (Rerr
-                                  (Rabort Rtype_error),s1)
+                                  with (Rerr (Rraise (bviSem_Ret _)),s1) ->
+                                  (Rerr (Rabort Rtype_error),s1)
                               | res -> res)
-                          | NONE -> (Rerr (Rraise (Exn v)),s))
+                          | NONE -> (Rerr (Rraise (bviSem_Exn v)),s))
                     | (Rerr (Rraise _),s) -> (Rerr (Rabort Rtype_error),s)
                     | res -> res))
          | res -> res)`;
@@ -371,7 +372,7 @@ let bviSem_evaluate_def,bviSem_evaluate_ind = assume_definition_rec_clauses
                       match bviSem_fix_clock (bviSem_dec_clock (ticks + 1) s)
                       (bviSem_evaluate ([exp],args,bviSem_dec_clock (ticks + 1)
                       s)) with (Rval _,s) -> (Rerr (Rabort Rtype_error),s)
-                    | (Rerr (Rraise (Ret ret_vs)),s) ->
+                    | (Rerr (Rraise (bviSem_Ret ret_vs)),s) ->
                         if LENGTH ret_vs = rets then bviSem_evaluate
                             ([y],APPEND ret_vs env,s)
                         else (Rerr (Rabort Rtype_error),s)

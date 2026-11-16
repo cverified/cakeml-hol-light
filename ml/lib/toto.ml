@@ -3,7 +3,7 @@
     src/finite_maps/totoScript.sml
     A HOL4 library theory, of which the port has the definitions and
     9 theorems that CakeML needs, all of them from LightCake.
-    Needed by 6 files of the port.  *)
+    Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ternaryComparisons.ml";;

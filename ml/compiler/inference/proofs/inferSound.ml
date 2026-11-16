@@ -2,7 +2,7 @@
 (*  inferSound: ported from HOL4's
     compiler/inference/proofs/inferSoundScript.sml
     A proof theory, with 1 definition and 11 theorems.  Needed by
-    compilerProof.ml.  *)
+    compilerProof.ml and repl_types.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -68,8 +68,8 @@ let generalise_none = prove
 
 (* [local] *)
 let lookup_var_empty = prove
- (`lookup_var x (bind_tvar tvs typeSystem_Empty) tenv =
-   lookup_var x typeSystem_Empty tenv`,
+ (`typeSystem_lookup_var x (bind_tvar tvs typeSystem_Empty) tenv =
+   typeSystem_lookup_var x typeSystem_Empty tenv`,
   CHEAT_TAC);;
 
 (* TODO: This should be generalized eventually *)

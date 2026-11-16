@@ -2,7 +2,7 @@
 (*  semanticPrimitivesProps: ported from HOL4's
     semantics/proofs/semanticPrimitivesPropsScript.sml
     A proof theory about semanticPrimitives.ml, with 20 definitions
-    and 61 theorems.  Needed by 27 files of the port.  *)
+    and 61 theorems.  Needed by 42 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -524,7 +524,7 @@ let FV_def,FV_ind = assume_definition_rec_clauses
   [`(FV (ast_Raise e) = FV e) /\
     (FV (ast_Handle e pes) = FV e UNION FV_pes pes) /\
     (FV (ast_Lit _) = {}) /\
-    (FV (ast_Var id') = {id'}) /\
+    (FV (ast_Var id) = {id}) /\
     (FV (ast_Fun x e) = FV e DIFF {Short x}) /\
     (FV (ast_Log _ e1 e2) = FV e1 UNION FV e2) /\
     (FV (ast_If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3) /\
@@ -607,7 +607,7 @@ let do_conversion_check_type = prove
   CHEAT_TAC);;
 
 let do_arith_check_type = prove
- (`do_arith a ty vs = SOME (INR res) ==>
+ (`semanticPrimitives_do_arith a ty vs = SOME (INR res) ==>
    semanticPrimitives_check_type ty res`,
   CHEAT_TAC);;
 

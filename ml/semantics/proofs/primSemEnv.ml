@@ -2,13 +2,14 @@
 (*  primSemEnv: ported from HOL4's
     semantics/proofs/primSemEnvScript.sml
     A proof theory, with no definitions and 2 theorems.  Needed by
-    backendProof.ml and typeSound.ml.  *)
+    backendProof.ml, ml_prog.ml, repl_types.ml and typeSound.ml.  *)
 (* ======================================================== *)
 
 (*
   Proof about the primitive semantic environment
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -30,8 +31,8 @@ let _ = cake_theory "primSemEnv"
 
 let prim_sem_env_eq =
   CAKE_EVAL [prim_sem_env_def; add_to_sem_env_def; nsEmpty_def;
-  prim_types_program_def; unknown_loc_def; extend_dec_env_def; nsAppend_def]
-  `prim_sem_env (ffi:'ffi ffi_state)`;;
+  prim_types_program_def; unknown_loc_def; backend_x64_eval_prog_def;
+  extend_dec_env_def; nsAppend_def] `prim_sem_env (ffi:'ffi ffi_state)`;;
 
 let prim_type_sound_invariants = prove
  (`!type_ids sem_st prim_env.

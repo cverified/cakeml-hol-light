@@ -2,7 +2,7 @@
 (*  panLang: ported from HOL4's
     pancake/panLangScript.sml
     A definition theory, with 24 definitions, 10 datatypes and 2
-    theorems.  Needed by compiler.ml, evaluateProps.ml and infer.ml.  *)
+    theorems.  Needed by 17 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -32,9 +32,9 @@ new_type_abbrev("stcname",`:mlstring`);;
 
 new_type_abbrev("fldname",`:mlstring`);;
 
-new_type_abbrev("varname",`:mlstring`);;
+new_type_abbrev("pan_varname",`:mlstring`);;
 
-new_type_abbrev("funname",`:mlstring`);;
+new_type_abbrev("pan_funname",`:mlstring`);;
 
 new_type_abbrev("eid",`:mlstring`);;
 
@@ -44,9 +44,9 @@ new_type_abbrev("index",`:num`);;
 
 let shape_INDUCT,shape_RECURSION = define_datatype
   "shape =
-     One
-   | Comb (shape list)
-   | Named stcname";;
+     pan_One
+   | pan_Comb (shape list)
+   | pan_Named stcname";;
 
 let panop_INDUCT,panop_RECURSION = define_datatype
   "panop =
@@ -63,7 +63,7 @@ let varkind_INDUCT,varkind_RECURSION = define_datatype
 let pan_exp_INDUCT,pan_exp_RECURSION = define_datatype
   "pan_exp =
      pan_Const ('a word)
-   | pan_Var varkind varname
+   | pan_Var varkind pan_varname
    | pan_RStruct (pan_exp list)
    | pan_RField index pan_exp
    | pan_NStruct stcname ((fldname#pan_exp) list)
@@ -72,7 +72,7 @@ let pan_exp_INDUCT,pan_exp_RECURSION = define_datatype
      // exp: start addr of value with given shape
    | pan_Load32 pan_exp
    | pan_LoadByte pan_exp
-   | pan_Op binop (pan_exp list)
+   | pan_Op asm_binop (pan_exp list)
    | pan_Panop panop (pan_exp list)
    | pan_Cmp cmp pan_exp pan_exp
    | pan_Shift pan_shift pan_exp pan_exp
@@ -94,10 +94,10 @@ let primop_INDUCT,primop_RECURSION = define_datatype
 let pan_prog_INDUCT,pan_prog_RECURSION = define_datatype
   "pan_prog =
      pan_Skip
-   | pan_Dec varname shape ('a pan_exp) pan_prog
-   | pan_Assign varkind varname ('a pan_exp)
+   | pan_Dec pan_varname shape ('a pan_exp) pan_prog
+   | pan_Assign varkind pan_varname ('a pan_exp)
      // dest, source
-   | pan_Primitive varname primop (('a pan_exp) list)
+   | pan_Primitive pan_varname primop (('a pan_exp) list)
      // Primitives directly target constructs in wordLang.
    | pan_Store ('a pan_exp) ('a pan_exp)
      // dest, source
@@ -110,14 +110,15 @@ let pan_prog_INDUCT,pan_prog_RECURSION = define_datatype
    | pan_While ('a pan_exp) pan_prog
    | pan_Break
    | pan_Continue
-   | pan_Call (((varkind#varname) option#(eid#varname#pan_prog) option) option)
-       funname (('a pan_exp) list)
-   | pan_DecCall varname shape funname (('a pan_exp) list) pan_prog
-   | pan_ExtCall funname ('a pan_exp) ('a pan_exp) ('a pan_exp) ('a pan_exp)
+   | pan_Call (((varkind#pan_varname) option#(eid#pan_varname#pan_prog) option)
+       option) pan_funname (('a pan_exp) list)
+   | pan_DecCall pan_varname shape pan_funname (('a pan_exp) list) pan_prog
+   | pan_ExtCall pan_funname ('a pan_exp) ('a pan_exp) ('a pan_exp) ('a
+       pan_exp)
      // FFI name, conf_ptr, conf_len, array_ptr, array_len
    | pan_Raise eid ('a pan_exp)
    | pan_Return ('a pan_exp)
-   | pan_ShMemLoad opsize varkind varname ('a pan_exp)
+   | pan_ShMemLoad opsize varkind pan_varname ('a pan_exp)
    | pan_ShMemStore opsize ('a pan_exp) ('a pan_exp)
    | pan_Tick
    | pan_Annot mlstring mlstring";;
@@ -155,9 +156,9 @@ let MEM_IMP_shape_size = prove
 
 let is_wf_shape_def,is_wf_shape_ind = define_shaped_rec
   "nested"
-  `(is_wf_shape ctxt One = T) /\
-   (is_wf_shape ctxt (Comb shs) = ALL (is_wf_shape ctxt) shs) /\
-   (is_wf_shape ctxt (Named nm) =
+  `(is_wf_shape ctxt pan_One = T) /\
+   (is_wf_shape ctxt (pan_Comb shs) = ALL (is_wf_shape ctxt) shs) /\
+   (is_wf_shape ctxt (pan_Named nm) =
       match ALOOKUP ctxt nm with SOME flds -> T
       | NONE -> F)`;;
 
@@ -176,10 +177,10 @@ let is_wf_ctxt_def,is_wf_ctxt_ind = define_rec
 (* For passes with Nameds *)
 let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind = define_shaped_rec
   "nested"
-  `(size_of_sh_with_ctxt ctxt One = 1) /\
-   (size_of_sh_with_ctxt ctxt (Comb shapes) = SUM (MAP
+  `(size_of_sh_with_ctxt ctxt pan_One = 1) /\
+   (size_of_sh_with_ctxt ctxt (pan_Comb shapes) = SUM (MAP
     (size_of_sh_with_ctxt ctxt) shapes)) /\
-   (size_of_sh_with_ctxt ctxt (Named name) =
+   (size_of_sh_with_ctxt ctxt (pan_Named name) =
       match ALOOKUP ctxt name with SOME info -> struct_info_size info
       | NONE -> 1)
    // should not happen`;;
@@ -187,28 +188,28 @@ let size_of_sh_with_ctxt_def,size_of_sh_with_ctxt_ind = define_shaped_rec
 (* For passes after Nameds are compiled away eg pan_to_crep *)
 let size_of_shape_def,size_of_shape_ind = define_shaped_rec
   "nested"
-  `(size_of_shape One = 1) /\
-   (size_of_shape (Comb shapes) = SUM (MAP size_of_shape shapes)) /\
-   (size_of_shape (Named name) = 1)
+  `(size_of_shape pan_One = 1) /\
+   (size_of_shape (pan_Comb shapes) = SUM (MAP size_of_shape shapes)) /\
+   (size_of_shape (pan_Named name) = 1)
    // should not happen`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let shape_to_str_def,shape_to_str_ind = define_wf
   `MEASURE (\x0. shape_size x0)`
-  `(shape_to_str One = implode "1") /\
-   (shape_to_str (Comb []) = implode "{}") /\
+  `(shape_to_str pan_One = implode "1") /\
+   (shape_to_str (pan_Comb []) = implode "{}") /\
    // should never happen
-   (shape_to_str (Comb (CONS x xs)) =
+   (shape_to_str (pan_Comb (CONS x xs)) =
       mlstring_concat (APPEND (CONS (implode "{") (CONS (shape_to_str x)
               (MAP (\x. strcat (implode ",") x) (MAP shape_to_str xs))))
               [implode "}"])) /\
-   (shape_to_str (Named nm) = nm)`;;
+   (shape_to_str (pan_Named nm) = nm)`;;
 
 let shape_val_def,shape_val_ind = define_rec
-  `(shape_val One = pan_Const (n2w 0)) /\
-   (shape_val (Comb shapes) = pan_RStruct (shape_vals shapes)) /\
-   (shape_val (Named nm) = pan_Const (n2w 0)) /\
+  `(shape_val pan_One = pan_Const (n2w 0)) /\
+   (shape_val (pan_Comb shapes) = pan_RStruct (shape_vals shapes)) /\
+   (shape_val (pan_Named nm) = pan_Const (n2w 0)) /\
    // should never happen
    (shape_vals [] = []) /\
    (shape_vals (CONS sh shs) = CONS (shape_val sh) (shape_vals shs))`;;
@@ -224,8 +225,8 @@ let MEM_IMP_exp_size = prove
 
 
 let nested_seq_def,nested_seq_ind = define_rec
-  `(nested_seq [] = pan_Skip) /\
-   (nested_seq (CONS e es) = pan_Seq e (nested_seq es))`;;
+  `(pan_nested_seq [] = pan_Skip) /\
+   (pan_nested_seq (CONS e es) = pan_Seq e (pan_nested_seq es))`;;
 
 let with_shape_def,with_shape_ind = define_rec
   `(with_shape [] _ = []) /\

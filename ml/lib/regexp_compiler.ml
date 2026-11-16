@@ -2,8 +2,7 @@
 (*  regexp_compiler: ported from HOL4's
     examples/formal-languages/regular/regexp_compilerScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by export.ml, export_x64.ml,
-    infer_t.ml, mlvector.ml, pegComplete.ml and word_bignum.ml.  *)
+    that CakeML needs.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/balanced_map.ml";;
@@ -23,7 +22,7 @@ let regexp_compiler_vector_INDUCT,regexp_compiler_vector_RECURSION =
      Vector ('a list)";;
 
 let sub_def = define_general
-  `sub (Vector l) n = EL n l`;;
+  `regexp_compiler_sub (Vector l) n = EL n l`;;
 
 let length_def = define_general
   `length (Vector l) = LENGTH l`;;

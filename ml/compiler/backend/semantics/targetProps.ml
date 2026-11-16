@@ -24,11 +24,18 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "targetProps"
   ["asm"; "asmProps"; "asmSem"; "ffi"; "misc"; "targetSem"];;
 
+let _ = do_list hide_constant ["app"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["state_ok","bvl_to_bviProof_state_ok"];;
+  ["encode","clFFI_encode";
+   "encode","fsFFI_encode";
+   "encode","runtimeFFI_encode";
+   "state_ok","bvl_to_bviProof_state_ok";
+   "state_ok","candle_prover_inv_state_ok";
+   "state_ok","evaluate_init_state_ok"];;
 
 let shift_interfer_def = new_definition
   `shift_interfer k s = machine_config_next_interfer_fupd (K (misc_shift_seq k
@@ -219,8 +226,8 @@ let interference_app_seq_def,interference_app_seq_ind = define_wf
   `(interference_app_seq mc ffi ms 0 = next_interference mc ffi ms) /\
    (interference_app_seq mc ffi ms (SUC n) =
          match next_interference mc ffi ms with NONE -> NONE
-         | SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
-             (app_post app) n)`;;
+         | SOME (app',mc',ffi') -> interference_app_seq mc' ffi'
+             (app_post app') n)`;;
 
 (* number of applications satisfying P among the first n applications *)
 (* the termination relation is not in the HOL4 source; this one is
@@ -230,8 +237,8 @@ let interference_count_def,interference_count_ind = define_wf
   `(interference_count P mc ffi ms 0 = 0) /\
    (interference_count P mc ffi ms (SUC n) =
          interference_count P mc ffi ms n +
-         (match interference_app_seq mc ffi ms n with SOME (app,mc',ffi')
-             -> if P app then 1 else 0
+         (match interference_app_seq mc ffi ms n with SOME (app',mc',ffi')
+             -> if P app' then 1 else 0
          | NONE -> 0))`;;
 
 (* position in the application sequence of the k-th application
@@ -239,9 +246,9 @@ let interference_count_def,interference_count_ind = define_wf
 let interference_pos_def = new_definition
   `interference_pos P mc ffi ms k =
      some (\n. interference_count P mc ffi ms n = k /\
-             (?app mc' ffi'.
-               interference_app_seq mc ffi ms n = SOME (app,mc',ffi') /\
-               P app))`;;
+             (?app' mc' ffi'.
+               interference_app_seq mc ffi ms n = SOME (app',mc',ffi') /\
+               P app'))`;;
 
 (* the lab-level oracle sequences, constructed from the machine run:
    caller-saved register and FP-register residues are read off each
@@ -275,8 +282,8 @@ let target_io_fp_regs_def = new_definition
 
 let target_cc_regs_def = new_definition
   `target_cc_regs mc ffi ms k r =
-     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
-       -> NONE
+     match interference_pos (\app'. ~(is_ffi_app app')) mc ffi ms k with
+       NONE -> NONE
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
          ms_post,mc',ffi') ->
@@ -292,8 +299,8 @@ let target_cc_regs_def = new_definition
 
 let target_cc_fp_regs_def = new_definition
   `target_cc_fp_regs mc ffi ms k (i:num) =
-     match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k with NONE
-       -> ((n2w 0):word64)
+     match interference_pos (\app'. ~(is_ffi_app app')) mc ffi ms k with
+       NONE -> ((n2w 0):word64)
      | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2 ms_pre
          ms_post,mc',ffi') -> target_get_fp_reg (machine_config_target
@@ -324,8 +331,8 @@ let next_interference_shift = prove
   CHEAT_TAC);;
 
 let find_next_interference_const = prove
- (`!k mc ffi ms app mc' ffi'.
-     find_next_interference mc ffi k ms = SOME (app,mc',ffi') ==>
+ (`!k mc ffi ms app' mc' ffi'.
+     find_next_interference mc ffi k ms = SOME (app',mc',ffi') ==>
        machine_config_target
      mc' = machine_config_target mc /\ machine_config_callee_saved_regs
      mc' = machine_config_callee_saved_regs mc /\ machine_config_ptr_reg
@@ -761,11 +768,12 @@ let targetProps_evaluate_add_clock_io_events_mono = prove
   CHEAT_TAC);;
 
 let machine_sem_total = prove
- (`?b. machine_sem mc st ms b`,
+ (`?b. targetSem_machine_sem mc st ms b`,
   CHEAT_TAC);;
 
 let machine_sem_unique = prove
- (`machine_sem mc ffi ms b1 /\ machine_sem mc ffi ms b2 ==> b1 = b2`,
+ (`targetSem_machine_sem mc ffi ms b1 /\ targetSem_machine_sem mc ffi ms b2
+  ==> b1 = b2`,
   CHEAT_TAC);;
 
 let read_ffi_bytearray_IMP_SUBSET_prog_addresses = prove
@@ -845,6 +853,10 @@ let ccache_interfer_ok_post_ccache_asm = prove
          k (a1,a2,ms2)))
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`),
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["app"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

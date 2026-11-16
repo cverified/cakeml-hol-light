@@ -2,7 +2,7 @@
 (*  lab_to_target: ported from HOL4's
     compiler/backend/lab_to_targetScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 2
-    theorems.  Needed by 7 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -49,21 +49,22 @@ add_simp cbw_to_asm_def;;
 
 
 let enc_line_def = define_cases
-  `(enc_line enc skip_len (lab_Label n1 n2 n3) = lab_Label n1 n2 skip_len) /\
-   (enc_line enc skip_len (lab_Asm a _ _) =
+  `(lab_to_target_enc_line enc skip_len (lab_Label n1 n2 n3) = lab_Label n1
+    n2 skip_len) /\
+   (lab_to_target_enc_line enc skip_len (lab_Asm a _ _) =
          let bs = enc (cbw_to_asm a) in lab_Asm a bs (LENGTH bs)) /\
-   (enc_line enc skip_len (lab_LabAsm l _ _ _) =
+   (lab_to_target_enc_line enc skip_len (lab_LabAsm l _ _ _) =
          let bs = enc (lab_inst (n2w 0) l) in
            lab_LabAsm l (n2w 0) bs (LENGTH bs))`;;
 
 let enc_sec_def = define_general
-  `enc_sec enc skip_len (Section k xs) =
-     Section k (MAP (enc_line enc skip_len) xs)`;;
+  `lab_to_target_enc_sec enc skip_len (Section k xs) =
+     Section k (MAP (lab_to_target_enc_line enc skip_len) xs)`;;
 
 let enc_sec_list_def = new_definition
-  `enc_sec_list enc xs =
+  `lab_to_target_enc_sec_list enc xs =
      let skip_len = LENGTH (enc (asm_Inst asm_Skip)) in
-       MAP (enc_sec enc skip_len) xs`;;
+       MAP (lab_to_target_enc_sec enc skip_len) xs`;;
 
 (* compute labels *)
 
@@ -136,34 +137,38 @@ let get_jump_offset_def = new_definition
 let enc_lines_again_def,enc_lines_again_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4,x5).      list_size (line_size (\x. 0)) x4 +
   pair_size (list_size (line_size (\x. 0))) (\x. 0) x5)`
-  `(enc_lines_again labs ffis pos enc [] (acc,ok) = (REVERSE
+  `(lab_to_target_enc_lines_again labs ffis pos enc [] (acc,ok) = (REVERSE
     acc,pos,(ok:bool))) /\
-   (enc_lines_again labs ffis pos enc (CONS (lab_Label k1 k2 l) xs) (acc,ok) =
-         enc_lines_again labs ffis (pos + l) enc xs (CONS (lab_Label k1
-             k2 l) acc,ok)) /\
-   (enc_lines_again labs ffis pos enc (CONS (lab_Asm x1 x2 l) xs) (acc,ok) =
-         enc_lines_again labs ffis (pos + l) enc xs (CONS (lab_Asm x1
-             x2 l) acc,ok)) /\
-   (enc_lines_again labs ffis pos enc (CONS (lab_LabAsm a w bytes l) xs)
+   (lab_to_target_enc_lines_again labs ffis pos enc (CONS (lab_Label k1 k2 l)
+    xs) (acc,ok) =
+         lab_to_target_enc_lines_again labs ffis (pos + l) enc xs (CONS
+             (lab_Label k1 k2 l) acc,ok)) /\
+   (lab_to_target_enc_lines_again labs ffis pos enc (CONS (lab_Asm x1 x2 l) xs)
     (acc,ok) =
+         lab_to_target_enc_lines_again labs ffis (pos + l) enc xs (CONS
+             (lab_Asm x1 x2 l) acc,ok)) /\
+   (lab_to_target_enc_lines_again labs ffis pos enc (CONS (lab_LabAsm a w bytes
+    l) xs) (acc,ok) =
          let w1 = get_jump_offset a ffis labs pos in
            if w = w1 then
-             enc_lines_again labs ffis (pos + l) enc xs (CONS (lab_LabAsm a
-                 w bytes l) acc,ok)
+             lab_to_target_enc_lines_again labs ffis (pos + l) enc xs (CONS
+                 (lab_LabAsm a w bytes l) acc,ok)
            else let bs = enc (lab_inst w1 a) in
              let l1 = MAX (LENGTH bs) l in
-               enc_lines_again labs ffis (pos + l1) enc xs
+               lab_to_target_enc_lines_again labs ffis (pos + l1) enc xs
                  (CONS (lab_LabAsm a w1 bs l1) acc,(ok /\ (l1 = l))))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let enc_secs_again_def,enc_secs_again_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). list_size (sec_size (\x. 0)) x4)`
-  `(enc_secs_again pos labs ffis enc [] = ([],T)) /\
-   (enc_secs_again pos labs ffis enc (CONS (Section s lines) rest) =
-         let (lines1,pos1,ok) = enc_lines_again labs ffis pos enc lines
-             ([],T) in
-         let (rest1,ok1) = enc_secs_again pos1 labs ffis enc rest in
+  `(lab_to_target_enc_secs_again pos labs ffis enc [] = ([],T)) /\
+   (lab_to_target_enc_secs_again pos labs ffis enc (CONS (Section s lines)
+    rest) =
+         let (lines1,pos1,ok) = lab_to_target_enc_lines_again labs ffis pos
+             enc lines ([],T) in
+         let (rest1,ok1) = lab_to_target_enc_secs_again pos1 labs ffis enc
+             rest in
            (CONS (Section s lines1) rest1,(ok /\ ok1)))`;;
 
 (* update labels *)
@@ -333,22 +338,22 @@ let remove_labels_loop_def,remove_labels_loop_ind = define_wf
      // compute labels
      let labs = compute_labels_alt pos sec_list init_labs in
      // update encodings and lengths (but not label lengths)
-     let (sec_list,done') = enc_secs_again pos labs ffis (asm_config_encode
-       c) sec_list in
+     let (sec_list,done) = lab_to_target_enc_secs_again pos labs ffis
+       (asm_config_encode c) sec_list in
        // done ==> labs are still fine
-       if done' then
+       if done then
          // adjust label lengths
          let sec_list = upd_lab_len pos sec_list in
          // compute labels again
          let labs = compute_labels_alt pos sec_list init_labs in
          // update encodings
-         let (sec_list,done') = enc_secs_again pos labs ffis
+         let (sec_list,done) = lab_to_target_enc_secs_again pos labs ffis
            (asm_config_encode c) sec_list in
          // move label padding into instructions
          let sec_list = pad_code (asm_config_encode c (asm_Inst asm_Skip))
            sec_list in
            // it ought to be impossible for done to be false here
-           if done' /\ (\c ls. ALL (sec_ok_light c) ls) c sec_list /\
+           if done /\ (\c ls. ALL (sec_ok_light c) ls) c sec_list /\
               zero_labs_acc_exist labs sec_list then SOME (sec_list,labs)
            else NONE
        else
@@ -364,8 +369,8 @@ let remove_labels_def = new_definition
      // init_clock, then something is badly wrong. Worth testing with
      // the clock limit set to low values to see how many iterations
      // are used.
-     remove_labels_loop init_clock c pos labs ffis (enc_sec_list
-       (asm_config_encode c) sec_list)`;;
+     remove_labels_loop init_clock c pos labs ffis
+       (lab_to_target_enc_sec_list (asm_config_encode c) sec_list)`;;
 
 (* code extraction *)
 
@@ -470,8 +475,8 @@ let get_shmem_info_def,get_shmem_info_ind = define_wf
 
 
 let compile_lab_def = new_definition
-  `compile_lab asm_conf c sec_list =
-     let current_ffis = find_ffi_names sec_list in
+  `lab_to_target_compile_lab asm_conf c sec_list =
+     (let current_ffis = find_ffi_names sec_list in
      let (ffis,ffis_ok) =
          (match lab_to_target_config_ffi_names c with SOME ffis ->
            (ffis,list_subset current_ffis ffis)
@@ -492,13 +497,13 @@ let compile_lab_def = new_definition
              l1)
                  c)))))
        | NONE -> NONE
-     else NONE`;;
+     else NONE)`;;
 
 (* compile labLang *)
 
 let lab_to_target_compile_def = new_definition
-  `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
-  (filter_skip sec_list)`;;
+  `lab_to_target_compile asm_conf c sec_list = lab_to_target_compile_lab
+  asm_conf c (filter_skip sec_list)`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

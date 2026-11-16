@@ -2,8 +2,7 @@
 (*  word_depth: ported from HOL4's
     compiler/backend/word_depthScript.sml
     A definition theory, with 5 definitions, 1 datatype and no
-    theorems.  Needed by dataSem.ml, data_to_word.ml,
-    data_to_word_bignumProof.ml and word_depthProof.ml.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -99,14 +98,14 @@ let full_call_graph_def = new_definition
                                 prog)`;;
 
 let max_depth_graphs_def,max_depth_graphs_ind = define_rec
-  `(max_depth_graphs ss [] all' funs all_funs = SOME 0) /\
-   (max_depth_graphs ss (CONS n ns) all' funs all_funs =
+  `(max_depth_graphs ss [] all funs all_funs = SOME 0) /\
+   (max_depth_graphs ss (CONS n ns) all funs all_funs =
       match sptree_lookup n all_funs with NONE -> NONE
       | SOME (a,body) ->
           OPTION_MAP2 MAX (sptree_lookup n ss)
-         (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
+         (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all
              (sptree__size all_funs) body))
-                          (max_depth_graphs ss ns all' funs all_funs)))`;;
+                          (max_depth_graphs ss ns all funs all_funs)))`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

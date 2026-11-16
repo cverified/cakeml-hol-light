@@ -2,7 +2,7 @@
 (*  infer: ported from HOL4's
     compiler/inference/inferScript.sml
     A definition theory, with 51 definitions, 3 datatypes and 22
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -16,6 +16,7 @@ needs "compiler/inference/unify.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/peg.ml";;
+needs "lib/sum.ml";;
 needs "misc/misc.ml";;
 needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
@@ -50,18 +51,18 @@ let guard_def = new_definition
   msg`;;
 
 let read_def = new_definition
-  `(read:'a->('a,'b)exc#'a) =
+  `(infer_read:'a->('a,'b)exc#'a) =
    (\s. (M_success s,s))`;;
 
 let write_def = new_definition
-  `(write:'a->'a->(1,'b)exc#'a) v =
+  `(infer_write:'a->'a->(1,'b)exc#'a) v =
    (\s. (M_success one,v))`;;
 
 let lookup_st_ex_def = new_definition
-  `lookup_st_ex l err id' ienv st =
-     match nsLookup ienv id' with NONE -> (M_failure (loc_err_info_loc
+  `lookup_st_ex l err id ienv st =
+     match nsLookup ienv id with NONE -> (M_failure (loc_err_info_loc
        l,mlstring_concat [(implode "Undefined "); err; (implode ": ");
-       id_to_string id']),st)
+       id_to_string id]),st)
      | SOME v -> (M_success v,st)`;;
 
 let infer_st_FIELDS = define_record "infer_st"
@@ -96,7 +97,7 @@ let init_infer_state_def = new_definition
   (infer_st_next_uvar_fupd (K 0) st)`;;
 
 let init_state_def = new_definition
-  `init_state =
+  `infer_init_state =
    (\st.
      (M_success one,init_infer_state st))`;;
 
@@ -106,10 +107,12 @@ let add_constraint_def = new_definition
      match t_unify (infer_st_subst st) t1 t2 with NONE ->
            (M_failure (loc_err_info_loc l,mlstring_concat [(implode
              "Type mismatch between ");
-                              inf_type_to_string (loc_err_info_err l)
+                              infer_t_inf_type_to_string (loc_err_info_err
+                                l)
                               (t_walkstar (infer_st_subst st) t1);
                               (implode " and ");
-                              inf_type_to_string (loc_err_info_err l)
+                              infer_t_inf_type_to_string (loc_err_info_err
+                                l)
                               (t_walkstar (infer_st_subst st) t2)]),st)
        | SOME s ->
            (M_success one,infer_st_subst_fupd (K s) st))`;;
@@ -137,12 +140,12 @@ let get_next_uvar_def = new_definition
 
 let apply_subst_def = new_definition
   `apply_subst t =
-     st_ex_bind read (\st.
+     st_ex_bind infer_read (\st.
         st_ex_return (t_walkstar (infer_st_subst st) t))`;;
 
 let apply_subst_list_def = new_definition
   `apply_subst_list ts =
-     st_ex_bind read (\st.
+     st_ex_bind infer_read (\st.
         st_ex_return (MAP (t_walkstar (infer_st_subst st)) ts))`;;
 
 (* We use a state argument for the inferencer's typing environment. This corresponds to the type system's typing environment
@@ -256,8 +259,8 @@ let type_name_check_subst_def,type_name_check_subst_ind = define_wf
                               mlint_toString (&(LENGTH ts)); (implode
                                   " arguments, but expected ");
                               mlint_toString (&(LENGTH tvs'))])) (
-          st_ex_return (type_subst (alist_to_fmap (ZIP tvs' ts'))
-              t'))))) /\
+          st_ex_return (typeSystem_type_subst (alist_to_fmap (ZIP tvs'
+              ts')) t'))))) /\
    (type_name_check_subst_list l f tenvT fvs [] = st_ex_return []) /\
    (type_name_check_subst_list l f tenvT fvs (CONS t ts) =
         st_ex_bind (type_name_check_subst l f tenvT fvs t) (\t'. st_ex_bind
@@ -324,8 +327,8 @@ let type_name_check_sub_def,type_name_check_sub_ind = define_wf
                         | SOME v -> (M_success v,s)) with
                         (M_success (y,z),s) ->
                           if LENGTH y = LENGTH ts then
-                            (M_success (type_subst (alist_to_fmap (ZIP y
-                                ts')) z),
+                            (M_success (typeSystem_type_subst
+                                (alist_to_fmap (ZIP y ts')) z),
                              s)
                           else (M_failure
                               (loc_err_info_loc l,INL
@@ -814,8 +817,8 @@ let infer_e_def,infer_e_ind = assume_definition_rec_clauses
         st_ex_return (Infer_Tapp [] Tword64_num)) /\
     (infer_e l ienv (ast_Lit (ast_Float64 _)) =
         st_ex_return (Infer_Tapp [] Tdouble_num)) /\
-    (infer_e l ienv (ast_Var id') =
-        st_ex_bind (lookup_st_ex l (implode "variable") id' (inf_env_inf_v
+    (infer_e l ienv (ast_Var id) =
+        st_ex_bind (lookup_st_ex l (implode "variable") id (inf_env_inf_v
             ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar tvs) (\uvs.
            st_ex_return (infer_deBruijn_subst uvs t)))) /\
     (infer_e l ienv (ast_Fun x e) =
@@ -974,10 +977,10 @@ let lift_ienv_def = new_definition
 let infer_d_def,infer_d_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
   `(infer_d ienv (Dlet locs p e) =
-      st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\n. st_ex_bind
-          (infer_e (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv)) ienv e)
-          (\t1. st_ex_bind (infer_p (mk_loc_err_info (SOME locs) (inf_env_inf_t
-          ienv)) ienv p) (\(t2,env').
+      st_ex_bind infer_init_state (\one. st_ex_bind get_next_uvar (\n.
+          st_ex_bind (infer_e (mk_loc_err_info (SOME locs) (inf_env_inf_t
+          ienv)) ienv e) (\t1. st_ex_bind (infer_p (mk_loc_err_info (SOME locs)
+          (inf_env_inf_t ienv)) ienv p) (\(t2,env').
          st_ex_ignore_bind (check_dups (mk_loc_err_info (SOME locs)
              (inf_env_inf_t ienv))
                        (\n. mlstring_concat [(implode
@@ -999,13 +1002,13 @@ let infer_d_def,infer_d_ind = assume_definition_rec
             (inf_env_inf_t ienv))
            (\n. mlstring_concat [(implode "Duplicate function name "); n;
                 (implode " a mutually recursive function definition")])
-                   (MAP FST funs)) (st_ex_bind init_state (\one. st_ex_bind
-                       get_next_uvar (\next'. st_ex_bind (n_fresh_uvar (LENGTH
-                       funs)) (\uvars. st_ex_bind (st_ex_return (nsAppend
-                       (alist_to_ns (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs
-                       uvars)) (inf_env_inf_v ienv))) (\env'. st_ex_bind
-                       (infer_funs (mk_loc_err_info (SOME locs) (inf_env_inf_t
-                       ienv))
+                   (MAP FST funs)) (st_ex_bind infer_init_state (\one.
+                       st_ex_bind get_next_uvar (\next'. st_ex_bind
+                       (n_fresh_uvar (LENGTH funs)) (\uvars. st_ex_bind
+                       (st_ex_return (nsAppend (alist_to_ns (MAP2 (\(f,x,e)
+                       uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v ienv)))
+                       (\env'. st_ex_bind (infer_funs (mk_loc_err_info (SOME
+                       locs) (inf_env_inf_t ienv))
                               (inf_env_inf_v_fupd (K env') ienv) funs)
                                   (\funs_ts. st_ex_bind (add_constraints
                                   (mk_loc_err_info (SOME locs) (inf_env_inf_t
@@ -1193,7 +1196,8 @@ let inf_env_to_types_string_def = new_definition
   `inf_env_to_types_string s =
      let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
      let xs = MAP (\(n,_,t). mlstring_concat [n; (implode ": ");
-                              inf_type_to_string (inf_env_inf_t s) t;
+                              infer_t_inf_type_to_string (inf_env_inf_t s)
+                                t;
                               (implode "\n")]) l in
         // sort mlstring_le
         REVERSE xs`;;

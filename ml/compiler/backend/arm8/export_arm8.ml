@@ -2,7 +2,7 @@
 (*  export_arm8: ported from HOL4's
     compiler/backend/arm8/export_arm8Script.sml
     A definition theory, with 5 definitions and no theorems.  Needed
-    by compiler.ml.  *)
+    by backend_arm8_cv.ml and compiler.ml.  *)
 (* ======================================================== *)
 
 (*

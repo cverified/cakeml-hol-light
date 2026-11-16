@@ -2,8 +2,7 @@
 (*  stack_remove: ported from HOL4's
     compiler/backend/stack_removeScript.sml
     A definition theory, with 27 definitions and 1 theorem.  Needed
-    by backendProof.ml, backend_passes.ml, stack_removeProof.ml,
-    stack_to_lab.ml and stack_to_labProof.ml.  *)
+    by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -320,7 +319,7 @@ let store_list_code_def,store_list_code_ind = define_wf
 
 (* k+1 is base, k is stack pointer, discards 0 *)
 let init_memory_def = new_definition
-  `init_memory k xs =
+  `stack_remove_init_memory k xs =
      stack_list_Seq [(\r w. stack_Inst (asm_Const r w)) 0 bytes_in_word;
                (\r1 r2. stack_Inst (asm_Arith (asm_Binop asm_Sub r1 r1 (Reg
                  r2)))) k 0;
@@ -443,8 +442,8 @@ let stack_remove_init_code_def = new_definition
                    (bytes_in_word))))) 0;
                  (\r a. stack_Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 1
                    0;
-                 init_memory k (MAP (store_init gen_gc' k) (REVERSE
-                   stack_remove_store_list));
+                 stack_remove_init_memory k (MAP (store_init gen_gc' k)
+                   (REVERSE stack_remove_store_list));
                  stack_LocValue 0 1 0]`;;
 
 let init_stubs_def = new_definition

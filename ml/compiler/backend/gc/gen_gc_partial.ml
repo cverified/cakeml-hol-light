@@ -158,14 +158,14 @@ let partial_gc_def = new_definition
   `partial_gc conf (roots,heap) =
      match heap_segment (gen_gc_partial_conf_gen_start
        conf,gen_gc_partial_conf_refs_start conf) heap with NONE ->
-       (roots,gc_state_ok_fupd (K F) empty_state)
+       (roots,gc_state_ok_fupd (K F) gc_shared_empty_state)
      | SOME (old,current,refs) ->
        let n = heap_length current in
        let state =
            gc_state_n_fupd (K n) (gc_state_a_fupd (K
              (gen_gc_partial_conf_gen_start conf)) (gc_state_r2_fupd (K refs)
              (gc_state_old_fupd (K old) (gc_state_heap_fupd (K heap)
-             empty_state)))) in
+             gc_shared_empty_state)))) in
        // process roots:
        let (roots,state) = gen_gc_partial_gc_move_list conf state roots in
        // process references:
@@ -279,7 +279,7 @@ let to_gen_state_def = new_definition
   (gc_state_r2_fupd (K []) (gc_state_r3_fupd (K []) (gc_state_r4_fupd (K [])
   (gc_state_h2_fupd (K (to_gen_heap_list conf (gc_state_h2 state)))
   (gc_state_h1_fupd (K (to_gen_heap_list conf (gc_state_h1 state)))
-     empty_state))))))))))`;;
+     gc_shared_empty_state))))))))))`;;
 
 let to_gen_roots_def = new_definition
   `to_gen_roots conf roots =

@@ -3,7 +3,7 @@
     src/sort/ternaryComparisonsScript.sml
     A HOL4 library theory, of which the port has the definitions and
     7 theorems that CakeML needs, all of them from LightCake.
-    Needed by 11 files of the port.  *)
+    Needed by 18 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
@@ -17,7 +17,7 @@ let ordering_INDUCT,ordering_RECURSION = define_datatype
    | EQUAL
    | GREATER";;
 let pair_compare_def = new_definition
-  `pair_compare c1 c2 (a,b) (x,y) =
+  `ternaryComparisons_pair_compare c1 c2 (a,b) (x,y) =
       match c1 a x with
          EQUAL -> c2 b y
        | res -> res`;;

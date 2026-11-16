@@ -9,6 +9,7 @@
   The formal semantics of stackLang
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 (* for word_loc and word_cmp *)
 needs "compiler/backend/stackLang.ml";;
@@ -120,17 +121,17 @@ let stackSem_state_FIELDS = define_record "stackSem_state"
   ];;
 
 let stackSem_mem_store_def = new_definition
-  `stackSem_mem_store (addr':'a word) (w:'a word_loc)
+  `stackSem_mem_store (addr:'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)stackSem_state) =
-     if addr' IN stackSem_state_mdomain s then
-       SOME (stackSem_state_memory_fupd (K ((addr' =+ w)
+     if addr IN stackSem_state_mdomain s then
+       SOME (stackSem_state_memory_fupd (K ((addr =+ w)
          (stackSem_state_memory s))) s)
      else NONE`;;
 
 let stackSem_mem_load_def = new_definition
-  `stackSem_mem_load (addr':'a word) (s:('a,'c,'ffi)stackSem_state) =
-     if addr' IN stackSem_state_mdomain s then
-       SOME (stackSem_state_memory s addr')
+  `stackSem_mem_load (addr:'a word) (s:('a,'c,'ffi)stackSem_state) =
+     if addr IN stackSem_state_mdomain s then
+       SOME (stackSem_state_memory s addr)
      else NONE`;;
 
 let stackSem_dec_clock_def = new_definition
@@ -153,8 +154,8 @@ let stackSem_word_exp_def,stackSem_word_exp_ind = define_shaped_rec
          match FLOOKUP (stackSem_state_store s) name with SOME (word_Word
              w) -> SOME w
          | _ -> NONE) /\
-   (stackSem_word_exp s (word_Load addr') =
-         match stackSem_word_exp s addr' with SOME w -> (match
+   (stackSem_word_exp s (word_Load addr) =
+         match stackSem_word_exp s addr with SOME w -> (match
              stackSem_mem_load w s with SOME (word_Word w) -> SOME w
                       | _ -> NONE)
          | _ -> NONE) /\
@@ -714,7 +715,7 @@ let get_labels_def,get_labels_ind = define_wf
 
 let loc_check_def = new_definition
   `loc_check code (l1,l2) <=>
-     (l2 = 0 /\ l1 IN domain code) \/
+     (l2 = 0 /\ l1 IN sptree_domain code) \/
      (?n e. sptree_lookup n code = SOME e /\ (l1,l2) IN
        stackSem_get_labels e)`;;
 

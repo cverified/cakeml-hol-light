@@ -2,8 +2,7 @@
 (*  balanced_map: ported from HOL4's
     examples/data-structures/balanced_bst/balanced_mapScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by jsonLang.ml, regexp_compiler.ml,
-    word_bignum.ml, word_cse.ml and word_cseProof.ml.  *)
+    that CakeML needs.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/comparison.ml";;
@@ -37,6 +36,10 @@ let bin_def = new_definition
   `bin k x l r = Bin (balanced_map__size l + balanced_map__size r + 1) k x l
   r`;;
 
+let null_def = define_cases
+  `(balanced_map_null Tip = T) /\
+   (balanced_map_null (Bin s k v m1 m2) = F)`;;
+
 let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
   `(balanced_map_lookup cmp k Tip = NONE) /\
    (balanced_map_lookup cmp k (Bin s k' v l r) =
@@ -44,11 +47,18 @@ let balanced_map_lookup_def,balanced_map_lookup_ind = define_rec
          | GREATER -> balanced_map_lookup cmp k r
          | EQUAL -> SOME v)`;;
 
+let member_def,member_ind = define_guess
+  `(balanced_map_member cmp k Tip = F) /\
+   (balanced_map_member cmp k (Bin s k' v l r) =
+      match cmp k k' with LESS -> balanced_map_member cmp k l
+         | GREATER -> balanced_map_member cmp k r
+         | EQUAL -> T)`;;
+
 let empty_def = new_definition
   `balanced_map_empty = Tip`;;
 
 let singleton_def = new_definition
-  `singleton k x = Bin 1 k x Tip Tip`;;
+  `balanced_map_singleton k x = Bin 1 k x Tip Tip`;;
 
 let balanceL_def = new_definition
   `balanceL k x x3 x4 =
@@ -122,7 +132,7 @@ let balanceR_def = new_definition
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl rr)`;;
 
 let balanced_map_insert_def,balanced_map_insert_ind = define_rec
-  `(balanced_map_insert cmp k v Tip = singleton k v) /\
+  `(balanced_map_insert cmp k v Tip = balanced_map_singleton k v) /\
    (balanced_map_insert cmp k v (Bin s k' v' l r) =
       match cmp k k' with LESS -> balanceL k' v' (balanced_map_insert cmp k
           v l) r
@@ -130,18 +140,18 @@ let balanced_map_insert_def,balanced_map_insert_ind = define_rec
          | EQUAL -> Bin s k v l r)`;;
 
 let insertR_def,insertR_ind = define_rec
-  `(insertR cmp k v Tip = singleton k v) /\
+  `(insertR cmp k v Tip = balanced_map_singleton k v) /\
    (insertR cmp k v (Bin s k' v' l r) =
       match cmp k k' with LESS -> balanceL k' v' (insertR cmp k v l) r
          | GREATER -> balanceR k' v' l (insertR cmp k v r)
          | EQUAL -> Bin s k' v' l r)`;;
 
 let insertMax_def,insertMax_ind = define_rec
-  `(insertMax k v Tip = singleton k v) /\
+  `(insertMax k v Tip = balanced_map_singleton k v) /\
    (insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k v r))`;;
 
 let insertMin_def,insertMin_ind = define_rec
-  `(insertMin k v Tip = singleton k v) /\
+  `(insertMin k v Tip = balanced_map_singleton k v) /\
    (insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v l) r)`;;
 
 make_size "balanced_map";;
@@ -189,7 +199,7 @@ let balanced_map_delete_def,balanced_map_delete_ind = define_rec
       match cmp k k' with LESS -> balanceR k' v (balanced_map_delete cmp k
           l) r
          | GREATER -> balanceL k' v l (balanced_map_delete cmp k r)
-         | Eq' -> glue l r)`;;
+         | Eq -> glue l r)`;;
 
 let trim_help_greater_def,trim_help_greater_ind = define_rec
   `(trim_help_greater cmp lo (Bin s' k v' l' r) =
@@ -238,6 +248,18 @@ let link_def,link_ind = define_wf
        balanceR ky y ly (link k v ry (Bin sizeR kz z lz rz))
      else bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz)`;;
 
+let link2_def,link2_ind = define_guess
+  `link2 l r =
+     match (l,r) with
+       (l,Tip) -> l
+     | (Tip,r) -> r
+     | (Bin sizeL kx x lx rx,Bin sizeR ky y ly ry) ->
+       if delta * sizeL < sizeR then
+         balanceL ky y (link2 (Bin sizeL kx x lx rx) ly) ry
+       else if delta * sizeR < sizeL then
+         balanceR kx x lx (link2 rx (Bin sizeR ky y ly ry))
+       else glue (Bin sizeL kx x lx rx) (Bin sizeR ky y ly ry)`;;
+
 let filterLt_help_def,filterLt_help_ind = define_rec
   `(filterLt_help cmp b Tip = Tip) /\
    (filterLt_help cmp b' (Bin s kx x l r) =
@@ -282,30 +304,103 @@ let balanced_map_union_def = new_definition
      | (t1,Tip) -> t1
      | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
 
+let hedgeUnionWithKey_def,hedgeUnionWithKey_ind = define_guess
+  `hedgeUnionWithKey cmp f blo bhi t1 t2 =
+     match (t1,t2) with
+       (t1,Tip) -> t1
+     | (Tip,Bin _ kx x l r) ->
+       link kx x (filterGt cmp blo l) (filterLt cmp bhi r)
+     | (Bin _ kx x l r,t2) ->
+       let newx = (match balanced_map_lookup cmp kx t2 with NONE -> x | SOME
+         y -> f kx x y) in
+       link kx newx
+         (hedgeUnionWithKey cmp f blo (SOME kx) l (trim cmp blo (SOME kx)
+           t2))
+         (hedgeUnionWithKey cmp f (SOME kx) bhi r (trim cmp (SOME kx)
+           bhi t2))`;;
+
+let unionWithKey_def = new_definition
+  `balanced_map_unionWithKey cmp f t1 t2 =
+     match (t1,t2) with
+       (Tip,t2) -> t2
+     | (t1,Tip) -> t1
+     | (t1,t2) ->
+       hedgeUnionWithKey cmp f NONE NONE t1 t2`;;
+
+let unionWith_def = new_definition
+  `balanced_map_unionWith cmp f t1 t2 = balanced_map_unionWithKey cmp (\k x
+  y. f x y) t1 t2`;;
+
+let filterWithKey_def,filterWithKey_ind = define_guess
+  `(balanced_map_filterWithKey f Tip = Tip) /\
+   (balanced_map_filterWithKey f (Bin s kx x l r) =
+      let l' = balanced_map_filterWithKey f l in
+      let r' = balanced_map_filterWithKey f r in
+        if f kx x then link kx x l' r' else link2 l' r')`;;
+
+let filter_def = new_definition
+  `balanced_map_filter f t = balanced_map_filterWithKey (\k x. f x) t`;;
+
 let foldrWithKey_def,foldrWithKey_ind = define_rec
-  `(foldrWithKey f z' Tip = z') /\
-   (foldrWithKey f z' (Bin _ kx x l r) =
-      foldrWithKey f (f kx x (foldrWithKey f z' r)) l)`;;
+  `(balanced_map_foldrWithKey f z' Tip = z') /\
+   (balanced_map_foldrWithKey f z' (Bin _ kx x l r) =
+      balanced_map_foldrWithKey f (f kx x (balanced_map_foldrWithKey f
+          z' r)) l)`;;
 
 let toAscList_def = new_definition
-  `toAscList t = foldrWithKey (\k x xs. CONS (k,x) xs) [] t`;;
+  `balanced_map_toAscList t = balanced_map_foldrWithKey (\k x xs. CONS (k,x)
+  xs) [] t`;;
 
 let compare_def = new_definition
-  `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare (pair_compare cmp1
-  cmp2) (toAscList t1) (toAscList t2)`;;
+  `balanced_map_compare cmp1 cmp2 t1 t2 = list_compare
+  (ternaryComparisons_pair_compare cmp1 cmp2) (balanced_map_toAscList t1)
+  (balanced_map_toAscList t2)`;;
 
 let mapWithKey_def,mapWithKey_ind = define_rec
-  `(mapWithKey f Tip = Tip) /\
-   (mapWithKey f (Bin sx kx x l r) =
-         Bin sx kx (f kx x) (mapWithKey f l) (mapWithKey f r))`;;
+  `(balanced_map_mapWithKey f Tip = Tip) /\
+   (balanced_map_mapWithKey f (Bin sx kx x l r) =
+         Bin sx kx (f kx x) (balanced_map_mapWithKey f l)
+             (balanced_map_mapWithKey f r))`;;
 
 let balanced_map_map_def = new_definition
-  `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
+  `balanced_map_map f t = balanced_map_mapWithKey (\k x. f x) t`;;
+
+let splitLookup_def,splitLookup_ind = define_guess
+  `(splitLookup cmp k Tip = (Tip,NONE,Tip)) /\
+   (splitLookup cmp k (Bin _ kx x l r) =
+      match cmp k kx with LESS ->
+             let (lt,z,gt) = splitLookup cmp k l in
+             let gt' = link kx x gt r in
+               (lt,z,gt')
+         | GREATER ->
+             let (lt,z,gt) = splitLookup cmp k r in
+             let lt' = link kx x l lt in
+               (lt',z,gt)
+         | EQUAL ->
+             (l,SOME x,r))`;;
+
+let submap'_def = new_definition
+  `submap' cmp f x3 t =
+     match (x3,t) with
+       (Tip,_) -> T
+     | (_,Tip) -> F
+     | (Bin _ kx x l r,t) ->
+     (match splitLookup cmp kx t with (lt,NONE,gt) -> F
+        | (lt,SOME y,gt) -> f x y /\ submap' cmp f l lt /\ submap' cmp f
+          r gt)`;;
+
+let isSubmapOfBy_def = new_definition
+  `isSubmapOfBy cmp f t1 t2 <=> balanced_map__size t1 <= balanced_map__size
+  t2 /\ submap' cmp f t1 t2`;;
+
+let isSubmapOf_def = new_definition
+  `isSubmapOf cmp t1 t2 <=> isSubmapOfBy cmp (=) t1 t2`;;
 
 let to_fmap_def,to_fmap_ind = define_rec
-  `(to_fmap cmp Tip = FEMPTY) /\
-   (to_fmap cmp (Bin s k v l r) =
-      (FUNION (to_fmap cmp l) (to_fmap cmp r)) |+ (key_set cmp k,v))`;;
+  `(balanced_map_to_fmap cmp Tip = FEMPTY) /\
+   (balanced_map_to_fmap cmp (Bin s k v l r) =
+      (FUNION (balanced_map_to_fmap cmp l) (balanced_map_to_fmap cmp
+          r)) |+ (key_set cmp k,v))`;;
 
 let balanced_def = new_definition
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
@@ -331,6 +426,15 @@ let invariant_def,invariant_ind = define_rec
       balanced (balanced_map__size l) (balanced_map__size r) /\
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r)`;;
+
+let every_def,every_ind = define_guess
+  `(every f Tip = T) /\
+   (every f (Bin _ kx x l r) =
+      if f kx x then
+        if every f l then
+          if every f r then T else F
+        else F
+      else F)`;;
 
 let exists_def,exists_ind = define_rec
   `(balanced_map_exists f Tip = F) /\

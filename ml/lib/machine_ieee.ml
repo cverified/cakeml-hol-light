@@ -2,8 +2,7 @@
 (*  machine_ieee: ported from HOL4's
     src/floating-point/machine_ieeeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by asmSem.ml, fpSem.ml, misc.ml,
-    semanticPrimitives.ml and wordSem.ml.  *)
+    that CakeML needs.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/binary_ieee.ml";;
@@ -97,3 +96,16 @@ let fp64_mul_add_def = new_definition
      float_to_fp64 (SND (float_mul_add mode (fp64_to_float a)
                                             (fp64_to_float b)
                                             (fp64_to_float c)))`;;
+
+let convert_def = new_definition
+  `convert (to_float:'a word->('b,'c)float) (from_float:('d,'e)float->'f word)
+  from_real_with_flags (m:rounding) w =
+   let f = to_float w in
+   match float_value f with
+      Float r -> from_real_with_flags m r
+    | NaN -> (check_for_signalling [f],from_float (@fp. float_is_nan fp))
+    | Infinity ->
+        (clear_flags,
+         from_float (if float_Sign f = (n2w 0) then
+                       float_plus_infinity (:'d#'e)
+                     else float_minus_infinity (:'d#'e)))`;;

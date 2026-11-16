@@ -9,6 +9,7 @@
   Correctness proof for word_unreach
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -19,6 +20,8 @@ needs "misc/misc.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "word_unreachProof"
   ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_unreach"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 (* HOL4 word_unreachProofScript.sml:10: the ML values that the definitions
    below antiquote *)
@@ -169,6 +172,10 @@ let evaluate_remove_unreach = prove
      wordSem_evaluate (p,s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
      wordSem_evaluate (remove_unreach p,s) = (res,s1)`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

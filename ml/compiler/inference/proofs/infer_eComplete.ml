@@ -31,6 +31,12 @@ let _ = cake_theory "infer_eComplete"
 
 let _ = do_list hide_constant ["id"];;
 
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
+
 (*Useful lemmas about pure add constraints, some of these imply the others*)
 let pure_add_constraints_success = prove
  (`!s constraints s'.
@@ -530,13 +536,13 @@ let sub_completion_completes = prove
 (* [local] *)
 let lookup_var_bind_var_list = prove
  (`!bindings.
-   lookup_var x (bind_var_list 0 bindings tenvE) tenv =
+   typeSystem_lookup_var x (bind_var_list 0 bindings tenvE) tenv =
    match x with
-   Short id' ->
-     (match ALOOKUP bindings id' with
+   Short id ->
+     (match ALOOKUP bindings id with
        SOME t -> SOME (0,t)
-     | NONE -> lookup_var x tenvE tenv)
-   | _ -> lookup_var x tenvE tenv`,
+     | NONE -> typeSystem_lookup_var x tenvE tenv)
+   | _ -> typeSystem_lookup_var x tenvE tenv`,
   CHEAT_TAC);;
 
 (*This should be general enough to prove both Mat and Handle cases*)

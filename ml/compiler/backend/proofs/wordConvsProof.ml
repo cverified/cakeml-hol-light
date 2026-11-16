@@ -32,7 +32,7 @@ let _ = cake_theory "wordConvsProof"
    "word_elim"; "word_inst"; "word_remove"; "word_simp"; "word_to_word";
    "word_unreach"];;
 
-let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
+let _ = do_list hide_constant ["C"; "comp"; "dummy"; "prog"];;
 
 (***
   This theory should serve also as documentation for
@@ -191,8 +191,8 @@ let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 (* labels_rel *)
 (* [local] *)
 let extract_labels_SmartSeq = prove
- (`wordConvs_extract_labels (SmartSeq p1 p2) = wordConvs_extract_labels
-  (word_Seq p1 p2)`,
+ (`wordConvs_extract_labels (word_simp_SmartSeq p1 p2) =
+  wordConvs_extract_labels (word_Seq p1 p2)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -214,7 +214,7 @@ let extract_labels_drop_consts_1 = prove
 
 (* [local] *)
 let extract_labels_drop_consts = prove
- (`wordConvs_extract_labels (SmartSeq (drop_consts cs ls) p) =
+ (`wordConvs_extract_labels (word_simp_SmartSeq (drop_consts cs ls) p) =
   wordConvs_extract_labels p`,
   CHEAT_TAC);;
 add_simp extract_labels_drop_consts;;
@@ -268,10 +268,10 @@ let wordConvsProof_dest_If_thm = prove
 
 (* [local] *)
 let labels_rel_hoist2 = prove
- (`!N p1 interm dummy' p2 s.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2 s.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    dest_If p2 = SOME (cmp,lhs,rhs,br1,br2) ==>
-   dummy' = word_If cmp lhs rhs (word_Raise 1) (word_Raise 2) ==>
+   dummy = word_If cmp lhs rhs (word_Raise 1) (word_Raise 2) ==>
    wordConvs_extract_labels interm = [] ==>
    labels_rel (APPEND (wordConvs_extract_labels p1)
      (wordConvs_extract_labels p2))
@@ -313,13 +313,13 @@ let seq_assoc_no_inst = prove
 
 (* [local] *)
 let every_inst_SmartSeq = prove
- (`every_inst P (SmartSeq p q) =
+ (`every_inst P (word_simp_SmartSeq p q) =
    (every_inst P p /\ every_inst P q)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let every_inst_drop_consts = prove
- (`every_inst P (SmartSeq (drop_consts cs ls) p) =
+ (`every_inst P (word_simp_SmartSeq (drop_consts cs ls) p) =
    every_inst P p`,
   CHEAT_TAC);;
 add_simp every_inst_drop_consts;;
@@ -333,8 +333,8 @@ let every_inst_const_fp = prove
 
 (* [local] *)
 let try_if_hoist2_no_inst = prove
- (`!N p1 interm dummy' p2 s.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2 s.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    every_inst P p1 ==>
    every_inst P interm ==>
    every_inst P p2 ==>
@@ -359,7 +359,7 @@ let compile_exp_no_inst = prove
 
 (* [local] *)
 let not_created_subprogs_SmartSeq = prove
- (`not_created_subprogs P (SmartSeq p1 p2) =
+ (`not_created_subprogs P (word_simp_SmartSeq p1 p2) =
    (not_created_subprogs P p1 /\ not_created_subprogs P p2)`,
   CHEAT_TAC);;
 
@@ -371,7 +371,7 @@ let not_created_subprogs_Seq_assoc = prove
 
 (* [local] *)
 let not_created_subprogs_drop_consts = prove
- (`not_created_subprogs P (SmartSeq (drop_consts cs ls) p) =
+ (`not_created_subprogs P (word_simp_SmartSeq (drop_consts cs ls) p) =
    not_created_subprogs P p`,
   CHEAT_TAC);;
 add_simp not_created_subprogs_drop_consts;;
@@ -392,8 +392,8 @@ let not_created_subprogs_const_fp = prove
 
 (* [local] *)
 let not_created_subprogs_hoist2 = prove
- (`!N p1 interm dummy' p2.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    not_created_subprogs P p1 ==> not_created_subprogs P interm ==>
    not_created_subprogs P p2 ==>
    not_created_subprogs P p3`,
@@ -420,7 +420,7 @@ let compile_exp_not_created_subprogs = prove
 
 (* [local] *)
 let word_get_code_labels_SmartSeq = prove
- (`wordConvs_get_code_labels (SmartSeq p q) =
+ (`wordConvs_get_code_labels (word_simp_SmartSeq p q) =
    wordConvs_get_code_labels p UNION wordConvs_get_code_labels q`,
   CHEAT_TAC);;
 add_simp word_get_code_labels_SmartSeq;;
@@ -441,7 +441,7 @@ let word_get_code_labels_const_fp_loop = prove
 
 (* [local] *)
 let word_good_handlers_SmartSeq = prove
- (`good_handlers n (SmartSeq p q) <=>
+ (`good_handlers n (word_simp_SmartSeq p q) <=>
    good_handlers n p /\
    good_handlers n q`,
   CHEAT_TAC);;
@@ -477,8 +477,8 @@ let word_good_handlers_Seq_assoc = prove
 
 (* [local] *)
 let word_good_handlers_try_if_hoist2 = prove
- (`!N p1 interm dummy' p2 s.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2 s.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    good_handlers n p1 /\ good_handlers n p2 /\ good_handlers n interm ==>
    good_handlers n p3`,
   CHEAT_TAC);;
@@ -502,8 +502,8 @@ let word_good_handlers_word_simp = prove
 
 (* [local] *)
 let word_get_code_labels_try_if_hoist2 = prove
- (`!N p1 interm dummy' p2 s.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2 s.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    wordConvs_get_code_labels p3 SUBSET
    (wordConvs_get_code_labels p1 UNION wordConvs_get_code_labels interm
      UNION wordConvs_get_code_labels p2)`,
@@ -861,13 +861,13 @@ let remove_dead_prog_not_created_subprogs = prove
 (* [local] *)
 let remove_dead_conventions = prove
  (`!p live nlive lt c k.
-     let comp' = FST (remove_dead p live nlive lt) in
-     (flat_exp_conventions p ==> flat_exp_conventions comp') /\
-     (full_inst_ok_less c p ==> full_inst_ok_less c comp') /\
-     (pre_alloc_conventions p ==> pre_alloc_conventions comp') /\
-     (every_inst P p ==> every_inst P comp') /\
-     (wf_cutsets p ==> wf_cutsets comp') /\
-     (wordConvs_extract_labels p = wordConvs_extract_labels comp')`,
+     let comp = FST (remove_dead p live nlive lt) in
+     (flat_exp_conventions p ==> flat_exp_conventions comp) /\
+     (full_inst_ok_less c p ==> full_inst_ok_less c comp) /\
+     (pre_alloc_conventions p ==> pre_alloc_conventions comp) /\
+     (every_inst P p ==> every_inst P comp) /\
+     (wf_cutsets p ==> wf_cutsets comp) /\
+     (wordConvs_extract_labels p = wordConvs_extract_labels comp)`,
   CHEAT_TAC);;
 
 let remove_dead_prog_conventions =
@@ -1443,12 +1443,12 @@ let word_good_handlers_word_alloc = prove
 
 let remove_must_terminate_conventions = prove
  (`!p c k.
-   let comp' = remove_must_terminate p in
-   (flat_exp_conventions p ==> flat_exp_conventions comp') /\
-   (full_inst_ok_less c p ==> full_inst_ok_less c comp') /\
-   (post_alloc_conventions k p ==> post_alloc_conventions k comp') /\
-   (every_inst P p ==> every_inst P comp') /\
-   (wordConvs_extract_labels p = wordConvs_extract_labels comp')`,
+   let comp = remove_must_terminate p in
+   (flat_exp_conventions p ==> flat_exp_conventions comp) /\
+   (full_inst_ok_less c p ==> full_inst_ok_less c comp) /\
+   (post_alloc_conventions k p ==> post_alloc_conventions k comp) /\
+   (every_inst P p ==> every_inst P comp) /\
+   (wordConvs_extract_labels p = wordConvs_extract_labels comp)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1524,7 +1524,8 @@ let word_good_code_labels_word_to_word = prove
 let _ = do_list unhide_constant
   ["C";
    "comp";
-   "dummy"];;
+   "dummy";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

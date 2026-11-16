@@ -2,7 +2,8 @@
 (*  stack_names: ported from HOL4's
     compiler/backend/stack_namesScript.sml
     A definition theory, with 7 definitions and 1 theorem.  Needed
-    by stackProps.ml, stack_namesProof.ml and stack_to_lab.ml.  *)
+    by stackProps.ml, stack_namesProof.ml, stack_to_lab.ml,
+    to_target32Prog.ml and to_target64Prog.ml.  *)
 (* ======================================================== *)
 
 (*

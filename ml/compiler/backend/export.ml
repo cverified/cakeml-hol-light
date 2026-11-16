@@ -2,8 +2,7 @@
 (*  export: ported from HOL4's
     compiler/backend/exportScript.sml
     A definition theory, with 17 definitions and 2 theorems.  Needed
-    by export_ag32.ml, export_arm7.ml, export_arm8.ml,
-    export_mips.ml, export_riscv.ml and export_x64.ml.  *)
+    by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -169,7 +168,7 @@ let all_bytes_def = new_definition
 let all_bytes_eq = CAKE_EVAL [all_bytes_def; byte_to_string_def] `all_bytes`;;
 
 let byte_to_string_eq = prove
- (`!b. byte_to_string b = sub all_bytes (w2n b)`,
+ (`!b. byte_to_string b = regexp_compiler_sub all_bytes (w2n b)`,
   CHEAT_TAC);;
 
 (* gas allows 0-9a-zA-Z_$. in labels as long as the first is _A-Za-z *)

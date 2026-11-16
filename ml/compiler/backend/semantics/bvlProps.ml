@@ -9,6 +9,7 @@
   Properties about BVL and its semantics
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
@@ -21,7 +22,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvlProps"
   ["backend_common"; "bvl"; "bvlSem"; "bvl_const"];;
 
-let _ = do_list hide_constant ["parts"];;
+let _ = do_list hide_constant ["exps"; "parts"];;
 
 (* HOL4 bvlPropsScript.sml:14: the ML values that the definitions below
    antiquote *)
@@ -32,11 +33,12 @@ let with_same_code = prove
   CHEAT_TAC);;
 add_simp with_same_code;;
 
-let with_same_clock = prove
+(* with_same_clock *)
+let bvlProps_with_same_clock = prove
  (`bvlSem_state_clock_fupd (K (bvlSem_state_clock st))
       (st:('a,'b)bvlSem_state) = st`,
   CHEAT_TAC);;
-add_simp with_same_clock;;
+add_simp bvlProps_with_same_clock;;
 
 let dec_clock_with_code = prove
  (`bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) =
@@ -71,8 +73,8 @@ let pair_lam_lem = prove
 let do_app_Rval_swap = prove
  (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rval (x0,x1) /\ ~(op =
   clos_Install) /\
-    (domain (bvlSem_state_code s1)) SUBSET (domain (bvlSem_state_code t1))
-      ==>
+    (sptree_domain (bvlSem_state_code s1)) SUBSET (sptree_domain
+      (bvlSem_state_code t1)) ==>
     bvlSem_do_app op a
       (bvlSem_state_ffi_fupd (K (bvlSem_state_ffi s1))
         (bvlSem_state_clock_fupd (K (bvlSem_state_clock s1))
@@ -88,7 +90,7 @@ let do_app_Rval_swap = prove
 
 let do_app_with_code = prove
  (`bvlSem_do_app op vs s = Rval (r,s') /\ ~(op = clos_Install) ==>
-   domain (bvlSem_state_code s) SUBSET domain c ==>
+   sptree_domain (bvlSem_state_code s) SUBSET sptree_domain c ==>
    bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c) s))) =
         Rval (r,bvlSem_state_compile_oracle_fupd (K co)
@@ -99,8 +101,8 @@ let do_app_with_code = prove
 let do_app_Rerr_swap = prove
  (`bvlSem_do_app op a (s1:('a,'b)bvlSem_state) = Rerr e /\ ~(op = clos_Install)
   /\
-   (domain (bvlSem_state_code t1)) SUBSET (domain (bvlSem_state_code s1))
-     ==>
+   (sptree_domain (bvlSem_state_code t1)) SUBSET (sptree_domain
+     (bvlSem_state_code s1)) ==>
    bvlSem_do_app op a
     (bvlSem_state_ffi_fupd (K (bvlSem_state_ffi s1))
       (bvlSem_state_clock_fupd (K (bvlSem_state_clock s1))
@@ -111,8 +113,8 @@ let do_app_Rerr_swap = prove
 
 let do_app_with_code_err_not_Install = prove
  (`bvlSem_do_app op vs s = Rerr e /\ ~(op = clos_Install) ==>
-   (domain c SUBSET domain (bvlSem_state_code s) \/ ~(e = Rabort
-     Rtype_error)) ==>
+   (sptree_domain c SUBSET sptree_domain (bvlSem_state_code s) \/ ~(e =
+     Rabort Rtype_error)) ==>
    bvlSem_do_app op vs (bvlSem_state_compile_oracle_fupd (K co)
      (bvlSem_state_compile_fupd (K cc) (bvlSem_state_code_fupd (K c) s))) =
      Rerr e`,
@@ -120,8 +122,8 @@ let do_app_with_code_err_not_Install = prove
 
 let do_app_with_code_err = prove
  (`bvlSem_do_app op vs s = Rerr e ==>
-   (domain c = domain (bvlSem_state_code s) \/ ~(e = Rabort Rtype_error))
-     ==>
+   (sptree_domain c = sptree_domain (bvlSem_state_code s) \/ ~(e = Rabort
+     Rtype_error)) ==>
    bvlSem_do_app op vs (bvlSem_state_code_fupd (K c) s) = Rerr e`,
   CHEAT_TAC);;
 
@@ -152,10 +154,10 @@ let bool_to_tag_11 = prove
 add_simp bool_to_tag_11;;
 
 (* Boolv_11 *)
-let boolv_11 = prove
+let bvlProps_Boolv_11 = prove
  (`bvlSem_Boolv b1 = bvlSem_Boolv b2 <=> b1 = b2`,
   CHEAT_TAC);;
-add_simp boolv_11;;
+add_simp bvlProps_Boolv_11;;
 
 let find_code_EVERY_IMP = prove
  (`(bvlSem_find_code dest a (bvlSem_state_code (r:('c,'ffi)bvlSem_state)) =
@@ -556,7 +558,8 @@ add_simp mk_tick_code_labels;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["parts"];;
+  ["exps";
+   "parts"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

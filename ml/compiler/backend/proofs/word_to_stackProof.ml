@@ -11,6 +11,8 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "characteristic/cf.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 (* for word_add_carry_def *)
 needs "compiler/backend/reg_alloc/parmove.ml";;
@@ -40,7 +42,8 @@ let _ = cake_theory "word_to_stackProof"
   ["backend_common"; "mllist"; "semanticsProps"; "stackLang"; "stackProps";
    "stackSem"; "wordProps"; "wordSem"; "word_to_stack"];;
 
-let _ = do_list hide_constant ["every"; "fv"];;
+let _ = do_list hide_constant ["GC"; "cf"; "concl"; "every"; "fv"; "prog";
+       "rand"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -712,8 +715,8 @@ let word_to_stackProof_state_rel_def = new_definition
          ALL ((\x y. ~(x = y)) stack_store_consts_stub_location o FST) progs
            /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
-     domain (stackSem_state_code t) = raise_stub_location INSERT
-                       stack_store_consts_stub_location INSERT domain
+     sptree_domain (stackSem_state_code t) = raise_stub_location INSERT
+                       stack_store_consts_stub_location INSERT sptree_domain
                          (wordSem_state_code s) /\
      (!n word_prog arg_count.
         (sptree_lookup n (wordSem_state_code s) = SOME
@@ -960,8 +963,8 @@ let EVEN_DIV2_INJ = prove
 let evaluate_wLive = prove
  (cake_as_vars (fun () ->
     `wLive names (bs,n) (k,f,f') = (wlive_prog,(bs',n')) /\
-     (!x. x IN domain (FST names) ==> EVEN x /\ k <= x DIV 2) /\
-     (!x. x IN domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
+     (!x. x IN sptree_domain (FST names) ==> EVEN x /\ k <= x DIV 2) /\
+     (!x. x IN sptree_domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
      word_to_stackProof_state_rel ac k f f'
        (s:('a,num#'c,'ffi)wordSem_state) t lens 0 /\
      1 <= f /\
@@ -1235,8 +1238,8 @@ let alloc_IMP_alloc = prove
  (cake_as_vars (fun () ->
     `(wordSem_alloc c names (s:('a,num#'c,'ffi)wordSem_state) = ((res:('a
   wordSem_result) option),s1)) /\
-       (!x. x IN domain (FST names) ==> EVEN x /\ k <= x DIV 2) /\
-       (!x. x IN domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
+       (!x. x IN sptree_domain (FST names) ==> EVEN x /\ k <= x DIV 2) /\
+       (!x. x IN sptree_domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
        1 <= f /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
        word_to_stackProof_state_rel ac k 0 0
@@ -1273,7 +1276,7 @@ let word_gc_empty_frame = prove
 
 (* [local] *)
 let inter_eq_empty_2 = prove
- (`domain t = {} ==>
+ (`sptree_domain t = {} ==>
    inter s t = LN`,
   CHEAT_TAC);;
 
@@ -1282,8 +1285,8 @@ let alloc_IMP_alloc2 = prove
  (`(wordSem_alloc c names (s:('a,num#'c,'ffi)wordSem_state) = ((res:('a
   wordSem_result) option),s1)) /\
    word_to_stackProof_state_rel ac k 0 0 s t lens 0 /\
-   domain (FST names) = {} /\
-   domain (SND names) = {} /\ ~(res = SOME wordSem_Error) ==>
+   sptree_domain (FST names) = {} /\
+   sptree_domain (SND names) = {} /\ ~(res = SOME wordSem_Error) ==>
    (?(t1:('a,'c,'ffi)stackSem_state) res1.
      (stackSem_alloc c t = ((res1:('a stackSem_result) option),t1)) /\
      (if res = NONE then
@@ -2366,7 +2369,8 @@ let ALL_DISTINCT_MEM_toAList_fromAList = prove
 (* [local] *)
 let state_rel_code_domain = prove
  (`word_to_stackProof_state_rel ac k f f' s t lens extra ==>
-   domain (wordSem_state_code s) SUBSET domain (stackSem_state_code t)`,
+   sptree_domain (wordSem_state_code s) SUBSET sptree_domain
+     (stackSem_state_code t)`,
   CHEAT_TAC);;
 
 let get_labels_wStackLoad = prove
@@ -3105,9 +3109,9 @@ let init_state_ok_IMP_state_rel = prove
          isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
            (stackSem_state_bitmaps t)) /\
          (sptree_lookup n (stackSem_state_code t) = SOME stack_prog))) /\
-    domain (stackSem_state_code t) =
+    sptree_domain (stackSem_state_code t) =
       raise_stub_location INSERT stack_store_consts_stub_location INSERT
-        domain code /\
+        sptree_domain code /\
     init_state_ok ac k t coracle ==>
     word_to_stackProof_state_rel ac k 0 0 (word_to_stackProof_make_init ac
       k t code coracle) (t:('a,'c,'ffi)stackSem_state) [] 0`,
@@ -3707,8 +3711,13 @@ let word_to_stack_compile_no_install = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["every";
-   "fv"];;
+  ["GC";
+   "cf";
+   "concl";
+   "every";
+   "fv";
+   "prog";
+   "rand"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

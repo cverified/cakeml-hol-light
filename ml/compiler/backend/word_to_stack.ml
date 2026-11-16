@@ -2,8 +2,7 @@
 (*  word_to_stack: ported from HOL4's
     compiler/backend/word_to_stackScript.sml
     A definition theory, with 45 definitions, 1 datatype and no
-    theorems.  Needed by backend.ml, backendProof.ml,
-    stack_to_lab.ml, stack_to_labProof.ml and word_to_stackProof.ml.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -583,7 +582,7 @@ let word_to_stack_comp_def,word_to_stack_comp_ind = assume_definition_rec
      | word_ShareInst op v exp ->
       (match exp_to_addr exp with
          NONE -> (stack_Skip,bs)
-       | SOME addr' -> wShareInst op v addr' kf,bs)
+       | SOME addr -> wShareInst op v addr kf,bs)
      | _ -> (stack_Skip,bs)`;;
 
 let raise_stub_def = new_definition

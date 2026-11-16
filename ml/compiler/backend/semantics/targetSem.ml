@@ -2,8 +2,7 @@
 (*  targetSem: ported from HOL4's
     compiler/backend/semantics/targetSemScript.sml
     A definition theory, with 19 definitions, 2 datatypes and no
-    theorems.  Needed by backendProof.ml, compilerProof.ml,
-    labSem.ml, lab_to_targetProof.ml and targetProps.ml.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -260,12 +259,12 @@ let targetSem_evaluate_def,targetSem_evaluate_ind = assume_definition_rec
                         | _ -> (targetSem_Error,ms,ffi))))`;;
 
 let machine_sem_def = define_cases
-  `(machine_sem mc st ms (ffi_Terminate t io_list) <=>
+  `(targetSem_machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
            targetSem_evaluate mc st k ms = (targetSem_Halt t,ms',st')
                /\ ffi_state_io_events
            st' = io_list)) /\
-   (machine_sem mc st ms (ffi_Diverge io_trace) <=>
+   (targetSem_machine_sem mc st ms (ffi_Diverge io_trace) <=>
          (!k. ?ms' st'. targetSem_evaluate mc st k ms =
              (targetSem_TimeOut,ms',st')) /\
          lprefix_lub
@@ -273,7 +272,7 @@ let machine_sem_def = define_cases
              (\k. fromList (ffi_state_io_events (SND (SND
                  (targetSem_evaluate mc st k ms))))) UNIV)
            io_trace) /\
-   (machine_sem mc st ms ffi_Fail <=>
+   (targetSem_machine_sem mc st ms ffi_Fail <=>
          (?k. FST (targetSem_evaluate mc st k ms) = targetSem_Error))`;;
 
 (* define what it means for code to be loaded and ready to run *)

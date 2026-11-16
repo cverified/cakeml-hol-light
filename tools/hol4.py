@@ -188,7 +188,12 @@ ML_MKVAR_OF = re.compile(
   r'\s*type_of\s+([A-Za-z0-9_\']+)\s*\)', re.S)
 
 
-QEND = {'`': '`', '``': '``', '\\u201c': '\\u201d'}
+# HOL4 quotes a term with backticks or with the Unicode
+# quotation marks “ and ”, and the escape of those two was
+# written with a backslash of its own here, so the key was the
+# six characters of the escape and no quotation mark ever
+# matched it
+QEND = {'`': '`', '``': '``', '\u201c': '\u201d'}
 
 
 def ml_theorems(text):

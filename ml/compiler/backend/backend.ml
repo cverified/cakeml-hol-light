@@ -2,7 +2,7 @@
 (*  backend: ported from HOL4's
     compiler/backend/backendScript.sml
     A definition theory, with 34 definitions, 2 datatypes and 15
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 32 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -47,7 +47,7 @@ let _ = cake_theory "backend"
    "source_to_flat"; "source_to_source"; "stack_to_lab"; "word_to_stack";
    "word_to_word"];;
 
-let _ = do_list hide_constant ["bvl_to_bvi"];;
+let _ = do_list hide_constant ["bvl_to_bvi"; "lab_to_target"; "prog"];;
 
 let backend_config_FIELDS = define_record "backend_config"
   ["source_conf","source_to_flat_config";
@@ -67,13 +67,13 @@ let backend_config_FIELDS = define_record "backend_config"
 (* HOL4 backendScript.sml:32: ML code, not ported *)
 
 let attach_bitmaps_def = define_cases
-  `(attach_bitmaps names c bm (SOME (bytes,c')) =
+  `(backend_attach_bitmaps names c bm (SOME (bytes,c')) =
         SOME (bytes,bm,backend_config_symbols_fupd (K (MAP (\(n,p,l).
             (lookup_any n names (implode "NOTFOUND"),p,l))
             (lab_to_target_config_sec_pos_len c')))
             (backend_config_lab_conf_fupd (K c')
               c))) /\
-   (attach_bitmaps names c bm NONE = NONE)`;;
+   (backend_attach_bitmaps names c bm NONE = NONE)`;;
 
 let backend_compile_def = new_definition
   `backend_compile asm_conf c p =
@@ -122,7 +122,7 @@ let backend_compile_def = new_definition
          asm_conf) + 3))
        (asm_config_addr_offset asm_conf) p in
      let _ = empty_ffi (implode "finished: stack_to_lab") in
-     let res = attach_bitmaps names c bm
+     let res = backend_attach_bitmaps names c bm
        (lab_to_target_compile asm_conf (backend_config_lab_conf c) (p:('a
          sec) list)) in
      let _ = empty_ffi (implode "finished: lab_to_target") in
@@ -181,7 +181,7 @@ let to_word_0_def = new_definition
        (c,p,names)`;;
 
 let to_word_def = new_definition
-  `to_word asm_conf c p =
+  `backend_to_word asm_conf c p =
    let (c,p,names) = to_data c p in
    let (col,p) = data_to_word_compile (backend_config_data_conf c)
      (backend_config_word_to_word_conf c) asm_conf p in
@@ -190,7 +190,7 @@ let to_word_def = new_definition
    (c,p,names)`;;
 
 let to_word_thm = prove
- (`to_word asm_conf c p =
+ (`backend_to_word asm_conf c p =
    let (c,p,names) = to_word_0 asm_conf c p in
    let (col,p) = word_to_word_compile (backend_config_word_to_word_conf c)
      asm_conf p in
@@ -201,7 +201,7 @@ let to_word_thm = prove
 
 let to_stack_def = new_definition
   `to_stack asm_conf c p =
-   let (c,p,names) = to_word asm_conf c p in
+   let (c,p,names) = backend_to_word asm_conf c p in
    let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
@@ -221,7 +221,7 @@ let to_lab_def = new_definition
 let to_target_def = new_definition
   `to_target asm_conf c p =
    let (bm,c,p,names) = to_lab asm_conf c p in
-     attach_bitmaps names c bm (
+     backend_attach_bitmaps names c bm (
        lab_to_target_compile
          asm_conf (backend_config_lab_conf c) p)`;;
 
@@ -251,34 +251,34 @@ let prim_config_def = new_definition
    of an ML expression: prim_config_eq *)
 
 let from_lab_def = new_definition
-  `from_lab asm_conf c names p bm =
-     attach_bitmaps names c bm
+  `backend_from_lab asm_conf c names p bm =
+     backend_attach_bitmaps names c bm
        (lab_to_target_compile asm_conf (backend_config_lab_conf c) p)`;;
 
 let from_stack_def = new_definition
-  `from_stack asm_conf c names p bm =
-   let p = stack_to_lab_compile (backend_config_stack_conf
+  `backend_from_stack asm_conf c names p bm =
+   (let p = stack_to_lab_compile (backend_config_stack_conf
      c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1)
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   from_lab asm_conf c names (p:('a sec) list) bm`;;
+   backend_from_lab asm_conf c names (p:('a sec) list) bm)`;;
 
 let from_word_def = new_definition
-  `from_word asm_conf c names p =
-   let (bm,c',fs,p) = word_to_stack_compile asm_conf
+  `backend_from_word asm_conf c names p =
+   (let (bm,c',fs,p) = word_to_stack_compile asm_conf
      (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
    let c = backend_config_word_conf_fupd (K c') c in
-   from_stack asm_conf c names p bm`;;
+   backend_from_stack asm_conf c names p bm)`;;
 
 let from_word_0_def = new_definition
-  `from_word_0 asm_conf c names p =
-   let (col,prog) = word_to_word_compile (backend_config_word_to_word_conf
+  `backend_from_word_0 asm_conf c names p =
+   (let (col,prog) = word_to_word_compile (backend_config_word_to_word_conf
      c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names prog`;;
+   backend_from_word asm_conf c names prog)`;;
 
 let from_data_def = new_definition
   `from_data asm_conf c names p =
@@ -286,12 +286,12 @@ let from_data_def = new_definition
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names p`;;
+   backend_from_word asm_conf c names p`;;
 
 let from_data_thm = prove
  (`from_data asm_conf c names p =
    let p = compile_0 (backend_config_data_conf c) asm_conf p in
-   from_word_0 asm_conf c names p`,
+   backend_from_word_0 asm_conf c names p`,
   CHEAT_TAC);;
 
 let from_bvi_def = new_definition
@@ -405,7 +405,7 @@ let from_livesets_def = new_definition
          col_prog)) prog_with_oracles in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names p)`;;
+   backend_from_word asm_conf c names p)`;;
 
 (* [local] *)
 let ZIP_MAP_MAP = prove
@@ -420,7 +420,7 @@ let EL_ZIP_MAP = prove
   CHEAT_TAC);;
 
 let from_word_0_to_livesets_0 = prove
- (`from_word_0 asm_conf c names p =
+ (`backend_from_word_0 asm_conf c names p =
    from_livesets asm_conf (to_livesets_0 asm_conf (c,p,names))`,
   CHEAT_TAC);;
 
@@ -432,7 +432,7 @@ let compile_oracle = prove
 let compile_oracle_word_0 = prove
  (`backend_compile asm_conf c p =
    let (c,p,names) = to_word_0 asm_conf c p in
-   from_word_0 asm_conf c names p`,
+   backend_from_word_0 asm_conf c names p`,
   CHEAT_TAC);;
 
 (* HOL4 backendScript.sml:469-494: code that the source has in a comment *)
@@ -657,7 +657,9 @@ let set_oracle_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["bvl_to_bvi"];;
+  ["bvl_to_bvi";
+   "lab_to_target";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

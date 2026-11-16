@@ -97,6 +97,11 @@ EXPECT = [
   # port is supposed to have ported
   ('ML code', r'^(?!\s*(Definition|Theorem|Datatype|Inductive|'
               r'Triviality|Type|Overload)\b)\s*\S'),
+  # the same for an ML block that the port could not read: what it
+  # points at is ML and no block the port is supposed to have
+  # ported
+  ('the ML code', r'^(?!\s*(Definition|Theorem|Datatype|Inductive|'
+                  r'Triviality|Type|Overload)\b)\s*\S'),
   ('code that the source has in a comment', r'^\s*\(\*'),
   ('a comment with ML code after it', r'^\s*\(\*'),
   ('the tactic that proves the termination',

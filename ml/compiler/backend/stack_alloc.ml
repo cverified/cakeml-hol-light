@@ -2,8 +2,8 @@
 (*  stack_alloc: ported from HOL4's
     compiler/backend/stack_allocScript.sml
     A definition theory, with 32 definitions and 2 theorems.  Needed
-    by stack_allocProof.ml, stack_to_lab.ml and
-    stack_to_labProof.ml.  *)
+    by stack_allocProof.ml, stack_to_lab.ml, stack_to_labProof.ml,
+    to_target32Prog.ml and to_target64Prog.ml.  *)
 (* ======================================================== *)
 
 (*

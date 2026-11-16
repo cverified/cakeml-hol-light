@@ -801,7 +801,7 @@ let dataSem_do_part_def = define_cases_clauses
                        | SOME n -> (dataSem_Block n t (MAP m ns),s,SOME
                            (n + (1:num)))))`;
    `dataSem_do_part m (clos_Str t) s ts =
-      let ptr = (minimal ptr. ~(ptr IN domain s)) in
+      let ptr = (minimal ptr. ~(ptr IN sptree_domain s)) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (dataSem_RefPtr T ptr,sptree_insert ptr (bvlSem_ByteArray T
             bytes) s,ts)`];;
@@ -959,7 +959,8 @@ let dataSem_do_app_aux_def = new_definition
      match (op,vs) with (
         // bvi part
         clos_Label l,xs) ->
-         (match xs with [] -> if l IN domain (dataSem_state_code s) then
+         (match xs with [] -> if l IN sptree_domain (dataSem_state_code s)
+           then
                     Rval (dataSem_CodePtr l,s)
                   else ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
@@ -1044,8 +1045,8 @@ let dataSem_do_app_aux_def = new_definition
      | (clos_MemOp (clos_RefByte f),xs) ->
          (match xs with [dataSem_Number i; dataSem_Number b] ->
              if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
-               let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs
-                 s))) in
+               let ptr = (minimal ptr. ~(ptr IN sptree_domain
+                 (dataSem_state_refs s))) in
                  Rval (dataSem_RefPtr T ptr,dataSem_state_refs_fupd (K
                    (sptree_insert ptr
                    (bvlSem_ByteArray f (REPLICATE (num_of_int i) (i2w b)))
@@ -1153,8 +1154,8 @@ let dataSem_do_app_aux_def = new_definition
              ,dataSem_v)semanticPrimitives_result))
      | (clos_MemOp clos_RefArray,[dataSem_Number i; v]) ->
          if (&0) <= i then
-           let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s)))
-             in
+           let ptr = (minimal ptr. ~(ptr IN sptree_domain
+             (dataSem_state_refs s))) in
              Rval (dataSem_RefPtr T ptr,dataSem_state_refs_fupd (K
                (sptree_insert ptr
                               (bvlSem_ValueArray (REPLICATE (num_of_int i)
@@ -1269,7 +1270,8 @@ let dataSem_do_app_aux_def = new_definition
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
      | (clos_MemOp clos_Ref,xs) ->
-         let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s))) in
+         let ptr = (minimal ptr. ~(ptr IN sptree_domain (dataSem_state_refs
+           s))) in
            Rval (dataSem_RefPtr T ptr,dataSem_state_refs_fupd (K
              (sptree_insert ptr (bvlSem_ValueArray xs) (dataSem_state_refs s)))
              s)
@@ -1288,8 +1290,8 @@ let dataSem_do_app_aux_def = new_definition
             Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
             ,dataSem_v)semanticPrimitives_result))
      | (clos_MemOp (clos_MutCons tag i),xs) ->
-         (let ptr = (minimal ptr. ~(ptr IN domain (dataSem_state_refs s)))
-           in
+         (let ptr = (minimal ptr. ~(ptr IN sptree_domain (dataSem_state_refs
+           s))) in
             if i >= LENGTH xs then ((Rerr (Rabort
               Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
               ,dataSem_v)semanticPrimitives_result) else let l = TAKE i xs in
@@ -1381,7 +1383,7 @@ let dataSem_do_app_aux_def = new_definition
                 ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
                 ,dataSem_v)semanticPrimitives_result) else let ptr = (minimal
-                ptr. ~(ptr IN domain (dataSem_state_refs s))) in
+                ptr. ~(ptr IN sptree_domain (dataSem_state_refs s))) in
                  Rval (dataSem_RefPtr F ptr,dataSem_state_refs_fupd (K
                    (sptree_insert ptr (bvlSem_Thunk m v) (dataSem_state_refs
                    s)))
@@ -1470,16 +1472,16 @@ let flush_state_def = define_general
     (K LN) s))`;;
 
 let call_env_def = new_definition
-  `dataSem_call_env args size' (s:('c,'ffi)dataSem_state) =
+  `dataSem_call_env args sptree__size (s:('c,'ffi)dataSem_state) =
      let new_stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (dataSem_state_stack s)) size') in let
+                                (dataSem_state_stack s)) sptree__size) in let
          stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit
            (dataSem_state_limits s))) new_stack_max) in
            dataSem_state_safe_for_space_fupd (K (dataSem_state_safe_for_space s
            /\ stack_safe)) (dataSem_state_stack_max_fupd (K new_stack_max)
-           (dataSem_state_locals_size_fupd (K size') (dataSem_state_locals_fupd
-           (K (sptree_fromList args))
+           (dataSem_state_locals_size_fupd (K sptree__size)
+           (dataSem_state_locals_fupd (K (sptree_fromList args))
        s)))`;;
 
 let push_env_def = define_general
@@ -1532,8 +1534,8 @@ let jump_exc_def = new_definition
 
 let cut_env_def = new_definition
   `dataSem_cut_env (name_set:1 spt) env =
-     if domain name_set SUBSET domain env then SOME (mk_wf (inter env
-       name_set))
+     if sptree_domain name_set SUBSET sptree_domain env then SOME (mk_wf
+       (inter env name_set))
      else NONE`;;
 
 let cut_state_def = new_definition

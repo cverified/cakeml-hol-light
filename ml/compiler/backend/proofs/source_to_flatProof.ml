@@ -10,6 +10,8 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "candle/standard/syntax/holBoolSyntax.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
@@ -41,7 +43,14 @@ let _ = cake_theory "source_to_flatProof"
    "namespaceProps"; "semanticPrimitives"; "semanticPrimitivesProps";
    "semantics"; "source_evalProof"; "source_to_flat"];;
 
-let _ = do_list hide_constant ["gc"; "id"; "path"; "vars"];;
+let _ = do_list hide_constant ["exps"; "gc"; "id"; "path"; "post"; "prog";
+       "test"; "unit"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["vars","vars"];;
 
 (* HOL4 source_to_flatProofScript.sml:20: ML code, not ported *)
 
@@ -388,21 +397,18 @@ let v_rel_weakening = prove
 let v_rel_weakening2 = prove
  (`(!genv v v'.
     source_to_flatProof_v_rel genv v v' ==>
-    (!gc'. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys
-      genv SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v
-      genv' ==>
+    (!gc. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys genv
+      SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v genv' ==>
     source_to_flatProof_v_rel genv' v v')) /\
    (!genv env env'.
     source_to_flatProof_env_rel genv env env' ==>
-    (!gc'. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys
-      genv SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v
-      genv' ==>
+    (!gc. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys genv
+      SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v genv' ==>
     source_to_flatProof_env_rel genv' env env')) /\
    (!genv comp_map shadowers env.
     global_env_inv genv comp_map shadowers env ==>
-    (!gc'. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys
-      genv SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v
-      genv' ==>
+    (!gc. global_env_c genv SUBMAP global_env_c genv' /\ global_env_tys genv
+      SUBMAP global_env_tys genv' /\ global_env_v genv = global_env_v genv' ==>
     global_env_inv genv' comp_map shadowers env))`,
   CHEAT_TAC);;
 
@@ -501,23 +507,23 @@ let s_rel = cake_inductive
      source_to_flatProof_s_rel genv s s')`;;
 
 let env_all_rel = cake_inductive
-  `(!genv map' env_v_local env env' locals.
+  `(!genv sptree_map env_v_local env env' locals.
      (?l. env_v_local = alist_to_ns l /\ MAP FST l = locals) /\
-     global_env_inv genv map' (set_of_list locals) env /\
+     global_env_inv genv sptree_map (set_of_list locals) env /\
      source_to_flatProof_env_rel genv env_v_local env' ==>
-     env_all_rel genv map'
+     env_all_rel genv sptree_map
        (mk_sem_env (nsAppend env_v_local (sem_env_v env)) (sem_env_c env))
        (mk_flatSem_environment env')
        locals)`;;
 
 (* [local] *)
 let env_all_rel_weak = prove
- (`!genv map' locals env env' genv'.
-    env_all_rel genv map' env env' locals /\ global_env_c
+ (`!genv sptree_map locals env env' genv'.
+    env_all_rel genv sptree_map env env' locals /\ global_env_c
     genv SUBMAP global_env_c genv' /\ global_env_tys
     genv SUBMAP global_env_tys genv' /\
     subglobals (global_env_v genv) (global_env_v genv') ==>
-    env_all_rel genv' map' env env' locals`,
+    env_all_rel genv' sptree_map env env' locals`,
   CHEAT_TAC);;
 
 let source_to_flatProof_match_result_rel_def = new_definition
@@ -674,10 +680,11 @@ let do_arith_INL = prove
  (`ALL (semanticPrimitives_check_type ty) vs /\ genv_c_ok (global_env_c genv)
   /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
-   do_arith a ty vs = SOME (INL exn) ==>
+   semanticPrimitives_do_arith a ty vs = SOME (INL exn) ==>
    exn = semanticPrimitives_div_exn_v /\
    ALL (semanticPrimitives_check_type ty) (MAP flat_to_v vs_i1) /\
-   (?e. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INL e))`,
+   (?e. semanticPrimitives_do_arith a ty (MAP flat_to_v vs_i1) = SOME (INL
+     e))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -685,9 +692,10 @@ let do_arith_INR = prove
  (`ALL (semanticPrimitives_check_type ty) vs /\ genv_c_ok (global_env_c genv)
   /\
    ALL2 (source_to_flatProof_v_rel genv) vs vs_i1 /\
-   do_arith a ty vs = SOME (INR r) ==>
+   semanticPrimitives_do_arith a ty vs = SOME (INR r) ==>
    ALL (semanticPrimitives_check_type ty) (MAP flat_to_v vs_i1) /\
-   (?r'. do_arith a ty (MAP flat_to_v vs_i1) = SOME (INR r') /\
+   (?r'. semanticPrimitives_do_arith a ty (MAP flat_to_v vs_i1) = SOME (INR
+     r') /\
         source_to_flatProof_v_rel genv r (v_to_flat r'))`,
   CHEAT_TAC);;
 
@@ -764,8 +772,8 @@ let do_app_rec_help = prove
            (MAP
               (\(f,n,e).
                  (f,
-                  flatSem_Recclosure
-                    (sem_env_v_fupd (K (nsAppend env_v_local (sem_env_v
+                  semanticPrimitives_Recclosure (sem_env_v_fupd (K (nsAppend
+                    env_v_local (sem_env_v
                       env'))) env')
                     funs' f)) funs))
         (MAP
@@ -960,7 +968,8 @@ let env_domain_eq_def = new_definition
 let env_domain_eq_append = prove
  (`env_domain_eq env1 env1' /\
     env_domain_eq env2 env2' ==>
-    env_domain_eq (extend_env env1 env2) (extend_dec_env env1' env2')`,
+    env_domain_eq (source_to_flat_extend_env env1 env2) (extend_dec_env
+      env1' env2')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -969,8 +978,8 @@ let global_env_inv_append = prove
      env_domain_eq var_map1 env1 /\
      global_env_inv genv var_map1 {} env1 /\
      global_env_inv genv var_map2 {} env2 ==>
-     global_env_inv genv (extend_env var_map1 var_map2) {} (extend_dec_env
-       env1 env2)`,
+     global_env_inv genv (source_to_flat_extend_env var_map1 var_map2) {}
+       (extend_dec_env env1 env2)`,
   CHEAT_TAC);;
 
 (* HOL4 source_to_flatProofScript.sml:2022: ML code, not ported *)
@@ -1038,12 +1047,12 @@ let genv_allocated_idxs_def = new_definition
    next field will always be free *)
 let env_gen_inv_def = new_definition
   `env_gen_inv (e:environment_generation_store) =
-     (domain (environment_generation_store_envs e) SUBSET count
+     (sptree_domain (environment_generation_store_envs e) SUBSET count
        (environment_generation_store_next e))`;;
 
 let env_store_inv_def = new_definition
   `env_store_inv (e:environment_store) =
-     (domain (environment_store_env_gens e) SUBSET count
+     (sptree_domain (environment_store_env_gens e) SUBSET count
        (environment_store_next e))`;;
 
 let inc_compile_prog_env_submap = prove
@@ -1127,13 +1136,13 @@ let src_orac_env_invs_def = new_definition
        env_store_inv (source_to_flat_config_envs c)
          /\ environment_store_next (source_to_flat_config_envs
        c) = LENGTH (eval_oracle_state_envs s) /\
-       (!g_id id'. g_id < LENGTH (eval_oracle_state_envs s) /\ id' < LENGTH
+       (!g_id id. g_id < LENGTH (eval_oracle_state_envs s) /\ id < LENGTH
          (EL g_id (eval_oracle_state_envs s)) ==>
          (?comp_map_gen comp_map.
          sptree_lookup g_id (environment_store_env_gens
            (source_to_flat_config_envs c)) = SOME comp_map_gen /\
-         sptree_lookup id' comp_map_gen = SOME comp_map /\
-         global_env_inv genv comp_map {} (EL id' (EL g_id
+         sptree_lookup id comp_map_gen = SOME comp_map /\
+         global_env_inv genv comp_map {} (EL id (EL g_id
            (eval_oracle_state_envs s))))))
      | _ -> F)`;;
 
@@ -1889,13 +1898,13 @@ let source_to_flatProof_compile_correct = prove
        genv SUBMAP global_env_c genv' /\ global_env_tys
        genv SUBMAP global_env_tys genv' /\
        subglobals (global_env_v genv) (global_env_v genv')))) /\
-   (!((s:'ffi semanticPrimitives_state)) env ds s' r path' t idx end_idx os
+   (!((s:'ffi semanticPrimitives_state)) env ds s' r path t idx end_idx os
      comp_map (s_i1:('f_orac_st,'ffi)flatSem_state) idx'
          comp_map' ds_i1 t' genv gen gen'.
      evaluate_evaluate_decs s env ds = (s',r) /\
      source_to_flatProof_invariant interp g gen genv (idx,end_idx,os) s s_i1
        /\
-     source_to_flat_compile_decs path' t idx comp_map gen ds =
+     source_to_flat_compile_decs path t idx comp_map gen ds =
          (t',idx',comp_map',gen',ds_i1) /\
      global_env_inv genv comp_map {} env /\ ~(r = Rerr (Rabort Rtype_error))
        /\
@@ -2100,8 +2109,8 @@ let init_genv_ty_els_def = new_definition
          (nil_tag,0,TypeStamp (implode "[]") list_type_num)])]`;;
 
 let init_genv_els_def = new_definition
-  `init_genv_els = APPEND (FLAT (MAP (\(id',xs).
-         MAP (\(tag,arity,stamp). (((tag,SOME id'),arity),stamp)) xs)
+  `init_genv_els = APPEND (FLAT (MAP (\(id,xs).
+         MAP (\(tag,arity,stamp). (((tag,SOME id),arity),stamp)) xs)
      init_genv_ty_els)) [
      (((div_tag,NONE),0),div_stamp);
      (((chr_tag,NONE),0),chr_stamp);
@@ -2303,7 +2312,7 @@ let make_varls_esgc_free = prove
 let nsAll_extend_env = prove
  (`nsAll P (source_to_flat_environment_v e1) /\ nsAll P
   (source_to_flat_environment_v e2) ==> nsAll P (source_to_flat_environment_v
-  (extend_env e1 e2))`,
+  (source_to_flat_extend_env e1 e2))`,
   CHEAT_TAC);;
 
 (* compile_decs_esgc_free *)
@@ -2433,10 +2442,14 @@ let monotonic_globals_state_co_compile = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["gc";
+  ["exps";
+   "gc";
    "id";
    "path";
-   "vars"];;
+   "post";
+   "prog";
+   "test";
+   "unit"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

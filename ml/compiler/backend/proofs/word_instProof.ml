@@ -9,6 +9,7 @@
   Correctness proof for word_inst
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -23,7 +24,7 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "word_instProof"
   ["asm"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_inst"];;
 
-let _ = do_list hide_constant ["C"];;
+let _ = do_list hide_constant ["C"; "prog"];;
 
 (* resolve ambiguity between semanticsPrimitives$result and wordSem$result
    in latter's favour
@@ -228,8 +229,8 @@ let binary_branch_exp_def,binary_branch_exp_ind = define_wf
        word_Op asm_Sub exps -> ALL (binary_branch_exp) exps
      | word_Op op xs -> (LENGTH xs = 2 /\ ALL (binary_branch_exp) xs)
      | word_Load exp -> binary_branch_exp exp
-     | word_Shift shift' exp nexp -> (binary_branch_exp exp
-       /\ binary_branch_exp nexp)
+     | word_Shift backend_common_word_shift exp nexp -> (binary_branch_exp
+       exp /\ binary_branch_exp nexp)
      | exp -> T`;;
 
 (* flatten_exp syntax *)
@@ -391,7 +392,8 @@ let evaluate_three_to_two_reg_prog = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["C"];;
+  ["C";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

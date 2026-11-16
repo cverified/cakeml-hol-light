@@ -11,6 +11,7 @@
   compilation.
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
@@ -44,7 +45,8 @@ let HD_intro_multi = prove
   CHEAT_TAC);;
 add_simp HD_intro_multi;;
 
-let intro_multi_cons = prove
+(* intro_multi_cons *)
+let clos_mtiProof_intro_multi_cons = prove
  (`!xs x. intro_multi m (CONS x xs) = CONS (HD (intro_multi m [x]))
   (intro_multi m xs)`,
   CHEAT_TAC);;

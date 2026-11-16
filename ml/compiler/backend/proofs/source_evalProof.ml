@@ -2,8 +2,7 @@
 (*  source_evalProof: ported from HOL4's
     compiler/backend/proofs/source_evalProofScript.sml
     A proof theory, with 27 definitions, 1 datatype and 94 theorems.
-    Needed by backendProof.ml, source_letProof.ml,
-    source_to_flatProof.ml and source_to_sourceProof.ml.  *)
+    Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -11,6 +10,8 @@
   be switched to one that includes an oracle.
 *)
 
+needs "characteristic/cfFFIType.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
 needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
@@ -28,7 +29,7 @@ let _ = cake_theory "source_evalProof"
   ["ast"; "evaluate"; "evaluateProps"; "namespaceProps";
    "semanticPrimitives"; "semanticPrimitivesProps"; "semantics"];;
 
-let _ = do_list hide_constant ["compile_decs"; "id"];;
+let _ = do_list hide_constant ["Num"; "compile_decs"; "exps"; "id"; "prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -47,11 +48,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -62,13 +69,15 @@ let _ = hide_overloads
    "compile","word_bignum_compile";
    "compile","word_to_stack_compile";
    "compile","word_to_word_compile";
-   "init_state","init_state"];;
+   "init_state","infer_init_state";
+   "init_state","ml_prog_init_state"];;
 (* HOL4 ancestors outside the port: string *)
 
 (* The things the translator is expected to produce from the
    compiler definition etc. *)
 
-let compiler_instance_FIELDS = define_record "compiler_instance"
+let source_evalProof_compiler_instance_FIELDS =
+  define_record "source_evalProof_compiler_instance"
   ["compiler_fun","(num#num)#'config#dec list->('config#word8 list#word64 \
    list) option";
    "config_v","'config->semanticPrimitives_v";
@@ -82,20 +91,21 @@ let v_rel_abs = new_definition
 
 let mk_compiler_fun_from_ci_def = new_definition
   `mk_compiler_fun_from_ci ci (env_id,cfg_v,decs) =
-     OPTION_BIND (v_fun_abs (compiler_instance_config_dom ci)
-       (compiler_instance_config_v ci) cfg_v) (\cfg.
-     OPTION_BIND (compiler_instance_compiler_fun ci (env_id,cfg,decs))
-       (\(cfg2,bs,ws).
-     SOME (compiler_instance_config_v ci cfg2,bs,ws)))`;;
+     OPTION_BIND (v_fun_abs (source_evalProof_compiler_instance_config_dom
+       ci) (source_evalProof_compiler_instance_config_v ci) cfg_v) (\cfg.
+     OPTION_BIND (source_evalProof_compiler_instance_compiler_fun ci
+       (env_id,cfg,decs)) (\(cfg2,bs,ws).
+     SOME (source_evalProof_compiler_instance_config_v ci cfg2,bs,ws)))`;;
 
 (* HOL4 source_evalProofScript.sml:41: the overload ci_comp, which the port
    expands *)
 
 let mk_init_eval_state_def = new_definition
   `mk_init_eval_state ci = EvalDecs (mk_eval_decs_state
-  (mk_compiler_fun_from_ci ci) (compiler_instance_config_v ci
-  (compiler_instance_init_state ci)) (0,0,1) (v_fun_abs
-  (compiler_instance_decs_dom ci) (compiler_instance_decs_v ci)))`;;
+  (mk_compiler_fun_from_ci ci) (source_evalProof_compiler_instance_config_v
+  ci (source_evalProof_compiler_instance_init_state ci)) (0,0,1) (v_fun_abs
+  (source_evalProof_compiler_instance_decs_dom ci)
+  (source_evalProof_compiler_instance_decs_v ci)))`;;
 
 (* an instance of custom_do_eval that behaves as much as possible
    like the no-oracle semantics *)
@@ -116,9 +126,10 @@ let do_eval_record_def = new_definition
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec list) =
   match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
        (let ((i,_),st,_) = orac 0 in
-       (match (v_to_env_id env_id_v,v_fun_abs (compiler_instance_decs_dom
-         ci) (compiler_instance_decs_v ci) decs_v) with (SOME env_id,SOME decs)
-         ->
+       (match (v_to_env_id env_id_v,v_fun_abs
+         (source_evalProof_compiler_instance_decs_dom ci)
+         (source_evalProof_compiler_instance_decs_v ci) decs_v) with (SOME
+         env_id,SOME decs) ->
          if compiler_agrees (mk_compiler_fun_from_ci ci)
              (env_id,st_v,decs) (st_v2,bs_v,ws_v) /\ st_v = st then
          let orac' = (\j. if j = 0 then ((i + 1,0),st_v2,[])
@@ -131,14 +142,14 @@ let do_eval_record_def = new_definition
 (* a somewhat generic env rel *)
 
 let source_evalProof_env_rel_def = new_definition
-  `source_evalProof_env_rel v_rel' (env:semanticPrimitives_v sem_env) env' <=>
-  sem_env_c
+  `source_evalProof_env_rel source_evalProof_v_rel (env:semanticPrimitives_v
+  sem_env) env' <=> sem_env_c
      env = sem_env_c env' /\ nsDom (sem_env_v env) = nsDom (sem_env_v env')
        /\
      nsDomMod (sem_env_v env) = nsDomMod (sem_env_v env') /\
      (!nm x y. nsLookup (sem_env_v env) nm = SOME x /\ nsLookup (sem_env_v
        env') nm = SOME y ==>
-         v_rel' x y)`;;
+         source_evalProof_v_rel x y)`;;
 
 let env_rel_mono_rel = prove
  (`(!y z. R y z ==> R' y z) ==>
@@ -177,7 +188,8 @@ let env_rel_nsLift = prove
 
 (* HOL4 source_evalProofScript.sml:150: ML code, not ported *)
 
-let env_rel_nsAppend = prove
+(* env_rel_nsAppend *)
+let source_evalProof_env_rel_nsAppend = prove
  (`source_evalProof_env_rel R (sem_env_v_fupd (K a) env) (sem_env_v_fupd (K c)
   env') /\
    source_evalProof_env_rel R (sem_env_v_fupd (K b) env) (sem_env_v_fupd (K
@@ -186,7 +198,8 @@ let env_rel_nsAppend = prove
      (sem_env_v_fupd (K (nsAppend c d)) env')`,
   CHEAT_TAC);;
 
-let env_rel_extend_dec_env = prove
+(* env_rel_extend_dec_env *)
+let source_evalProof_env_rel_extend_dec_env = prove
  (`source_evalProof_env_rel R env1 env2 /\ source_evalProof_env_rel R env3 env4
   ==>
    source_evalProof_env_rel R (extend_dec_env env1 env3) (extend_dec_env
@@ -283,19 +296,20 @@ let s_rel_def = new_definition
    orac_s' = do_eval_record ci /\ eval_decs_state_compiler_state
    dec_s = (FST (SND (eval_oracle_state_oracle orac_s' 0)))
      /\ eval_decs_state_decode_decs
-   dec_s = v_fun_abs (compiler_instance_decs_dom ci)
-     (compiler_instance_decs_v ci) /\ eval_decs_state_compiler
+   dec_s = v_fun_abs (source_evalProof_compiler_instance_decs_dom ci)
+     (source_evalProof_compiler_instance_decs_v ci) /\ eval_decs_state_compiler
    dec_s = mk_compiler_fun_from_ci ci /\
    (
     // (0 < FST (FST (orac_s.oracle 0)) ==>
     // (FST (SND (orac_s.oracle 1))) = init_eds.compiler_state) /\
     0 = FST (FST (eval_oracle_state_oracle orac_s' 0)) ==>
       eval_decs_state_compiler_state
-     dec_s = compiler_instance_config_v ci (compiler_instance_init_state
-       ci)) /\
+     dec_s = source_evalProof_compiler_instance_config_v ci
+       (source_evalProof_compiler_instance_init_state ci)) /\
    (0 < FST (FST (eval_oracle_state_oracle orac_s' 0)) ==>
      FST (SND (eval_oracle_state_oracle orac_s' 1)) =
-       compiler_instance_config_v ci (compiler_instance_init_state ci))
+       source_evalProof_compiler_instance_config_v ci
+       (source_evalProof_compiler_instance_init_state ci))
        /\ eval_decs_state_env_id_counter
    dec_s = (eval_oracle_state_generation orac_s',
          LENGTH (EL (eval_oracle_state_generation orac_s')
@@ -382,8 +396,8 @@ let store_lookup_rel = prove
    below antiquote *)
 
 let s_rel_store_lookup = prove
- (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ j = i /\ es =
-  orac_s (semanticPrimitives_state_eval_state t) ==>
+ (`source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+  /\ j = i /\ es = orac_s (semanticPrimitives_state_eval_state t) ==>
    OPTREL (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel es))
      (store_lookup i (semanticPrimitives_state_refs s)) (store_lookup j
      (semanticPrimitives_state_refs t))`,
@@ -401,9 +415,9 @@ let v_to_env_id_SOME = prove
   CHEAT_TAC);;
 
 let pmatch = prove
- (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ es = orac_s
-  (semanticPrimitives_state_eval_state t) /\ source_evalProof_env_rel
-  (source_evalProof_v_rel es) env env' ==>
+ (`source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+  /\ es = orac_s (semanticPrimitives_state_eval_state t)
+  /\ source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
    (!env_c s_refs p x binds y binds'.
    s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c env /\
    source_evalProof_v_rel es x y /\
@@ -428,7 +442,7 @@ let pmatch = prove
 let pmatch_drule_form = prove
  (`semanticPrimitives_pmatch (sem_env_c env) (semanticPrimitives_state_refs s)
   p x [] = res /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
      /\ source_evalProof_env_rel (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) env env' /\
    source_evalProof_v_rel (orac_s (semanticPrimitives_state_eval_state t)) x
@@ -442,7 +456,8 @@ let pmatch_drule_form = prove
 
 let can_pmatch_all = prove
  (`can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs s) pats x /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+     /\
    source_evalProof_env_rel (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) env env' /\
    source_evalProof_v_rel (orac_s (semanticPrimitives_state_eval_state t)) x
@@ -452,7 +467,7 @@ let can_pmatch_all = prove
   CHEAT_TAC);;
 
 (* Num_11 *)
-let num_11 = prove
+let source_evalProof_Num_11 = prove
  (`(&0) <= i /\ (&0) <= j ==> (num_of_int i = num_of_int j) = (i = j)`,
   CHEAT_TAC);;
 
@@ -484,7 +499,8 @@ let store_lookup = prove
    store_lookup n refs' = SOME sv')`,
   CHEAT_TAC);;
 
-let v_rel_list_to_v = prove
+(* v_rel_list_to_v *)
+let source_evalProof_v_rel_list_to_v = prove
  (`!xs ys.
    source_evalProof_v_rel es (semanticPrimitives_list_to_v xs)
      (semanticPrimitives_list_to_v ys) <=>
@@ -532,7 +548,8 @@ let LIST_REL_v_rel_check_type = prove
 let do_app_sim = prove
  (`semanticPrimitives_do_app (semanticPrimitives_state_refs
   s,semanticPrimitives_state_ffi s) op (REVERSE xs) = SOME ((refs,ffi),r) /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+     /\
    ALL2 (source_evalProof_v_rel (orac_s (semanticPrimitives_state_eval_state
      t))) xs ys /\ ~(r = Rerr (Rabort Rtype_error)) ==>
    (?ref1 refs' r' es.
@@ -551,8 +568,8 @@ let pairarg_to_pair_map = prove
   CHEAT_TAC);;
 
 let s_rel_clock = prove
- (`source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t ==>
-  semanticPrimitives_state_clock s = semanticPrimitives_state_clock t /\
+ (`source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+  ==> semanticPrimitives_state_clock s = semanticPrimitives_state_clock t /\
      source_evalProof_s_rel ci (evaluate_dec_clock s) (evaluate_dec_clock
        t)`,
   CHEAT_TAC);;
@@ -603,8 +620,8 @@ let recorded_orac_wf_step = prove
 let do_eval_sim = prove
  (`semanticPrimitives_do_eval (REVERSE xs) (semanticPrimitives_state_eval_state
   s) = SOME (env,decs,es) /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) (s:'a
-     semanticPrimitives_state) t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance))
+     (s:'a semanticPrimitives_state) t /\
    ALL2 (source_evalProof_v_rel (orac_s (semanticPrimitives_state_eval_state
      t))) xs ys ==>
    (?env' es'.
@@ -639,7 +656,8 @@ let do_eval_sim = prove
 
 let declare_env_sim = prove
  (`declare_env (semanticPrimitives_state_eval_state s) env = SOME (v,es) /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+     /\
    source_evalProof_env_rel (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) env env' ==>
    (?v' es2.
@@ -688,7 +706,8 @@ let env_rel_imp_c = prove
 let eval_simulation = prove
  (`(!((s:'ffi semanticPrimitives_state)) env exps s' res es t env'.
    evaluate s env exps = (s',res) /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+     /\
    source_evalProof_env_rel (source_evalProof_v_rel (orac_s
      (semanticPrimitives_state_eval_state t))) env env' /\ ~(res = Rerr (Rabort
      Rtype_error)) ==>
@@ -836,8 +855,8 @@ let is_record_def = new_definition
      | _ -> F)`;;
 
 let is_record_IMP = prove
- (`is_record ((ci:'cfg compiler_instance)) es ==> (?orac_st. es = SOME
-  (EvalOracle orac_st))`,
+ (`is_record ((ci:'cfg source_evalProof_compiler_instance)) es ==> (?orac_st.
+  es = SOME (EvalOracle orac_st))`,
   CHEAT_TAC);;
 
 let insert_do_eval = prove
@@ -894,7 +913,7 @@ let reset_env_generation_orac_eqs = prove
 let evaluate_is_record_forward = prove
  (`(!((s:'ffi semanticPrimitives_state)) env exps s' res.
    evaluate s env exps = (s',res) /\
-   is_record ((ci:'cfg compiler_instance))
+   is_record ((ci:'cfg source_evalProof_compiler_instance))
      (semanticPrimitives_state_eval_state s) ==>
    is_record ci (semanticPrimitives_state_eval_state s') /\
    record_forward (semanticPrimitives_state_eval_state s)
@@ -1059,7 +1078,7 @@ let evaluate_decs_clock_record_common_prefix = prove
  (`evaluate_evaluate_decs s env decs = (s',res) /\
    evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k) s) env
      decs = (s'',res') /\
-   is_record ((ci:'cfg compiler_instance))
+   is_record ((ci:'cfg source_evalProof_compiler_instance))
      (semanticPrimitives_state_eval_state s) /\
    j < FST (FST (eval_oracle_state_oracle (orac_s
      (semanticPrimitives_state_eval_state s')) 0)) /\
@@ -1081,7 +1100,8 @@ let recorded_orac_wf_defined = prove
 let extract_oracle_agrees = prove
  (`evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k) t) env
   decs = (t',res) /\
-   source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+   source_evalProof_s_rel ((ci:'cfg source_evalProof_compiler_instance)) s t
+     /\
    (!i r. extract_oracle t env decs i = SOME r /\ ~(mk_compiler_fun_from_ci
      ci r = NONE) ==>
      orac i = r) ==>
@@ -1091,16 +1111,18 @@ let extract_oracle_agrees = prove
 let get_oracle_def = new_definition
   `get_oracle ci s env decs =
      let es_record = EvalOracle (mk_eval_oracle_state (K
-       ((0,0),compiler_instance_config_v ci (compiler_instance_init_state
-       ci),[])) (do_eval_record ci) [[]] 0) in
+       ((0,0),source_evalProof_compiler_instance_config_v ci
+       (source_evalProof_compiler_instance_init_state ci),[])) (do_eval_record
+       ci) [[]] 0) in
      extract_oracle (semanticPrimitives_state_eval_state_fupd (K (SOME
        es_record)) s) env decs`;;
 
 let put_oracle_def = new_definition
   `put_oracle ci orac = ((\ci. insert_gen_oracle ci I (FST o FST)) ci orac
      (SOME (EvalOracle (mk_eval_oracle_state (K
-       ((0,0),compiler_instance_config_v ci (compiler_instance_init_state
-       ci),[])) (do_eval_record ci) [[]] 0))))`;;
+       ((0,0),source_evalProof_compiler_instance_config_v ci
+       (source_evalProof_compiler_instance_init_state ci),[]))
+       (do_eval_record ci) [[]] 0))))`;;
 
 let result_rel_IMP_cases = prove
  (`semanticPrimitivesProps_result_rel r_rel e_rel r r' ==>
@@ -1137,8 +1159,8 @@ let extract_oracle_0_st = prove
    ~(semantics_prog s env decs ffi_Fail) /\
    source_evalProof_s_rel ci s t /\
    nsAll (K concrete_v) (sem_env_v env) ==>
-   FST (SND r) = compiler_instance_config_v ci
-     (compiler_instance_init_state ci)`,
+   FST (SND r) = source_evalProof_compiler_instance_config_v ci
+     (source_evalProof_compiler_instance_init_state ci)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1169,8 +1191,8 @@ let get_oracle_props = prove
    s = SOME (mk_init_eval_state ci) /\
    ~(semantics_prog s env decs ffi_Fail) ==>
    (!r. get_oracle ci s env decs 0 = SOME r ==>
-     FST (SND r) = compiler_instance_config_v ci
-       (compiler_instance_init_state ci)) /\
+     FST (SND r) = source_evalProof_compiler_instance_config_v ci
+       (source_evalProof_compiler_instance_init_state ci)) /\
    (!i r'. get_oracle ci s env decs (SUC i) = SOME r' ==>
      (?r x. get_oracle ci s env decs i = SOME r /\ mk_compiler_fun_from_ci
        ci r = SOME x /\
@@ -1196,8 +1218,8 @@ let oracle_semantics_prog = prove
    semantics_prog (semanticPrimitives_state_eval_state_fupd (K (put_oracle
      ci orac)) s1)
      env decs outcome /\
-   precond_eval_state orac ((ci:'cfg compiler_instance)) s1 env decs
-     /\ semanticPrimitives_state_refs
+   precond_eval_state orac ((ci:'cfg source_evalProof_compiler_instance)) s1
+     env decs /\ semanticPrimitives_state_refs
    s1 = [] /\
    nsAll (K concrete_v) (sem_env_v env) ==>
    semantics_prog s1 env decs outcome`,
@@ -1332,8 +1354,11 @@ let adjust_oracle_semantics_prog = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["compile_decs";
-   "id"];;
+  ["Num";
+   "compile_decs";
+   "exps";
+   "id";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -9,6 +9,7 @@
   Correctness proof for bvl_to_bvi
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tailrec.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
@@ -41,7 +42,7 @@ let _ = cake_theory "bvl_to_bviProof"
    "bvl_constProof"; "bvl_handleProof"; "bvl_inlineProof"; "bvl_to_bvi";
    "ffi"];;
 
-let _ = do_list hide_constant ["id"; "parts"];;
+let _ = do_list hide_constant ["id"; "parts"; "prog"];;
 
 let _ = do_list hide_constant ["str"];;
 
@@ -110,12 +111,12 @@ let bvl_to_bviProof_names_ok_def = new_definition
      (!n k prog. s_oracle n = (k,prog) ==>
                  ALL (\(name,arity,exp). handle_ok [exp]) prog) /\
      (let next' = FST (FST (s_oracle 0)) in
-       (!n. n IN domain t_code /\ bvl_num_stubs <= n ==>
+       (!n. n IN sptree_domain t_code /\ bvl_num_stubs <= n ==>
             (if (\n. n MOD bvl_to_bvi_namespaces = 1) n then n <
               bvl_num_stubs + bvl_to_bvi_namespaces * next'
             else (\n. n MOD bvl_to_bvi_namespaces = 0) n /\
-                 (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN domain
-                   s_code)))`;;
+                 (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN
+                   sptree_domain s_code)))`;;
 
 let bvl_to_bviProof_state_rel_def = new_definition
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state) <=>
@@ -239,7 +240,7 @@ let bv_ok_IMP_adjust_bv_eq = prove
        (adjust_bv b2 a1 = adjust_bv b3 a1)`,
   CHEAT_TAC);;
 
-let state_ok_def = new_definition
+let bvl_to_bviProof_state_ok_def = new_definition
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
      ALL (\x. match x with NONE -> T | SOME v -> bv_ok (bvlSem_state_refs s)
        v) (bvlSem_state_globals s) /\
@@ -304,7 +305,8 @@ let do_app_ok_lemma = prove
    bvl_to_bviProof_state_ok t /\ bv_ok (bvlSem_state_refs t) q`,
   CHEAT_TAC);;
 
-let do_app_ok = prove
+(* do_app_ok *)
+let bvl_to_bviProof_do_app_ok = prove
  (`bvl_to_bviProof_state_ok r /\ ALL (bv_ok (bvlSem_state_refs r)) a /\
     (bvlSem_do_app op a r = Rval (q,t)) ==>
     bvl_to_bviProof_state_ok t /\ bv_ok (bvlSem_state_refs t) q /\
@@ -325,7 +327,8 @@ let find_code_bv_ok = prove
       refs) args`,
   CHEAT_TAC);;
 
-let evaluate_ok = prove
+(* evaluate_ok *)
+let bvl_to_bviProof_evaluate_ok = prove
  (`!xs env s res t.
       (bvlSem_evaluate (xs,env,s) = (res,t)) /\
       bvl_to_bviProof_state_ok s /\ ALL (bv_ok (bvlSem_state_refs s)) env
@@ -642,10 +645,10 @@ let eval_ind_alt = prove
            bvlSem_find_code (SOME force_loc) [thunk_v; v] (bvlSem_state_code
              s) = SOME v' /\
            v' = (args,exp) /\ ~(bvlSem_state_clock s = 0) ==>
-           P ([exp],args,bviSem_dec_clock 1 s)) ==>
+           P ([exp],args,bvlSem_dec_clock 1 s)) ==>
         P ([bvl_Force force_loc n],env,s)) /\
      (!x env s.
-        (~(bvlSem_state_clock s = 0) ==> P ([x],env,bviSem_dec_clock 1 s))
+        (~(bvlSem_state_clock s = 0) ==> P ([x],env,bvlSem_dec_clock 1 s))
           ==>
         P ([bvl_Tick x],env,s)) /\
      (!ticks dest xs env s1.
@@ -654,7 +657,7 @@ let eval_ind_alt = prove
            bvlSem_find_code dest vs (bvlSem_state_code s) = SOME v /\ v =
              (args,exp) /\
            ~(bvlSem_state_clock s < ticks + 1) ==>
-           P ([exp],args,bviSem_dec_clock (ticks + 1) s)) /\ P (xs,env,s1)
+           P ([exp],args,bvlSem_dec_clock (ticks + 1) s)) /\ P (xs,env,s1)
              ==>
         P ([bvl_Call ticks dest xs],env,s1)) ==>
      (!v v1 v2. P (v,v1,(v2:('c,'ffi)bvlSem_state)))`,
@@ -868,12 +871,12 @@ let names_nss_DIV_nss = prove
 (* [local] *)
 let call_SOME_handler_result = prove
  (`!f g r t.
-     (match map_result f (\v. Exn (g v)) r with
+     (match map_result f (\v. bviSem_Exn (g v)) r with
         Rval v6 -> (Rval v6,t)
-      | Rerr (Rraise (Exn v14)) -> (Rerr (Rraise (Exn v14)),t)
-      | Rerr (Rraise (Ret v15)) -> (Rerr (Rabort Rtype_error),t)
+      | Rerr (Rraise (bviSem_Exn v14)) -> (Rerr (Rraise (bviSem_Exn v14)),t)
+      | Rerr (Rraise (bviSem_Ret v15)) -> (Rerr (Rabort Rtype_error),t)
       | Rerr (Rabort v11) -> (Rerr (Rabort v11),t)) =
-     (map_result f (\v. Exn (g v)) r,t)`,
+     (map_result f (\v. bviSem_Exn (g v)) r,t)`,
   CHEAT_TAC);;
 
 (* HOL4 bvl_to_bviProofScript.sml:2182: ML code, not ported *)
@@ -894,8 +897,8 @@ let compile_exps_correct = prove
      (?t2 b2 c.
         (bviSem_evaluate (ys,MAP (adjust_bv b2) env,bviProps_inc_clock c t1)
           =
-           (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
-             res,t2)) /\
+           (map_result (MAP (adjust_bv b2)) (\v. bviSem_Exn (adjust_bv b2
+             v)) res,t2)) /\
         bvl_to_bviProof_state_rel b2 s2 t2 /\
         (MAP (adjust_bv b1) env = MAP (adjust_bv b2) env) /\
         (!a. a IN FDOM (bvlSem_state_refs s1) ==> (b1 a = b2 a)))`,
@@ -942,8 +945,8 @@ let compile_single_evaluate = prove
        bviSem_evaluate ([bvi_Call 0 (SOME (bvl_num_stubs +
          bvl_to_bvi_namespaces * start)) [] NONE],[],bviProps_inc_clock ck t1)
          =
-         (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
-           res,t2) /\
+         (map_result (MAP (adjust_bv b2)) (\v. bviSem_Exn (adjust_bv b2
+           v)) res,t2) /\
        bvl_to_bviProof_state_rel b2 s2 (t2:('c,'ffi)bviSem_state))`),
   CHEAT_TAC);;
 
@@ -968,7 +971,8 @@ let bvi_stubs_evaluate = prove
           start' kk) code)) co cc (k + 1)) =
    (let (r,s) = bviSem_evaluate ([bvi_Call 0 (SOME start') [] NONE],[],t0)
      in
-     ((match r with Rerr (Rraise (Exn v)) -> Rval [v] | _ -> r),s)))`,
+     ((match r with Rerr (Rraise (bviSem_Exn v)) -> Rval [v] | _ ->
+       r),s)))`,
   CHEAT_TAC);;
 
 let compile_list_distinct_locs = prove
@@ -1008,7 +1012,7 @@ let bvl_to_bviProof_compile_prog_evaluate = prove
      bviSem_evaluate ([bvi_Call 0 (SOME start') [] NONE],[],
                bviSem_initial_state ffi0 (fromAList prog') (state_co
                  bvl_to_bvi_compile_inc co) cc (k + ck)) =
-       (map_result (MAP (adjust_bv b2)) (\v. Exn (adjust_bv b2 v))
+       (map_result (MAP (adjust_bv b2)) (\v. bviSem_Exn (adjust_bv b2 v))
          (match r with Rerr (Rraise v) -> Rval [v] | _ -> r),s2) /\
      bvl_to_bviProof_state_rel b2 s (s2:('c,'ffi)bviSem_state))`),
   CHEAT_TAC);;
@@ -1023,11 +1027,11 @@ let bvl_to_bviProof_compile_prog_semantics = prove
      handle_ok (MAP (SND o SND) prog) /\
      (!n. ALL ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
      n' <= FST (FST ((co:num->(num#'c)#(num#num#bvl_exp) list) 0))
-       /\ ~(bviSem_semantics (ffi0:'ffi ffi_state) (fromAList prog) co
+       /\ ~(bvlSem_semantics (ffi0:'ffi ffi_state) (fromAList prog) co
        (state_cc bvl_to_bvi_compile_inc cc) start = ffi_Fail) ==>
      bviSem_semantics ffi0 (fromAList prog') (state_co
        bvl_to_bvi_compile_inc co) cc start' =
-     bviSem_semantics ffi0 (fromAList prog) co (state_cc
+     bvlSem_semantics ffi0 (fromAList prog) co (state_cc
        bvl_to_bvi_compile_inc cc) start`),
   CHEAT_TAC);;
 
@@ -1465,6 +1469,7 @@ let compile_prog_code_labels_domain = prove
 let _ = do_list unhide_constant
   ["id";
    "parts";
+   "prog";
    "str"];;
 
 (* and the interface *)

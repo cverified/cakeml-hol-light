@@ -19,14 +19,14 @@ let _ = cake_theory "tokenUtils"
 
 
 let isInt_def = new_definition
-  `isInt x1 =
+  `tokenUtils_isInt x1 =
    match x1 with
      tokens_IntT i -> T
    | _ -> F`;;
 add_simp isInt_def;;
 
 let isString_def = new_definition
-  `isString x1' =
+  `tokenUtils_isString x1' =
    match x1' with
      tokens_StringT _ -> T
    | _ -> F`;;
@@ -110,7 +110,7 @@ let destTyvarPT_def = new_definition
 add_simp destTyvarPT_def;;
 
 let destLf_def = new_definition
-  `destLf x1'''''''''''' =
+  `tokenUtils_destLf x1'''''''''''' =
      match x1'''''''''''' with
        Lf (x,_) -> SOME x
      | _ -> NONE`;;

@@ -42,7 +42,8 @@ let arm7_names_def = new_definition
 
 (* [allow_rebind] *)
 let arm7_config_arm7_names_def =
-  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def; the_def])) arm7_names_def;;
+  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def; the_def; return_def]))
+  arm7_names_def;;
 
 (* HOL4 arm7_configScript.sml:35-41: the ML values that the definitions
    below antiquote *)

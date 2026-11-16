@@ -2,8 +2,7 @@
 (*  word_simp: ported from HOL4's
     compiler/backend/word_simpScript.sml
     A definition theory, with 25 definitions and 7 theorems.  Needed
-    by wordConvsProof.ml, word_cseProof.ml, word_simpProof.ml and
-    word_to_word.ml.  *)
+    by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -20,12 +19,12 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_simp"
   ["asm"; "wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"; "prog"];;
 
 (* function that makes all Seq associate to the left *)
 
 let SmartSeq_def = new_definition
-  `SmartSeq p1 (p2:'a word_prog) =
+  `word_simp_SmartSeq p1 (p2:'a word_prog) =
      if p1 = word_Skip then p2 else word_Seq p1 p2`;;
 
 make_size "word_prog";;
@@ -38,12 +37,12 @@ let seq_assoc_def,seq_assoc_ind = define_wf
        word_Skip -> p1
      | word_Seq q1 q2 -> Seq_assoc (Seq_assoc p1 q1) q2
      | word_If v n r q1 q2 ->
-        SmartSeq p1 (word_If v n r (Seq_assoc word_Skip q1) (Seq_assoc
-          word_Skip q2))
+        word_simp_SmartSeq p1 (word_If v n r (Seq_assoc word_Skip q1)
+          (Seq_assoc word_Skip q2))
      | word_MustTerminate q ->
-        SmartSeq p1 (word_MustTerminate (Seq_assoc word_Skip q))
+        word_simp_SmartSeq p1 (word_MustTerminate (Seq_assoc word_Skip q))
      | word_Call ret_prog dest args handler ->
-        SmartSeq p1 (word_Call (match ret_prog with NONE -> NONE
+        word_simp_SmartSeq p1 (word_Call (match ret_prog with NONE -> NONE
               | SOME (x1,x2,q1,x3,x4) -> SOME (x1,x2,Seq_assoc word_Skip
                 q1,x3,x4))
           dest args
@@ -51,8 +50,9 @@ let seq_assoc_def,seq_assoc_ind = define_wf
               | SOME (y1,q2,y2,y3) -> SOME (y1,Seq_assoc word_Skip
                 q2,y2,y3)))
      | word_Loop names body exit_names ->
-        SmartSeq p1 (word_Loop names (Seq_assoc word_Skip body) exit_names)
-     | other -> SmartSeq p1 other`;;
+        word_simp_SmartSeq p1 (word_Loop names (Seq_assoc word_Skip body)
+          exit_names)
+     | other -> word_simp_SmartSeq p1 other`;;
 
 (* Seq_assoc_pmatch *)
 let seq_assoc_pmatch = prove
@@ -61,20 +61,21 @@ let seq_assoc_pmatch = prove
    match prog with word_Skip -> p1
    | (word_Seq q1 q2) -> Seq_assoc (Seq_assoc p1 q1) q2
    | (word_If v n r q1 q2) ->
-      SmartSeq p1 (word_If v n r (Seq_assoc word_Skip q1) (Seq_assoc
-        word_Skip q2))
+      word_simp_SmartSeq p1 (word_If v n r (Seq_assoc word_Skip q1)
+        (Seq_assoc word_Skip q2))
    | (word_MustTerminate q) ->
-      SmartSeq p1 (word_MustTerminate (Seq_assoc word_Skip q))
+      word_simp_SmartSeq p1 (word_MustTerminate (Seq_assoc word_Skip q))
    | (word_Call ret_prog dest args handler) ->
-      SmartSeq p1 (word_Call (match ret_prog with NONE -> NONE
+      word_simp_SmartSeq p1 (word_Call (match ret_prog with NONE -> NONE
             | SOME (x1,x2,q1,x3,x4) -> SOME (x1,x2,Seq_assoc word_Skip
               q1,x3,x4))
         dest args
            (match handler with NONE -> NONE
             | SOME (y1,q2,y2,y3) -> SOME (y1,Seq_assoc word_Skip q2,y2,y3)))
    | (word_Loop names body exit_names) ->
-      SmartSeq p1 (word_Loop names (Seq_assoc word_Skip body) exit_names)
-   | other -> SmartSeq p1 other`,
+      word_simp_SmartSeq p1 (word_Loop names (Seq_assoc word_Skip body)
+        exit_names)
+   | other -> word_simp_SmartSeq p1 other`,
   CHEAT_TAC);;
 
 (* optimise certain consequtive If statements that arise from data-to-word
@@ -263,8 +264,8 @@ let drop_consts_def,drop_consts_ind = define_rec
   `(drop_consts cs [] = word_Skip) /\
    (drop_consts cs (CONS n ns) =
       match sptree_lookup n cs with NONE -> drop_consts cs ns
-      | SOME w -> SmartSeq (drop_consts cs ns) (word_Assign n
-          (word_Const w)))`;;
+      | SOME w -> word_simp_SmartSeq (drop_consts cs ns) (word_Assign
+          n (word_Const w)))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
@@ -298,31 +299,31 @@ let const_fp_loop_def,const_fp_loop_ind = define_wf
                  let (p2',p2cs) = const_fp_loop p2 cs in
                   (word_If cmp lhs rhs p1' p2',inter_eq p1cs p2cs)))
      | word_Call ret dest args handler ->
-       (match ret with NONE -> (SmartSeq (drop_consts cs args) (word_Call
-         ret dest args handler),
+       (match ret with NONE -> (word_simp_SmartSeq (drop_consts cs args)
+         (word_Call ret dest args handler),
                     filter_v is_gc_const cs)
          | SOME (n,names,ret_handler,l1,l2) ->
            (if handler = NONE then
               (let cs' = (\n l. ITLIST sptree_delete n l) n (filter_v
                 is_gc_const (inter cs (all_names names))) in
                let (ret_handler',cs'') = const_fp_loop ret_handler cs' in
-                 (SmartSeq (drop_consts cs args)
+                 (word_simp_SmartSeq (drop_consts cs args)
                    (word_Call (SOME (n,names,ret_handler',l1,l2)) dest args
                      handler),cs''))
-            else (SmartSeq (drop_consts cs args)
+            else (word_simp_SmartSeq (drop_consts cs args)
                 (word_Call ret dest args handler),LN)))
      | word_FFI x0 x1 x2 x3 x4 names ->
-       (SmartSeq (drop_consts cs [x1; x2; x3; x4]) (word_FFI x0 x1 x2 x3 x4
-         names),inter cs (all_names names))
+       (word_simp_SmartSeq (drop_consts cs [x1; x2; x3; x4]) (word_FFI x0 x1
+         x2 x3 x4 names),inter cs (all_names names))
      | word_LocValue v x3 -> (word_LocValue v x3,sptree_delete v cs)
      | word_Alloc n names ->
-       (SmartSeq (drop_consts cs [n]) (word_Alloc n names),filter_v
-         is_gc_const (inter cs (all_names names)))
+       (word_simp_SmartSeq (drop_consts cs [n]) (word_Alloc n
+         names),filter_v is_gc_const (inter cs (all_names names)))
      | word_StoreConsts a b c d ws -> (word_StoreConsts a b c d
        ws,sptree_delete a (sptree_delete b (sptree_delete c (sptree_delete d
        cs))))
      | word_Install r1 r2 r3 r4 names ->
-       (SmartSeq (drop_consts cs [r1; r2; r3; r4])
+       (word_simp_SmartSeq (drop_consts cs [r1; r2; r3; r4])
          (word_Install r1 r2 r3 r4 names),sptree_delete r1 (filter_v
            is_gc_const (inter cs (all_names names))))
      | word_Store e v ->
@@ -397,13 +398,13 @@ let is_simple_pmatch_def = new_definition
    what the port found for it *)
 let try_if_hoist2_def,try_if_hoist2_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3,x4). (\n. n) x0)`
-  `try_if_hoist2 N p1 interm dummy' p2 = if N = 0 then NONE
+  `try_if_hoist2 N p1 interm dummy p2 = if N = 0 then NONE
    else match p1 with word_If cmp lhs rhs br1 br2 ->
        let res1 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (word_Seq (word_Seq br1 interm) dummy')))) in
+         (word_Seq (word_Seq br1 interm) dummy)))) in
        if res1 = 0 then NONE
        else let res2 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (word_Seq (word_Seq br2 interm) dummy')))) in
+         (word_Seq (word_Seq br2 interm) dummy)))) in
        if ~(res1 + res2 = 3) then NONE
        else SOME (const_fp (word_If cmp lhs rhs (word_Seq (word_Seq br1
          interm) p2)
@@ -411,25 +412,25 @@ let try_if_hoist2_def,try_if_hoist2_ind = define_wf
      | word_Seq p3 p4 -> (
        match dest_If p4 with SOME (cmp,lhs,rhs,br1,br2) ->
        let res1 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (word_Seq (word_Seq br1 interm) dummy')))) in
+         (word_Seq (word_Seq br1 interm) dummy)))) in
        if res1 = 0 then NONE
        else let res2 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (word_Seq (word_Seq br2 interm) dummy')))) in
+         (word_Seq (word_Seq br2 interm) dummy)))) in
        if ~(res1 + res2 = 3) then NONE
        else SOME (word_Seq p3 (const_fp (word_If cmp lhs rhs (word_Seq
          (word_Seq br1 interm) p2)
            (word_Seq (word_Seq br2 interm) p2))))
        | NONE ->
        if is_simple p4 then try_if_hoist2 (N - 1) p3 (word_Seq p4 interm)
-         dummy' p2
+         dummy p2
        else NONE)
      | _ -> NONE`;;
 
 let try_if_hoist1_def = new_definition
   `try_if_hoist1 p1 p2 = (match dest_If p2 with NONE -> NONE
    | SOME (cmp,lhs,rhs,_,_) -> (
-     let dummy' = word_If cmp lhs rhs (word_Raise 1) (word_Raise 2) in
-     try_if_hoist2 rewrite_duplicate_if_max_reassoc p1 word_Skip dummy'
+     let dummy = word_If cmp lhs rhs (word_Raise 1) (word_Raise 2) in
+     try_if_hoist2 rewrite_duplicate_if_max_reassoc p1 word_Skip dummy
        p2))`;;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -503,7 +504,8 @@ let word_simp_compile_exp_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch"];;
+  ["pmatch";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

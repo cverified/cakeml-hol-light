@@ -10,6 +10,7 @@
   about the compiler backend.
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
@@ -17,6 +18,8 @@ needs "semantics/typeSystem.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "backendProps"
   ["misc"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 let state_cc_def = new_definition
   `state_cc f cc =
@@ -359,6 +362,10 @@ let OPTION_MAP2_MAX_ASSOC = prove
  (`OPTION_MAP2 MAX x (OPTION_MAP2 MAX y z) =
    OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) z`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -2,7 +2,7 @@
 (*  wordLang: ported from HOL4's
     compiler/backend/wordLangScript.sml
     A definition theory, with 15 definitions, 3 datatypes and 3
-    theorems.  Needed by 41 files of the port.  *)
+    theorems.  Needed by 45 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -30,7 +30,7 @@ let word_exp_INDUCT,word_exp_RECURSION = define_datatype
    | word_Var num
    | word_Lookup store_name
    | word_Load word_exp
-   | word_Op binop (word_exp list)
+   | word_Op asm_binop (word_exp list)
    | word_Shift word_shift word_exp word_exp";;
 
 (* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port expands *)
@@ -71,7 +71,7 @@ let word_prog_INDUCT,word_prog_RECURSION = define_datatype
    | word_Break num
    | word_Continue num
    | word_Tick
-   | word_OpCurrHeap binop num num
+   | word_OpCurrHeap asm_binop num num
      // special case compiled well in stackLang
    | word_LocValue num num
      // assign v1 := Loc v2 0
@@ -122,13 +122,13 @@ let every_var_imm_def = new_definition
      | _ -> T`;;
 
 let every_var_inst_def = new_definition
-  `every_var_inst P inst' =
-     match inst' with
+  `every_var_inst P inst =
+     match inst with
        asm_Const reg w -> P reg
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
-     | asm_Arith (asm_Shift shift' r1 r2 ri) -> (P r1 /\ P r2
-       /\ every_var_imm P ri)
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) -> (P r1
+       /\ P r2 /\ every_var_imm P ri)
      | asm_Arith (asm_Div r1 r2 r3) -> (P r1 /\ P r2 /\ P r3)
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> (P r1 /\ P r2 /\ P r3 /\ P
        r4)
@@ -154,7 +154,7 @@ let every_var_inst_def = new_definition
      | asm_FP (FPMovFromReg d r1 r2) ->
        if dimindex (:'a) = 64 then P r1
        else (P r1 /\ P r2)
-     | inst' -> T`;;
+     | inst -> T`;;
 (*catchall*)
 
 let every_name_def = new_definition
@@ -268,7 +268,7 @@ let max_var_inst_def = new_definition
      | asm_Const reg w -> reg
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
-     | asm_Arith (asm_Shift shift' r1 r2 n) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 n) ->
        (match n with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
      | asm_Arith (asm_Div r1 r2 r3) -> max3 r1 r2 r3
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> MAX (MAX r1 r2) (MAX r3 r4)

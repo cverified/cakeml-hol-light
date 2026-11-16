@@ -9,6 +9,7 @@
   Properties about stackLang and its semantics
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -21,6 +22,8 @@ needs "semantics/ast.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "stackProps"
   ["backendProps"; "stackSem"; "stack_names"];;
+
+let _ = do_list hide_constant ["exps"; "prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -1154,6 +1157,11 @@ let no_shmemop_def,no_shmemop_ind = define_wf
      | stack_Loop p -> no_shmemop p
      | stack_ShMemOp _ _ _ -> F
      | _ -> T`;;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

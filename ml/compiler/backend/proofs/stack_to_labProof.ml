@@ -9,6 +9,7 @@
   Correctness proof for stack_to_lab
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/data_to_word.ml";;
@@ -49,6 +50,8 @@ let _ = cake_theory "stack_to_labProof"
    "stack_namesProof"; "stack_rawcallProof"; "stack_removeProof";
    "stack_to_lab"; "wordProps"; "wordSem"; "word_to_stackProof"];;
 
+let _ = do_list hide_constant ["prog"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -84,13 +87,13 @@ let asm_fetch_aux_no_label = prove
 
 let dest_to_loc_def = new_definition
   `dest_to_loc regs' dest =
-     match dest with INL p -> p | INR r -> (match FAPPLY regs' r with
-       word_Loc loc _ -> loc)`;;
+     match dest with sum_INL p -> p | sum_INR r -> (match FAPPLY regs' r
+       with word_Loc loc _ -> loc)`;;
 
 let dest_to_loc'_def = new_definition
   `dest_to_loc' regs' dest =
-     match dest with INL p -> p | INR r -> (match regs' r with word_Loc
-       loc _ -> loc)`;;
+     match dest with sum_INL p -> p | sum_INR r -> (match regs' r with
+       word_Loc loc _ -> loc)`;;
 
 (* the names of record fields that this statement uses for
    variables of its own are read as variables *)
@@ -98,7 +101,7 @@ let find_code_lookup = prove
  (cake_as_vars (fun () ->
     `stackSem_find_code dest regs code = SOME p ==>
       sptree_lookup (dest_to_loc regs dest) code = SOME p /\
-      (!r. dest = INR r ==> r IN FDOM regs)`),
+      (!r. dest = sum_INR r ==> r IN FDOM regs)`),
   CHEAT_TAC);;
 
 let not_is_Label_compile_jump = prove
@@ -395,7 +398,7 @@ let stack_to_labProof_state_rel_def = new_definition
                 [] []))) (labSem_state_code t) /\
             loc_to_pc n 0 (labSem_state_code t) = SOME pc')) /\
      // These two conjuncts are needed for Install
-     domain (stackSem_state_code s) = set_of_list (MAP Section_num
+     sptree_domain (stackSem_state_code s) = set_of_list (MAP Section_num
        (labSem_state_code t)) /\
      ALL sec_labels_ok (labSem_state_code t) /\
      ~(labSem_state_failed t) /\ ~(labSem_state_link_reg
@@ -533,7 +536,7 @@ let compile_jump_correct = prove
  (`asm_fetch_aux (pc:num) code = SOME (compile_jump dest) /\
    loc_to_pc (dest_to_loc' (regs:num->('a)word_loc) dest) 0 code = SOME pc'
      /\
-   (!r. dest = INR r ==> (?p. labSem_state_regs s r = word_Loc p 0))
+   (!r. dest = sum_INR r ==> (?p. labSem_state_regs s r = word_Loc p 0))
      /\ labSem_state_pc
    (s:('a,'c,'ffi)labSem_state) = pc /\ labSem_state_code s = code
      /\ labSem_state_regs s = regs /\ ~(labSem_state_clock s = 0) ==>
@@ -554,8 +557,8 @@ let result_view_def = new_definition
        stackSem_Result (word_Loc n1 n2) -> Vloc n1 n2
      | stackSem_Exception (word_Loc n1 n2) -> Vloc n1 n2
      | stackSem_TimeOut -> Vtimeout
-     | stackSem_Continue n -> Vcont l (find_lab n cs)
-     | stackSem_Break n -> Vloc l (find_lab n bs)
+     | stackSem_Continue n -> Vcont l (stack_to_lab_find_lab n cs)
+     | stackSem_Break n -> Vloc l (stack_to_lab_find_lab n bs)
      | _ -> Verr`;;
 add_simp result_view_def;;
 
@@ -631,7 +634,8 @@ let prog_to_section_labels_ok = prove
   CHEAT_TAC);;
 
 let NOT_MEM_find_lab_IMP = prove
- (`!bs n. ~(MEM (find_lab n bs) bs) ==> find_lab n bs = 0`,
+ (`!bs n. ~(MEM (stack_to_lab_find_lab n bs) bs) ==> stack_to_lab_find_lab n
+  bs = 0`,
   CHEAT_TAC);;
 
 let is_some_loc_to_pc_prefix = prove
@@ -693,7 +697,8 @@ let flatten_correct = prove
   CHEAT_TAC);;
 
 let flatten_call_correct = prove
- (`stackSem_evaluate (stack_Call NONE (INL (start:num)) NONE,s1) = (res,s2) /\
+ (`stackSem_evaluate (stack_Call NONE (sum_INL (start:num)) NONE,s1) = (res,s2)
+  /\
    stack_to_labProof_state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
    loc_to_pc start 0 (labSem_state_code t1) = SOME (labSem_state_pc t1)
      /\ ~(res = SOME stackSem_Error) /\
@@ -703,8 +708,9 @@ let flatten_call_correct = prove
      (?n. res = SOME (stackSem_Result (word_Loc n 0)) /\
        (!(s:('a,'c,'ffi)stackSem_state). subspt (stackSem_state_code s1)
          (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0) ==>
-           (?t. stackSem_evaluate (stack_Call NONE (INL n) NONE,s) = (SOME
-             (stackSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
+           (?t. stackSem_evaluate (stack_Call NONE (sum_INL n) NONE,s) =
+             (SOME (stackSem_Halt (word_Word (n2w 0))),t)
+             /\ stackSem_state_ffi
                t = stackSem_state_ffi s /\ stackSem_state_clock t =
                  stackSem_state_clock s - 1)))) ==>
    (?ck r2 t2.
@@ -730,7 +736,7 @@ let halt_assum_def = new_definition
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0)
         ==>
-      (?t. stackSem_evaluate (stack_Call NONE (INL 1) NONE,s) = (SOME
+      (?t. stackSem_evaluate (stack_Call NONE (sum_INL 1) NONE,s) = (SOME
         (stackSem_Halt (word_Word (n2w 0))),t) /\ stackSem_state_ffi
           t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
@@ -799,13 +805,12 @@ let full_make_init_buffer = prove
   CHEAT_TAC);;
 
 let full_make_init_ffi = prove
- (`labSem_state_ffi
-       (FST (full_make_init a b c d e f g h i j k)) = labSem_state_ffi h`,
+ (`stackSem_state_ffi (FST (full_make_init a b c d e f g h i j k)) =
+  labSem_state_ffi h`,
   CHEAT_TAC);;
 
 let full_make_init_compile = prove
- (`labSem_state_compile
-      (FST (full_make_init a b c d e f g h i j k)) =
+ (`stackSem_state_compile (FST (full_make_init a b c d e f g h i j k)) =
       (\c. (\p. labSem_state_compile h c (MAP prog_to_section (MAP
         (stack_alloc_prog_comp (stack_to_lab_config_reg_names a)) (MAP
         (stack_alloc_prog_comp (stack_to_lab_config_jump a) e d) p)))) o MAP
@@ -838,7 +843,7 @@ let memory_assumption_def = new_definition
        ptr2 <=+ ptr4 /\ byte_aligned ptr2 /\
        byte_aligned ptr4 /\ byte_aligned bitmap_ptr /\
        (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
-      (word_to_stack_word_list bitmap_ptr (MAP word_Word bitmaps) *
+      (misc_word_list bitmap_ptr (MAP word_Word bitmaps) *
        word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
          data_sp *
        word_list_exists ptr2
@@ -894,7 +899,8 @@ let state_rel_make_init = prove
       s = labSem_state_len2_reg s) /\ ~(labSem_state_link_reg s =
         labSem_state_ptr2_reg s) /\ ~(labSem_state_link_reg
       s IN save_regs) /\
-      domain code = set_of_list (MAP Section_num (labSem_state_code s)) /\
+      sptree_domain code = set_of_list (MAP Section_num (labSem_state_code
+        s)) /\
       ALL sec_labels_ok (labSem_state_code s) /\
       (!k i n. k IN save_regs ==> labSem_state_io_regs s n i k = NONE) /\
       (!k n. k IN save_regs ==> labSem_state_cc_regs s n k = NONE) /\
@@ -1044,13 +1050,13 @@ let stack_to_lab_compile_all_enc_ok = prove
      /\
    asm_offset_ok 0 (asm_config_byte_offset c) (n2w 0) /\
    (!n. n <= max_stack_alloc ==> asm_config_valid_imm
-   c (INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
+   c (sum_INL word_bignum_Sub) (n2w (n * (dimindex (:'a) DIV 8)))
      /\ asm_config_valid_imm
-   c (INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8))))
+   c (sum_INL word_bignum_Add) (n2w (n * (dimindex (:'a) DIV 8))))
      /\ asm_config_valid_imm
-   c (INL word_bignum_Add) (n2w 1) /\ asm_config_valid_imm c (INL
+   c (sum_INL word_bignum_Add) (n2w 1) /\ asm_config_valid_imm c (sum_INL
      word_bignum_Sub) (n2w 1) /\ asm_config_valid_imm
-   c (INL word_bignum_Add) (n2w 4) /\ asm_config_valid_imm c (INL
+   c (sum_INL word_bignum_Add) (n2w 4) /\ asm_config_valid_imm c (sum_INL
      word_bignum_Add) (n2w 8) /\
    (!s. asm_offset_ok 0 (asm_config_addr_offset c) (store_offset s))
      /\ reg_name 10 c /\
@@ -1117,7 +1123,7 @@ let complex_get_code_labels_def,complex_get_code_labels_ind = define_wf
      | stack_If _ _ _ p1 p2 -> complex_get_code_labels p1 UNION
        complex_get_code_labels p2
      | stack_Call ret dest handler ->
-        (match dest with INL x -> {(x,0)} | _ -> {}) UNION
+        (match dest with sum_INL x -> {(x,0)} | _ -> {}) UNION
         (match ret with NONE -> {}
          | SOME (r,_,l1,l2) -> (l1,l2) INSERT (complex_get_code_labels r
            UNION
@@ -1344,16 +1350,16 @@ let IN_get_code_labels_comp_top_lemma = prove
  (`!i q p_1 p_2.
      ((p_1,p_2) IN stackProps_get_code_labels (stack_rawcall_comp i q) ==>
       (?k. (p_1,k) IN stackProps_get_code_labels q /\
-          (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN domain i))) /\
+          (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN sptree_domain i))) /\
      ((p_1,p_2) IN stackProps_get_code_labels (comp_top i q) ==>
       (?k. (p_1,k) IN stackProps_get_code_labels q /\
-          (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN domain i)))`,
+          (~(p_2 = k) ==> p_2 = 1 /\ k = 0 /\ p_1 IN sptree_domain i)))`,
   CHEAT_TAC);;
 
 let IN_domain_collect_info = prove
  (`!prog f p_1.
-     p_1 IN domain (collect_info prog f) ==>
-     MEM p_1 (MAP FST prog) \/ p_1 IN domain f`,
+     p_1 IN sptree_domain (collect_info prog f) ==>
+     MEM p_1 (MAP FST prog) \/ p_1 IN sptree_domain f`,
   CHEAT_TAC);;
 
 let IN_get_code_labels_comp_top = prove
@@ -1548,15 +1554,15 @@ let stack_names_compile_no_shmemop = prove
 let flatten_no_share_mem_inst = prove
  (`!t p n m cs bs.
        no_shmemop p ==>
-       ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
-         len))
+       ALL (\ln. !op re a stackSem_inst len. ~(ln = lab_Asm (ShareMem op re
+         a) stackSem_inst len))
              (append (FST (stack_to_lab_flatten t p n m cs bs)))`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_share_mem_inst_CONS = prove
  (`!xs.
-   ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
-     len)) xs /\
+   ALL (\ln. !op re a stackSem_inst len. ~(ln = lab_Asm (ShareMem op re a)
+     stackSem_inst len)) xs /\
    no_share_mem_inst ls ==>
    no_share_mem_inst (CONS (Section k xs) ls)`,
   CHEAT_TAC);;
@@ -1697,6 +1703,10 @@ let stack_to_lab_compile_no_install = prove
      ==>
    labProps_no_install prog'`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

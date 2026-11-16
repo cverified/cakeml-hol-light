@@ -9,6 +9,7 @@
   Correctness proof for word_remove
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -18,6 +19,8 @@ needs "semantics/typeSystem.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "word_removeProof"
   ["wordConvs"; "wordProps"; "wordSem"; "word_remove"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -37,11 +40,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -338,6 +347,10 @@ let word_remove_correct = prove
 (* HOL4 word_removeProofScript.sml:401-428: a proof *)
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

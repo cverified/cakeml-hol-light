@@ -10,6 +10,9 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "candle/standard/semantics/holAxioms.ml";;
+needs "candle/standard/syntax/holSyntaxExtra.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -30,7 +33,8 @@ let _ = cake_theory "wordProps"
   ["asm"; "backendProps"; "mllist"; "reg_alloc"; "wordConvs"; "wordLang";
    "wordSem"];;
 
-let _ = do_list hide_constant ["Term"; "comp"; "precondition"];;
+let _ = do_list hide_constant ["Term"; "comp"; "db"; "exps"; "precondition";
+       "prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -50,11 +54,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -83,7 +93,7 @@ Main lemmas:
 
 (*TODO move*)
 let domain_fromAList_toAList = prove
- (`domain (fromAList (toAList l)) = domain l`,
+ (`sptree_domain (fromAList (toAList l)) = sptree_domain l`,
   CHEAT_TAC);;
 
 (* TODO: move *)
@@ -2106,8 +2116,8 @@ let push_env_pop_env_s_key_eq = prove
               (?y. (wordSem_pop_env t = SOME y /\ wordSem_state_locals
                    y = sptree_union (fromAList l) (fromAList (toAList (FST
                      x))) /\
-                   (domain (SND x)) UNION (domain (FST x)) = domain
-                     (wordSem_state_locals y) /\
+                   (sptree_domain (SND x)) UNION (sptree_domain (FST x)) =
+                     sptree_domain (wordSem_state_locals y) /\
                    s_key_eq (wordSem_state_stack s) (wordSem_state_stack
                      y))))`,
   CHEAT_TAC);;
@@ -2853,7 +2863,10 @@ add_simp word_cmp_Word_Word;;
 let _ = do_list unhide_constant
   ["Term";
    "comp";
-   "precondition"];;
+   "db";
+   "exps";
+   "precondition";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

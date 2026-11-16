@@ -2,7 +2,8 @@
 (*  compiler: ported from HOL4's
     compiler/compilerScript.sml
     A definition theory, with 48 definitions, 2 datatypes and no
-    theorems.  Needed by compilerProof.ml.  *)
+    theorems.  Needed by ag32BootstrapProof.ml, compiler32Prog.ml,
+    compiler64Prog.ml, compilerProof.ml and repl_check_and_tweak.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,9 +13,11 @@
   containing the generated machine code if successful).
 *)
 
+needs "basis/basisProg.ml";;
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/ag32/ag32_config.ml";;
 needs "compiler/backend/ag32/export_ag32.ml";;
 needs "compiler/backend/arm7/arm7_config.ml";;
@@ -38,25 +41,27 @@ needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/location.ml";;
-needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/simpleSexpParse.ml";;
 needs "misc/misc.ml";;
 needs "pancake/panLang.ml";;
+needs "pancake/panStatic.ml";;
+needs "pancake/pan_passes.ml";;
+needs "pancake/pan_to_target.ml";;
+needs "pancake/parser/panPtreeConversion.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
+needs "translator/ml_translator.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "compiler"
   ["ag32_config"; "arm7_config"; "arm8_config"; "backend"; "backend_passes";
-   "cmlParse"; "evaluateProps"; "export_ag32"; "export_arm7"; "export_arm8";
+   "basisProg"; "cmlParse"; "export_ag32"; "export_arm7"; "export_arm8";
    "export_mips"; "export_riscv"; "export_x64"; "fromSexp"; "infer";
-   "lexer_fun"; "lexer_impl"; "mips_config"; "mlint"; "mlstring"; "panLang";
-   "primSemEnv"; "riscv_config"; "semanticPrimitivesProps"; "semantics";
-   "typeSoundInvariants"; "typeSysProps"; "x64_config"];;
-(* HOL4 ancestors outside the port: basisProg panPtreeConversion
-   pan_to_target panStatic pan_passes *)
+   "lexer_fun"; "lexer_impl"; "mips_config"; "mlint"; "mlstring";
+   "panPtreeConversion"; "panStatic"; "pan_passes"; "pan_to_target";
+   "riscv_config"; "x64_config"];;
 
 let staterr_INDUCT,staterr_RECURSION = define_datatype
   "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
@@ -276,7 +281,7 @@ let compile_error_INDUCT,compile_error_RECURSION = define_datatype
    | TypeError mlstring
    | AssembleError
    | ConfigError mlstring
-   | StaticError staterr";;
+   | StaticError compiler_staterr";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -421,13 +426,13 @@ let error_to_str_def = define_cases
    (error_to_str AssembleError = (implode "### ERROR: assembly error\n")) /\
    (error_to_str (StaticError e) =
         match e with
-          ScopeErr s -> mlstring_concat [(implode
+          compiler_ScopeErr s -> mlstring_concat [(implode
               "### ERROR: scope error\n"); s; (implode "\n")]
-        | WarningErr s -> mlstring_concat [(implode "# WARNING:\n"); s;
-            (implode "\n")]
-        | GenErr s -> mlstring_concat [(implode
+        | compiler_WarningErr s -> mlstring_concat [(implode
+            "# WARNING:\n"); s; (implode "\n")]
+        | compiler_GenErr s -> mlstring_concat [(implode
             "### ERROR: static error\n"); s; (implode "\n")]
-        | ShapeErr s -> mlstring_concat [(implode
+        | compiler_ShapeErr s -> mlstring_concat [(implode
             "### ERROR: shape error\n"); s; (implode "\n")])`;;
 
 let is_error_msg_def = new_definition
@@ -439,7 +444,7 @@ let parse_num_def = new_definition
   `parse_num str =
    let str = explode str in
    if ALL isDigit str then
-     SOME (num_from_dec_string_alt str)
+     SOME (lexer_impl_num_from_dec_string_alt str)
    else NONE`;;
 
 let parse_bool_def = new_definition
@@ -648,12 +653,12 @@ let parse_data_conf_def = new_definition
      (data_to_word_config_len_size data) in
    let empty_FFI = find_bool (implode "--emit_empty_ffi=") ls
      (data_to_word_config_call_empty_ffi data) in
-   let gc' = parse_gc ls (data_to_word_config_gc_kind data) in
-   match (tag_bits,len_bits,pad_bits,len_size,gc',empty_FFI) with
-     (INL tb,INL lb,INL pb,INL ls,INL gc',INL empty_FFI) ->
+   let gc = parse_gc ls (data_to_word_config_gc_kind data) in
+   match (tag_bits,len_bits,pad_bits,len_size,gc,empty_FFI) with
+     (INL tb,INL lb,INL pb,INL ls,INL gc,INL empty_FFI) ->
        // TODO: check conf_ok here and raise error if violated
        INL (data_to_word_config_call_empty_ffi_fupd (K empty_FFI)
-         (data_to_word_config_gc_kind_fupd (K gc')
+         (data_to_word_config_gc_kind_fupd (K gc)
          (data_to_word_config_len_size_fupd (K ls)
          (data_to_word_config_pad_bits_fupd (K pb)
          (data_to_word_config_len_bits_fupd (K lb)
@@ -663,7 +668,7 @@ let parse_data_conf_def = new_definition
                    get_err_str len_bits;
                    get_err_str pad_bits;
                    get_err_str len_size;
-                   get_err_str gc';
+                   get_err_str gc;
                    get_err_str empty_FFI])`;;
 
 (* stack *)

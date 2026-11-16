@@ -2,7 +2,7 @@
 (*  ml_monadBase: ported from HOL4's
     translator/monadic/monad_base/ml_monadBaseScript.sml
     A definition theory, with 26 definitions, 2 datatypes and 27
-    theorems.  Needed by 16 files of the port.  *)
+    theorems.  Needed by 42 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -28,10 +28,10 @@ let exc_INDUCT,exc_RECURSION = define_datatype
    expands *)
 
 let liftM_def = new_definition
-  `((liftM read' (write':('a->'a)->'d->'d)
+  `((liftM read (write:('a->'a)->'d->'d)
   (op:'a->('b,'c)exc#'a)):'d->('b,'c)exc#'d) =
-     (\state. let (ret,new) = op (read' state) in
-                (ret,write' (K new) state))`;;
+     (\state. let (ret,new) = op (read state) in
+                (ret,write (K new) state))`;;
 
 (* Definitions using monadic syntax *)
 
@@ -271,10 +271,10 @@ let ref_bind_def = new_definition
 
 (* TODO: use that *)
 let mget_ref_def = new_definition
-  `Mget_ref get_var' = (\s. (M_success (get_var' s),s))`;;
+  `Mget_ref get_var = (\s. (M_success (get_var s),s))`;;
 
 let mset_ref_def = new_definition
-  `Mset_ref set_var' x = (\s. (M_success one,set_var' x s))`;;
+  `Mset_ref set_var x = (\s. (M_success one,set_var x s))`;;
 
 (* Rules to deal with the monads *)
 (* [local] *)
@@ -395,7 +395,7 @@ let marray_alloc_success = prove
 
 (* Run *)
 let run_def = new_definition
-  `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
+  `ml_monadBase_run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

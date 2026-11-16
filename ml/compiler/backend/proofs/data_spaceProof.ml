@@ -19,7 +19,11 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "data_spaceProof"
   ["dataProps"; "dataSem"; "data_space"];;
 
-let _ = do_list hide_constant ["vars"];;
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["vars","vars"];;
 
 (* HOL4 data_spaceProofScript.sml:12-17: an overload that the source brings
    to the front: get_vars, written out as dataSem_get_vars *)
@@ -128,10 +132,6 @@ let data_spaceProof_get_code_labels_compile = prove
   dataProps_get_code_labels x`,
   CHEAT_TAC);;
 add_simp data_spaceProof_get_code_labels_compile;;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["vars"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

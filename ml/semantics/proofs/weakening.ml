@@ -21,6 +21,8 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "weakening"
   ["ast"; "namespaceProps"; "semanticPrimitives"; "typeSoundInvariants";
    "typeSysProps"; "typeSystem"];;
+
+let _ = do_list hide_constant ["check"];;
 (* HOL4 ancestors outside the port: option rich_list alist *)
 
 let weak_tenvE_def = new_definition
@@ -281,6 +283,10 @@ let type_d_weakening = prove
 (* HOL4 weakeningScript.sml:729-877: code that the source has in a comment *)
 
 (* HOL4 weakeningScript.sml:879-913: code that the source has in a comment *)
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["check"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

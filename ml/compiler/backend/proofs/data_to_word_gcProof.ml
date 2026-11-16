@@ -11,6 +11,9 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "candle/standard/syntax/holSyntaxExtra.ml";;
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
@@ -47,14 +50,15 @@ let _ = cake_theory "data_to_word_gcProof"
    "mllist"; "semanticsProps"; "wordLang"; "wordProps"; "wordSem";
    "word_bignum"; "word_bignumProof"; "word_gcFunctions"];;
 
-let _ = do_list hide_constant ["stack_alloc"; "vars"];;
+let _ = do_list hide_constant ["ABS"; "db"; "prog"; "stack_alloc"; "unit"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
   ["code_buffer","code_buffer";
-   "data_buffer","data_buffer"];;
+   "data_buffer","data_buffer";
+   "vars","vars"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_word_gcProofScript.sml:19-23: ML code, not ported *)
@@ -309,7 +313,8 @@ let lookup_adjust_var_adjust_set = prove
   CHEAT_TAC);;
 
 let adjust_var_IN_adjust_set = prove
- (`adjust_var n IN domain (adjust_set (s:1 spt)) <=> n IN domain s`,
+ (`adjust_var n IN sptree_domain (adjust_set (s:1 spt)) <=> n IN
+  sptree_domain s`,
   CHEAT_TAC);;
 
 let none_opt_eq = prove
@@ -416,7 +421,7 @@ let unit_some_eq_IS_SOME = prove
   CHEAT_TAC);;
 
 let IS_SOME_lookup_domain = prove
- (`IS_SOME (sptree_lookup k m) <=> k IN domain m`,
+ (`IS_SOME (sptree_lookup k m) <=> k IN sptree_domain m`,
   CHEAT_TAC);;
 
 
@@ -1893,7 +1898,7 @@ let word_gc_fun_correct = prove
 
 let data_to_word_gcProof_code_rel_def = new_definition
   `data_to_word_gcProof_code_rel c s_code (t_code:(num#'a word_prog) spt) <=>
-     domain t_code = domain s_code UNION set_of_list (MAP FST
+     sptree_domain t_code = sptree_domain s_code UNION set_of_list (MAP FST
        (data_to_word_stubs (:'a) c)) /\
      ALL (\(n,x). sptree_lookup n t_code = SOME x) (data_to_word_stubs (:'a)
        c) /\
@@ -2400,7 +2405,7 @@ let cut_env_IMP_lookup = prove
   CHEAT_TAC);;
 
 let cut_env_IMP_lookup_EQ = prove
- (`dataSem_cut_env r y = SOME x /\ n IN domain r ==>
+ (`dataSem_cut_env r y = SOME x /\ n IN sptree_domain r ==>
     sptree_lookup n x = sptree_lookup n y`,
   CHEAT_TAC);;
 
@@ -2411,13 +2416,13 @@ let cut_env_res_IS_SOME_IMP = prove
 
 let adjust_var_cut_env_IMP_MEM = prove
  (`cut_envs (adjust_sets s) r = SOME x ==>
-    domain (SND x) SUBSET EVEN /\
+    sptree_domain (SND x) SUBSET EVEN /\
     (IS_SOME (sptree_lookup (adjust_var n) (SND x)) <=> IS_SOME
       (sptree_lookup n s))`,
   CHEAT_TAC);;
 
 let NOT_0_domain = prove
- (`~(0 IN domain (adjust_set names))`,
+ (`~(0 IN sptree_domain (adjust_set names))`,
   CHEAT_TAC);;
 
 let cut_envs_SND_nonzero = prove
@@ -2547,7 +2552,8 @@ let evaluate_IMP_domain_EQ = prove
      (wordSem_push_env y (opt:(num#'a word_prog#num#num) option)
        (wordSem_dec_clock t))) =
       (SOME (wordSem_Result ll w),t1) /\ wordSem_pop_env t1 = SOME t2 ==>
-    domain (wordSem_state_locals t2) = domain (FST y) UNION domain (SND y)`,
+    sptree_domain (wordSem_state_locals t2) = sptree_domain (FST y) UNION
+      sptree_domain (SND y)`,
   CHEAT_TAC);;
 
 let evaluate_IMP_domain_EQ_Exc = prove
@@ -2555,7 +2561,8 @@ let evaluate_IMP_domain_EQ_Exc = prove
       (SOME (x0,(prog1:'a word_prog),x1,l))
       (wordSem_dec_clock (t:('a,'b,'c)wordSem_state)))) = (SOME
         (wordSem_Exception ll w),t1) ==>
-    domain (wordSem_state_locals t1) = domain (FST y) UNION domain (SND y)`,
+    sptree_domain (wordSem_state_locals t1) = sptree_domain (FST y) UNION
+      sptree_domain (SND y)`,
   CHEAT_TAC);;
 
 let mk_loc_jump_exc = prove
@@ -2677,15 +2684,15 @@ let eval_exc_stack_shorter = prove
   CHEAT_TAC);;
 
 let NOT_1_domain = prove
- (`~(1 IN domain (adjust_set names))`,
+ (`~(1 IN sptree_domain (adjust_set names))`,
   CHEAT_TAC);;
 
 let NOT_3_domain = prove
- (`~(3 IN domain (adjust_set names))`,
+ (`~(3 IN sptree_domain (adjust_set names))`,
   CHEAT_TAC);;
 
 let NOT_5_domain = prove
- (`~(5 IN domain (adjust_set names))`,
+ (`~(5 IN sptree_domain (adjust_set names))`,
   CHEAT_TAC);;
 
 let cut_names_adjust_set_insert_1 = prove
@@ -2711,8 +2718,8 @@ let state_rel_set_store_AllocSize = prove
 
 let inter_insert = prove
  (`inter (sptree_insert n x t1) t2 =
-    if n IN domain t2 then sptree_insert n x (inter t1 t2) else inter t1
-      t2`,
+    if n IN sptree_domain t2 then sptree_insert n x (inter t1 t2) else
+      inter t1 t2`,
   CHEAT_TAC);;
 
 let lookup_0_adjust_set = prove
@@ -2741,8 +2748,8 @@ let wf_adjust_set = prove
 
 let lookup_adjust_set = prove
  (`sptree_lookup n (adjust_set s) =
-   if ODD n \/ n = 0 then NONE else if (n - 2) DIV 2 IN domain s then SOME
-     one else NONE`,
+   if ODD n \/ n = 0 then NONE else if (n - 2) DIV 2 IN sptree_domain s
+     then SOME one else NONE`,
   CHEAT_TAC);;
 
 let adjust_set_inter = prove
@@ -3164,18 +3171,18 @@ let soundness_size_of = prove
        no_thunks_in_refs refs /\
        ALL2 (\v x. v_inv c v refs (x,f,tf,heap)) root_vars vars' /\
        PERM roots root_vars /\ good_dimindex (:'a) /\
-       IMAGE (FAPPLY tf) (domain s1) SUBSET set_of_list p1 /\
-       IMAGE (FAPPLY f) (domain refs DIFF domain r1) SUBSET set_of_list p1
-         /\
-       FDOM f SUBSET domain refs /\ subspt r1 refs /\
+       IMAGE (FAPPLY tf) (sptree_domain s1) SUBSET set_of_list p1 /\
+       IMAGE (FAPPLY f) (sptree_domain refs DIFF sptree_domain r1) SUBSET
+         set_of_list p1 /\
+       FDOM f SUBSET sptree_domain refs /\ subspt r1 refs /\
        (limits_arch_64_bit lims <=> dimindex (:'a) = 64) /\
        size_of lims roots r1 s1 = (n2,r2,s2) ==>
        (?p2. SUM (MAP (lookup_len heap) p2) <= n2 + SUM (MAP (lookup_len
          heap) p1) /\
             traverse_heap heap p1 vars' p2 /\ subspt r2 refs /\
-            IMAGE (FAPPLY tf) (domain s2) SUBSET set_of_list p2 /\
-            IMAGE (FAPPLY f) (domain refs DIFF domain r2) SUBSET
-              set_of_list p2)`),
+            IMAGE (FAPPLY tf) (sptree_domain s2) SUBSET set_of_list p2 /\
+            IMAGE (FAPPLY f) (sptree_domain refs DIFF sptree_domain r2)
+              SUBSET set_of_list p2)`),
   CHEAT_TAC);;
 
 let traverse_heap_reachable_set_mono = prove
@@ -3250,7 +3257,7 @@ let soundness_size_of_gen = prove
      PERM roots2 (APPEND dups root_vars) /\
      set_of_list dups SUBSET set_of_list root_vars /\
      good_dimindex (:'a) /\
-     FDOM f SUBSET domain refs /\
+     FDOM f SUBSET sptree_domain refs /\
      (limits_arch_64_bit lims <=> dimindex (:'a) = 64) /\
      size_of lims roots2 refs LN = (n2,r2,s2) ==>
      (?p2. SUM (MAP (lookup_len heap) p2) <= n2 /\
@@ -3561,7 +3568,7 @@ let state_rel_cut_env_cut_env = prove
   CHEAT_TAC);;
 
 let domain_adjust_set_EVEN = prove
- (`k IN domain (adjust_set s) ==> EVEN k`,
+ (`k IN sptree_domain (adjust_set s) ==> EVEN k`,
   CHEAT_TAC);;
 
 let cut_env_adjust_sets_insert_ODD = prove
@@ -3945,8 +3952,11 @@ let get_vars_sing = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["stack_alloc";
-   "vars"];;
+  ["ABS";
+   "db";
+   "prog";
+   "stack_alloc";
+   "unit"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

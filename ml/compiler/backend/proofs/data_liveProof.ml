@@ -9,6 +9,7 @@
   Correctness proof for data_live
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/semantics/dataProps.ml";;
@@ -30,7 +31,7 @@ let SPLIT_PAIR = prove
  (`!x y z. (x = (y,z)) <=> (y = FST x) /\ (z = SND x)`,
   CHEAT_TAC);;
 
-let state_rel_def = new_definition
+let data_liveProof_state_rel_def = new_definition
   `data_liveProof_state_rel (s1:('a,'ffi)dataSem_state)
   (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> dataSem_state_code
      s1 = dataSem_state_code t1 /\ dataSem_state_clock s1 =
@@ -49,8 +50,9 @@ let state_rel_def = new_definition
      (
       // s1.safe_for_space = t1.safe_for_space /\
       // ASK: Probably don't need it
-      !x. x IN domain live ==> (sptree_lookup x (dataSem_state_locals s1)
-        = sptree_lookup x (dataSem_state_locals t1)))`;;
+      !x. x IN sptree_domain live ==> (sptree_lookup x
+        (dataSem_state_locals s1) = sptree_lookup x (dataSem_state_locals
+        t1)))`;;
 
 (* [local] *)
 let state_rel_ID = prove
@@ -140,7 +142,7 @@ let is_pure_do_app_Rval_IMP = prove
 
 (* [local] *)
 let domain_list_delete = prove
- (`domain (list_delete xs l) = domain l DIFF set_of_list xs`,
+ (`sptree_domain (list_delete xs l) = sptree_domain l DIFF set_of_list xs`,
   CHEAT_TAC);;
 
 (* [local] *)

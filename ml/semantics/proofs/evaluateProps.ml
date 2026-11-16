@@ -2,7 +2,7 @@
 (*  evaluateProps: ported from HOL4's
     semantics/proofs/evaluatePropsScript.sml
     A proof theory about evaluate.ml, with 5 definitions and 87
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 28 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "candle/standard/semantics/holAxioms.ml";;
 needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
@@ -23,6 +24,8 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "evaluateProps"
   ["ast"; "evaluate"; "namespace"; "namespaceProps"; "semanticPrimitives";
    "semanticPrimitivesProps"];;
+
+let _ = do_list hide_constant ["exps"];;
 
 let call_FFI_LENGTH = prove
  (`(call_FFI st index conf x = FFI_return new_st new_bytes) ==>
@@ -400,7 +403,8 @@ let evaluate_decs_cons = prove
       | err -> err`,
   CHEAT_TAC);;
 
-let evaluate_decs_append = prove
+(* evaluate_decs_append *)
+let evaluateProps_evaluate_decs_append = prove
  (`!ds1 s env ds2.
      evaluate_evaluate_decs s env (APPEND ds1 ds2) =
      match evaluate_evaluate_decs s env ds1 with
@@ -926,6 +930,10 @@ let evaluate_Apps = prove
          (sem_env_v_fupd (K (nsAppend (alist_to_ns (ZIP (REVERSE ns)
            (BUTLAST vs))) (sem_env_v env1))) env1) [e])`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

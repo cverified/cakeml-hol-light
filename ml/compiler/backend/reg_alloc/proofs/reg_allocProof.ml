@@ -2,7 +2,8 @@
 (*  reg_allocProof: ported from HOL4's
     compiler/backend/reg_alloc/proofs/reg_allocProofScript.sml
     A proof theory about reg_alloc.ml, with 12 definitions and 119
-    theorems.  Needed by linear_scanProof.ml and word_allocProof.ml.  *)
+    theorems.  Needed by linear_scanProof.ml, reg_allocProg.ml and
+    word_allocProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -24,7 +25,9 @@ let _ = cake_theory "reg_allocProof"
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["return","errorMonad_return"];;
+  ["return","camlPtreeConversion_return";
+   "return","errorLogMonad_return";
+   "return","errorMonad_return"];;
 
 (* Edge from node x to node y, in terms of an adjacency list *)
 let has_edge_def = new_definition
@@ -125,13 +128,13 @@ let list_case_st = prove
 
 (* Rewriting lemmas for array "sub" *)
 (* Msub_eqn *)
-let msub_eqn = prove
+let reg_allocProof_Msub_eqn = prove
  (`!e n ls v.
    Msub e n ls =
    if n < LENGTH ls then M_success (EL n ls)
                   else M_failure e`,
   CHEAT_TAC);;
-add_simp msub_eqn;;
+add_simp reg_allocProof_Msub_eqn;;
 
 let adj_ls_sub_eqn = prove
  (`adj_ls_sub n s =
@@ -175,14 +178,14 @@ add_simp move_related_sub;;
 
 (* Rewriting lemmas for array "update" *)
 (* Mupdate_eqn *)
-let mupdate_eqn = prove
+let reg_allocProof_Mupdate_eqn = prove
  (`!e x n ls.
    Mupdate e x n ls =
    if n < LENGTH ls then
    M_success (LUPDATE x n ls)
    else M_failure e`,
   CHEAT_TAC);;
-add_simp mupdate_eqn;;
+add_simp reg_allocProof_Mupdate_eqn;;
 
 let update_adj_ls_eqn = prove
  (`update_adj_ls n t s =
@@ -456,12 +459,12 @@ let good_pref_biased_pref = prove
 
 let in_clash_tree_def,in_clash_tree_ind = define_rec
   `(in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r) /\
-   (in_clash_tree (reg_alloc_Set names) x <=> x IN domain names) /\
+   (in_clash_tree (reg_alloc_Set names) x <=> x IN sptree_domain names) /\
    (in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
-          SOME names -> x IN domain names
+          SOME names -> x IN sptree_domain names
         | NONE -> F)) /\
    (in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
     in_clash_tree t' x)`;;
@@ -474,7 +477,7 @@ let sp_inverts_def = new_definition
      sptree_lookup fm g = SOME m)`;;
 
 let sp_inverts_insert = prove
- (`sp_inverts f g /\ ~(x IN domain f) /\ ~(y IN domain g) ==>
+ (`sp_inverts f g /\ ~(x IN sptree_domain f) /\ ~(y IN sptree_domain g) ==>
    sp_inverts (sptree_insert x y f) (sptree_insert y x g)`,
   CHEAT_TAC);;
 
@@ -482,7 +485,7 @@ let sp_inverts_insert = prove
 let list_remap_domain = prove
  (`!ls ta fa n ta' fa' n'.
    list_remap ls (ta,fa,n) = (ta',fa',n') ==>
-   domain ta' = domain ta UNION set_of_list ls`,
+   sptree_domain ta' = sptree_domain ta UNION set_of_list ls`,
   CHEAT_TAC);;
 
 (* HOL4 reg_allocProofScript.sml:814-835: a theorem that HOL4 states as the
@@ -492,7 +495,7 @@ let list_remap_domain = prove
 let mk_bij_aux_domain = prove
  (`!ct ta fa n ta' fa' n'.
    mk_bij_aux ct (ta,fa,n) = (ta',fa',n') ==>
-   domain ta' = domain ta UNION {x | in_clash_tree ct x}`,
+   sptree_domain ta' = sptree_domain ta UNION {x | in_clash_tree ct x}`,
   CHEAT_TAC);;
 
 (* HOL4 reg_allocProofScript.sml:879-919: a theorem that HOL4 states as the
@@ -660,11 +663,11 @@ let INJ_less = prove
 
 let check_partial_col_success = prove
  (`!ls live flive col.
-   domain flive = IMAGE col (domain live) /\
-   INJ col (set_of_list ls UNION domain live) UNIV ==>
+   sptree_domain flive = IMAGE col (sptree_domain live) /\
+   INJ col (set_of_list ls UNION sptree_domain live) UNIV ==>
    (?livein flivein.
    check_partial_col col ls live flive = SOME (livein,flivein) /\
-   domain flivein = IMAGE col (domain livein))`,
+   sptree_domain flivein = IMAGE col (sptree_domain livein))`,
   CHEAT_TAC);;
 
 let INJ_COMPOSE_IMAGE = prove
@@ -684,7 +687,7 @@ let colouring_satisfactory_cliques = prove
 
 (* [local] *)
 let domain_eq_IMAGE = prove
- (`domain s = IMAGE FST (set_of_list (toAList s))`,
+ (`sptree_domain s = IMAGE FST (set_of_list (toAList s))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -703,8 +706,8 @@ let is_clique_subgraph = prove
 
 let domain_numset_list_delete = prove
  (`!l live.
-   domain (numset_list_delete l live) =
-   domain live DIFF set_of_list l`,
+   sptree_domain (numset_list_delete l live) =
+   sptree_domain live DIFF set_of_list l`,
   CHEAT_TAC);;
 
 (* The success theorem is separated here *)
@@ -760,7 +763,7 @@ let MEM_MAP_IMAGE = prove
 
 (* [local] *)
 let domain_difference = prove
- (`domain (difference s t) = domain s DIFF domain t`,
+ (`sptree_domain (difference s t) = sptree_domain s DIFF sptree_domain t`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -771,13 +774,14 @@ let UNION_DIFF_3 = prove
 let check_partial_col_domain = prove
  (`!ls f live flive v.
    check_partial_col f ls live flive = SOME v ==>
-   domain (FST v) = set_of_list ls UNION domain live`,
+   sptree_domain (FST v) = set_of_list ls UNION sptree_domain live`,
   CHEAT_TAC);;
 
 let check_clash_tree_domain = prove
  (`!ct f live flive live' flive'.
    check_clash_tree f ct live flive = SOME (live',flive') ==>
-   domain live' SUBSET domain live UNION {x | in_clash_tree ct x}`,
+   sptree_domain live' SUBSET sptree_domain live UNION {x | in_clash_tree
+     ct x}`,
   CHEAT_TAC);;
 
 (* the correctness theorem for mk_graph *)
@@ -785,18 +789,18 @@ let mk_graph_check_clash_tree = prove
  (`!ct ta livelist s livelist' s' col live flive.
    mk_graph ta ct livelist s = (M_success livelist',s') /\
    colouring_satisfactory col (ra_state_adj_ls s') /\
-   INJ ta ({x | in_clash_tree ct x} UNION domain live) (count (LENGTH
+   INJ ta ({x | in_clash_tree ct x} UNION sptree_domain live) (count (LENGTH
      (ra_state_adj_ls s))) /\
-   IMAGE ta (domain live) = set_of_list livelist /\
+   IMAGE ta (sptree_domain live) = set_of_list livelist /\
    ALL_DISTINCT livelist /\
    ALL (\y. y < ra_state_dim s) livelist /\
    is_clique livelist (ra_state_adj_ls s) /\
    good_ra_state s /\
-   domain flive = IMAGE (col o ta) (domain live) ==>
+   sptree_domain flive = IMAGE (col o ta) (sptree_domain live) ==>
    (?livein flivein.
    check_clash_tree (col o ta) ct live flive = SOME (livein,flivein) /\
-   IMAGE ta (domain livein) = set_of_list livelist' /\
-   domain flivein = IMAGE (col o ta) (domain livein))`,
+   IMAGE ta (sptree_domain livein) = set_of_list livelist' /\
+   sptree_domain flivein = IMAGE (col o ta) (sptree_domain livein))`,
   CHEAT_TAC);;
 
 (* This precise characterization is needed to show that the forced edges
@@ -1294,7 +1298,7 @@ let check_partial_col_same_dom = prove
 
 let check_clash_tree_same_dom = prove
  (`!ct f g live flive.
-   (!x. in_clash_tree ct x \/ x IN domain live ==> f x = g x) ==>
+   (!x. in_clash_tree ct x \/ x IN sptree_domain live ==> f x = g x) ==>
    check_clash_tree f ct live flive =
    check_clash_tree g ct live flive`,
   CHEAT_TAC);;
@@ -1306,19 +1310,19 @@ let opt_split = prove
 
 let INJ_IMG_lookup = prove
  (`!x. INJ g UNIV UNIV /\
-   domain (gt:1 spt) = IMAGE g (domain ft) ==>
+   sptree_domain (gt:1 spt) = IMAGE g (sptree_domain ft) ==>
    sptree_lookup (g x) gt = sptree_lookup x ft`,
   CHEAT_TAC);;
 
 let check_partial_col_INJ = prove
  (`!ls t ft gt.
    INJ g UNIV UNIV /\
-   domain gt = IMAGE g (domain ft) ==>
+   sptree_domain gt = IMAGE g (sptree_domain ft) ==>
    (match check_partial_col f ls t ft with
    NONE -> check_partial_col (g o f) ls t gt = NONE
    | SOME (tt,ftt) ->
    (?gtt. check_partial_col (g o f) ls t gt = SOME (tt,gtt) /\
-   domain gtt = IMAGE g (domain ftt)))`,
+   sptree_domain gtt = IMAGE g (sptree_domain ftt)))`,
   CHEAT_TAC);;
 
 let check_col_INJ = prove
@@ -1327,19 +1331,19 @@ let check_col_INJ = prove
    NONE -> check_col (g o f) s = NONE
    | SOME (t,ft) ->
    (?gt. check_col (g o f) s = SOME (t,gt) /\
-   domain gt = IMAGE g (domain ft)))`,
+   sptree_domain gt = IMAGE g (sptree_domain ft)))`,
   CHEAT_TAC);;
 
 let check_clash_tree_INJ = prove
  (`!ct f g live flive glive.
    INJ g UNIV UNIV /\
-   domain glive = IMAGE g (domain flive) ==>
+   sptree_domain glive = IMAGE g (sptree_domain flive) ==>
    (match check_clash_tree f ct live flive with
    NONE -> check_clash_tree (g o f) ct live glive = NONE
    | SOME (liveout,fliveout) ->
    (?gliveout.
    check_clash_tree (g o f) ct live glive = SOME (liveout,gliveout) /\
-   domain gliveout = IMAGE g (domain fliveout)))`,
+   sptree_domain gliveout = IMAGE g (sptree_domain fliveout)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1378,13 +1382,13 @@ let do_reg_alloc_correct = prove
        spcol,st') /\
      check_clash_tree (sp_default spcol) ct LN LN = SOME (livein,flivein) /\
      (!x. in_clash_tree ct x ==>
-     x IN domain spcol /\
+     x IN sptree_domain spcol /\
      (if is_phy_var x then
        sp_default spcol x = x DIV 2
      else if is_stack_var x then
        k <= (sp_default spcol x)
      else T)) /\
-     (!x. x IN domain spcol ==> in_clash_tree ct x) /\
+     (!x. x IN sptree_domain spcol ==> in_clash_tree ct x) /\
      ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
        forced)`,
   CHEAT_TAC);;
@@ -1400,13 +1404,13 @@ let reg_alloc_correct = prove
      reg_alloc alg scost k moves ct forced fs = M_success spcol /\
      check_clash_tree (sp_default spcol) ct LN LN = SOME (livein,flivein) /\
      (!x. in_clash_tree ct x ==>
-     x IN domain spcol /\
+     x IN sptree_domain spcol /\
      (if is_phy_var x then
        sp_default spcol x = x DIV 2
      else if is_stack_var x then
        k <= (sp_default spcol x)
      else T)) /\
-     (!x. x IN domain spcol ==> in_clash_tree ct x) /\
+     (!x. x IN sptree_domain spcol ==> in_clash_tree ct x) /\
      ALL (\(x,y). (sp_default spcol) x = (sp_default spcol) y ==> x = y)
        forced)`,
   CHEAT_TAC);;

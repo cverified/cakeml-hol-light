@@ -2,7 +2,7 @@
 (*  clos_known: ported from HOL4's
     compiler/backend/clos_knownScript.sml
     A definition theory, with 29 definitions, 4 datatypes and 12
-    theorems.  Needed by 6 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -31,7 +31,7 @@ needs "semantics/namespace.ml";;
 let _ = cake_theory "clos_known"
   ["closLang"; "clos_fvs"; "clos_letop"; "clos_op"; "clos_ticks"; "db_vars"];;
 
-let _ = do_list hide_constant ["all"; "pmatch"];;
+let _ = do_list hide_constant ["Num"; "all"; "pmatch"];;
 
 (* HOL4 clos_knownScript.sml:16: code that the source has in a comment *)
 
@@ -587,8 +587,8 @@ let known_sing = prove
   CHEAT_TAC);;
 
 let known_sing_EQ_E = prove
- (`!limit' e vs g0 all' g. known limit' [e] vs g0 = (all',g) ==> (?e' apx.
-  all' = [(e',apx)])`,
+ (`!limit' e vs g0 all g. known limit' [e] vs g0 = (all,g) ==> (?e' apx. all
+  = [(e',apx)])`,
   CHEAT_TAC);;
 
 let clos_known_compile_def = define_cases
@@ -726,7 +726,8 @@ EVAL ``
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["all";
+  ["Num";
+   "all";
    "pmatch"];;
 
 (* and the interface *)

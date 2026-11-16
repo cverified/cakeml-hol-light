@@ -2,7 +2,8 @@
 (*  mergesort: ported from HOL4's
     src/sort/mergesortScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by mllist.ml and regexp_compiler.ml.  *)
+    that CakeML needs.  Needed by ListProg.ml, backend_cv.ml,
+    mllist.ml and regexp_compiler.ml.  *)
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;

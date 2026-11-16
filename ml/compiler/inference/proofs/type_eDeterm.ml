@@ -32,6 +32,12 @@ let _ = cake_theory "type_eDeterm"
    "infer_eSound"; "namespace"; "namespaceProps"; "semanticPrimitives";
    "typeSysProps"; "typeSystem"; "unify"];;
 
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
+
 (* [local] *)
 let sub_completion_empty = prove
  (`!m n s s'. sub_completion m n s [] s' <=> count n SUBSET FDOM s' /\ (!uv.

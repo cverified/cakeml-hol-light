@@ -2,7 +2,8 @@
 (*  ag32_config: ported from HOL4's
     compiler/backend/ag32/ag32_configScript.sml
     A definition theory, with 2 definitions and 1 theorem.  Needed
-    by compiler.ml.  *)
+    by ag32BootstrapProof.ml, ag32_basis_ffiProof.ml,
+    ag32_configProof.ml, backend_ag32_cv.ml and compiler.ml.  *)
 (* ======================================================== *)
 
 (*

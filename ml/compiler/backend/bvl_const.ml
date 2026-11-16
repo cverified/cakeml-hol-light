@@ -2,8 +2,8 @@
 (*  bvl_const: ported from HOL4's
     compiler/backend/bvl_constScript.sml
     A definition theory, with 13 definitions and 12 theorems.
-    Needed by bvlProps.ml, bvl_constProof.ml, bvl_handle.ml and
-    bvl_to_bvi.ml.  *)
+    Needed by bvlProps.ml, bvl_constProof.ml, bvl_handle.ml,
+    bvl_to_bvi.ml and to_data_cv.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -79,15 +79,15 @@ let SmartOp_flip_pmatch = prove
 
 let SmartOp2_def = new_definition
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
-     let mk_add_const = (\x1 c2.
+     let mk_add_const' = (\x1 c2.
        if c2 = (&0) then x1
        else bvl_Op (clos_IntOp clos_Add) [x1; bvl_Op (clos_IntOp (clos_Const
          c2)) []]) in
-     let mk_add = (\x1 x2.
+     let mk_add' = (\x1 x2.
        let default = bvl_Op (clos_IntOp clos_Add) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 if op = clos_IntOp clos_Add then mk_add_const x11 (n2 +
+                 if op = clos_IntOp clos_Add then mk_add_const' x11 (n2 +
                    n12)
                  else if op = clos_IntOp clos_Sub then bvl_Op (clos_IntOp
                    clos_Sub) [x11; bvl_Op (clos_IntOp (clos_Const (n2 + n12)))
@@ -96,13 +96,13 @@ let SmartOp2_def = new_definition
              | _ ->
                  (match (dest_simple x1) with SOME n1 -> bvl_Op (clos_IntOp
                    (clos_Const (n2 + n1))) []
-                 | _ -> mk_add_const x1 n2))
+                 | _ -> mk_add_const' x1 n2))
          | _ ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
                  if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp clos_Add
                    then
-                   mk_add_const (bvl_Op (clos_IntOp clos_Add) [x11; x21])
+                   mk_add_const' (bvl_Op (clos_IntOp clos_Add) [x11; x21])
                      (n22 + n12)
                  else if op1 = clos_IntOp clos_Add /\ op2 = clos_IntOp
                    clos_Sub then
@@ -111,18 +111,18 @@ let SmartOp2_def = new_definition
                      + n12))) []]
                  else if op1 = clos_IntOp clos_Sub /\ op2 = clos_IntOp
                    clos_Add then
-                   mk_add_const (bvl_Op (clos_IntOp clos_Sub) [x11; x21])
+                   mk_add_const' (bvl_Op (clos_IntOp clos_Sub) [x11; x21])
                      (n22 + n12)
                  else default
              | _ -> default)) in
-     let mk_sub = (\x1 x2.
+     let mk_sub' = (\x1 x2.
        let default = bvl_Op (clos_IntOp clos_Sub) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
                  if op = clos_IntOp clos_Add then bvl_Op (clos_IntOp
                    clos_Sub) [x11; bvl_Op (clos_IntOp (clos_Const (n2 - n12)))
                    []]
-                 else if op = clos_IntOp clos_Sub then mk_add_const x11 (n2
+                 else if op = clos_IntOp clos_Sub then mk_add_const' x11 (n2
                    - n12)
                  else default
              | _ ->
@@ -144,11 +144,11 @@ let SmartOp2_def = new_definition
                      - n12))) []]
                  else if op1 = clos_IntOp clos_Sub /\ op2 = clos_IntOp
                    clos_Add then
-                   mk_add_const (bvl_Op (clos_IntOp clos_Add) [x11; x21])
+                   mk_add_const' (bvl_Op (clos_IntOp clos_Add) [x11; x21])
                      (n22 - n12)
                  else default
              | _ -> default)) in
-     let mk_mul = (\x1 x2.
+     let mk_mul' = (\x1 x2.
        let default = bvl_Op (clos_IntOp clos_Mult) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
@@ -161,7 +161,7 @@ let SmartOp2_def = new_definition
                    (clos_Const (n2 * n1))) []
                  | _ ->
                      if n2 = (&1) then x1
-                     else if n2 = --(&1) then mk_sub x1 (bvl_Op (clos_IntOp
+                     else if n2 = --(&1) then mk_sub' x1 (bvl_Op (clos_IntOp
                        (clos_Const (&0))) [])
                      else default))
          | _ ->
@@ -176,11 +176,11 @@ let SmartOp2_def = new_definition
              | _ -> default)) in
      let default = bvl_Op op [x1; x2] in
      if op = clos_IntOp clos_Add then
-       mk_add x1 x2
+       mk_add' x1 x2
      else if op = clos_IntOp clos_Sub then
-       mk_sub x1 x2
+       mk_sub' x1 x2
      else if op = clos_IntOp clos_Mult then
-       mk_mul x1 x2
+       mk_mul' x1 x2
      else if MEM op [clos_IntOp clos_Div; clos_IntOp clos_Mod; clos_IntOp
        clos_Less; clos_IntOp clos_LessEq; clos_IntOp clos_Greater; clos_IntOp
        clos_GreaterEq] then

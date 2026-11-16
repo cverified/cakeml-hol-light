@@ -2,7 +2,7 @@
 (*  location: ported from HOL4's
     examples/formal-languages/context-free/locationScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 14 files of the port.  *)
+    that CakeML needs.  Needed by 29 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

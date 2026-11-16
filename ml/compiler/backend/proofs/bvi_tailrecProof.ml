@@ -10,6 +10,8 @@
 *)
 
 needs "basis/pure/mlvector.ml";;
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tailrec.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -22,7 +24,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvi_tailrecProof"
   ["bviProps"; "bviSem"; "bvi_tailrec"];;
 
-let _ = do_list hide_constant ["all"];;
+let _ = do_list hide_constant ["all"; "prog"];;
 
 (* TODO
 
@@ -151,7 +153,7 @@ let term_ok_any_SING = prove
 
 let term_ok_SING = prove
  (`!ts ty exp env ((s:('c,'ffi)bviSem_state)) r t.
-     term_ok ts ty exp /\
+     bvi_tailrec_term_ok ts ty exp /\
      ty_rel env ts /\
      bviSem_evaluate ([exp],env,s) = (r,t) ==>
        s = t /\
@@ -222,7 +224,8 @@ let code_rel_find_code_NONE = prove
 
 let code_rel_domain = prove
  (`!c1 c2.
-     bvi_tailrecProof_code_rel c1 c2 ==> domain c1 SUBSET domain c2`,
+     bvi_tailrecProof_code_rel c1 c2 ==> sptree_domain c1 SUBSET
+       sptree_domain c2`,
   CHEAT_TAC);;
 
 let evaluate_let_wrap = prove
@@ -324,7 +327,7 @@ let check_op_thm = prove
  (`check_op ts opr loc exp = SOME expr ==>
    (?x y.
      bvi_tailrec_is_rec loc x /\
-     term_ok ts (op_type opr) y /\
+     bvi_tailrec_term_ok ts (op_type opr) y /\
      expr = bvi_Op (to_op opr) [y; x] /\
      (exp = bvi_Op (to_op opr) [x; y] \/ exp = bvi_Op (to_op opr) [y; x]))`,
   CHEAT_TAC);;
@@ -509,12 +512,13 @@ let compile_prog_ALL_DISTINCT = prove
 
 let namespace_rel_def = new_definition
   `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
-     (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
-       bvl_to_bvi_namespaces = 2) n then ~(n IN domain c1) else n IN domain
-       c1)) /\
-     (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
+     (!n. n IN sptree_domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
+       bvl_to_bvi_namespaces = 2) n then ~(n IN sptree_domain c1) else n IN
+       sptree_domain c1)) /\
+     (!n. n IN sptree_domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 2) n)) /\
-     (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
+     (!n. n IN sptree_domain c2 /\ n < bvl_num_stubs ==> n IN
+       sptree_domain c1)`;;
 
 let input_condition_def = new_definition
   `bvi_tailrecProof_input_condition next' prog <=>
@@ -539,7 +543,7 @@ let bvi_tailrecProof_state_rel_def = new_definition
        t) /\
      (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tailrecProof_input_condition next' prog) /\
-     (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
+     (!n. n IN sptree_domain (bviSem_state_code t) /\ (\n. n MOD
        bvl_to_bvi_namespaces = 2) n ==> n < FST (FST
        (bviSem_state_compile_oracle s 0)))`;;
 
@@ -565,14 +569,14 @@ let code_rel_union = prove
  (`bvi_tailrecProof_code_rel x y /\ bvi_tailrecProof_code_rel t s /\
    // (∀a. a ∉ domain x ∧ a ∈ domain s ⇒ a ∉ domain y) ∧
    // (∀a. a ∉ domain x ∧ a ∈ domain y ⇒ a ∉ domain s)
-   DISJOINT (domain s) (domain y) ==>
+   DISJOINT (sptree_domain s) (sptree_domain y) ==>
     // DISJOINT (domain s DIFF domain t) (domain y DIFF domain x)
     bvi_tailrecProof_code_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
 let namespace_rel_union = prove
  (`bvi_tailrecProof_namespace_rel x y /\ bvi_tailrecProof_namespace_rel t s /\
-   DISJOINT (domain s) (domain y) ==>
+   DISJOINT (sptree_domain s) (sptree_domain y) ==>
    bvi_tailrecProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
@@ -641,9 +645,11 @@ let term_ok_any_extend = prove
      term_ok_any ts list' exp ==> term_ok_any (APPEND ts extra) list' exp`,
   CHEAT_TAC);;
 
-let term_ok_extend = prove
+(* term_ok_extend *)
+let bvi_tailrecProof_term_ok_extend = prove
  (`!ts ty exp extra.
-     term_ok ts ty exp ==> term_ok (APPEND ts extra) ty exp`,
+     bvi_tailrec_term_ok ts ty exp ==> bvi_tailrec_term_ok (APPEND ts
+       extra) ty exp`,
   CHEAT_TAC);;
 
 let decide_ty_imp = prove
@@ -667,8 +673,8 @@ let scan_expr_Op = prove
 
 let is_rec_term_ok = prove
  (`!exp ts loc ty.
-     (bvi_tailrec_is_rec loc exp ==> ~(term_ok ts ty exp)) /\
-     (term_ok ts ty exp ==> ~(bvi_tailrec_is_rec loc exp))`,
+     (bvi_tailrec_is_rec loc exp ==> ~(bvi_tailrec_term_ok ts ty exp)) /\
+     (bvi_tailrec_term_ok ts ty exp ==> ~(bvi_tailrec_is_rec loc exp))`,
   CHEAT_TAC);;
 
 let op_type_lem = prove
@@ -865,7 +871,8 @@ let bvi_tailrecProof_compile_prog_good_code_labels = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["all"];;
+  ["all";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

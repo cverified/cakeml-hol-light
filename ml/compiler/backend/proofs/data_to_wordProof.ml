@@ -9,6 +9,8 @@
   Correctness proof for data_to_word
 *)
 
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -56,14 +58,15 @@ let _ = cake_theory "data_to_wordProof"
    "wordLang"; "wordProps"; "wordSem"; "word_bignum"; "word_bignumProof";
    "word_to_wordProof"];;
 
-let _ = do_list hide_constant ["all"; "vars"];;
+let _ = do_list hide_constant ["all"; "prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
   ["code_buffer","code_buffer";
-   "data_buffer","data_buffer"];;
+   "data_buffer","data_buffer";
+   "vars","vars"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
 (* HOL4 data_to_wordProofScript.sml:23-24: a proof *)
@@ -274,7 +277,7 @@ let compile_correct_lemma = prove
                               (?v w. res1 = SOME (wordSem_Exception v w))
         | SOME (Rerr (Rabort (Rffi_error f))) -> (res1 = SOME
           (wordSem_FinalFFI f) /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)
-        | SOME (Rerr (Rabort e)) -> (res1 = SOME targetSem_TimeOut)
+        | SOME (Rerr (Rabort e)) -> (res1 = SOME wordSem_TimeOut)
           /\ wordSem_state_ffi t1 = dataSem_state_ffi s1)))`,
   CHEAT_TAC);;
 
@@ -282,7 +285,8 @@ let state_rel_ext_def = new_definition
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        data_to_word_gcProof_state_rel c l1 l2 s t NONE [] /\
-       domain (wordSem_state_code t) = domain l /\ wordSem_state_termdep
+       sptree_domain (wordSem_state_code t) = sptree_domain l
+         /\ wordSem_state_termdep
        t > 1 /\
        (?tt kk aa co. wordSem_state_compile_oracle
           u =
@@ -307,7 +311,7 @@ let data_to_wordProof_compile_correct = prove
         /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
       state_rel_ext x l1 l2 s t ==>
       (?ck t1 res1.
-        (wordSem_evaluate (data_Call NONE (SOME start') [0] NONE,
+        (wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,
            (wordProps_inc_clock ck t)) = (res1,t1)) /\
         option_le (wordSem_state_stack_max t1) (dataSem_state_stack_max s1)
           /\
@@ -407,9 +411,9 @@ let data_to_wordProof_compile_semantics = prove
             MAP (data_to_word_compile_part c)) /\
        Abbrev (tco = (I ## MAP (data_to_word_compile_part c)) o co) /\
        (!n. ALL (\(n,_). data_num_stubs <= n) (SND (co n))) /\
-       code_rel_ext x1 (wordSem_state_code t) /\ domain x1 = domain
-         (wordSem_state_code t) /\ wordSem_state_be t = data_to_word_config_be
-         c /\ wordSem_state_stack_max
+       code_rel_ext x1 (wordSem_state_code t) /\ sptree_domain x1 =
+         sptree_domain (wordSem_state_code t) /\ wordSem_state_be t =
+         data_to_word_config_be c /\ wordSem_state_stack_max
        t = SOME 1 /\ wordSem_state_locals_size t = SOME 0
          /\ ~(wordSem_state_stack_limit t = 0) /\ wordSem_state_compile_oracle
        t =
@@ -838,7 +842,7 @@ let data_to_word_good_handlers_incr = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
-   "vars"];;
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

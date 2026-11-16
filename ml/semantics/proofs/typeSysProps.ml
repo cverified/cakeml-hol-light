@@ -22,7 +22,7 @@ let _ = cake_theory "typeSysProps"
   ["ast"; "namespace"; "namespaceProps"; "semanticPrimitivesProps";
    "typeSoundInvariants"; "typeSystem"];;
 
-let _ = do_list hide_constant ["id"];;
+let _ = do_list hide_constant ["check"; "id"];;
 
 (* HOL4 typeSysPropsScript.sml:14: ML code, not ported *)
 (* HOL4 typeSysPropsScript.sml:15-20: code that the source has in a comment *)
@@ -99,7 +99,8 @@ let check_freevars_subst_single = prove
     LENGTH tvs = LENGTH ts /\
     check_freevars dbmax tvs t /\
     ALL (check_freevars dbmax tvs') ts ==>
-    check_freevars dbmax tvs' (type_subst (alist_to_fmap (ZIP tvs ts)) t)`,
+    check_freevars dbmax tvs' (typeSystem_type_subst (alist_to_fmap (ZIP
+      tvs ts)) t)`,
   CHEAT_TAC);;
 
 let check_freevars_subst_list = prove
@@ -107,8 +108,8 @@ let check_freevars_subst_list = prove
     (LENGTH tvs = LENGTH ts) /\
     ALL (check_freevars dbmax tvs) ts' /\
     ALL (check_freevars dbmax tvs') ts ==>
-    ALL (check_freevars dbmax tvs') (MAP (type_subst (alist_to_fmap (ZIP
-      tvs ts))) ts')`,
+    ALL (check_freevars dbmax tvs') (MAP (typeSystem_type_subst
+      (alist_to_fmap (ZIP tvs ts))) ts')`,
   CHEAT_TAC);;
 
 (* ---------- deBruijn_inc ---------- *)
@@ -137,19 +138,19 @@ let type_subst_deBruijn_inc_single = prove
    (LENGTH tvs = LENGTH ts) /\
    (s = alist_to_fmap (ZIP tvs ts)) /\
    check_freevars 0 tvs t ==>
-   (deBruijn_inc sk inc (type_subst s t) =
-    type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_inc sk inc t)
-      ts))) t)`,
+   (deBruijn_inc sk inc (typeSystem_type_subst s t) =
+    typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_inc
+      sk inc t) ts))) t)`,
   CHEAT_TAC);;
 
 let type_subst_deBruijn_inc_list = prove
  (`!ts' ts tvs inc sk.
     (LENGTH tvs = LENGTH ts) /\
     ALL (check_freevars 0 tvs) ts' ==>
-    (MAP (deBruijn_inc sk inc) (MAP (type_subst (alist_to_fmap (ZIP tvs
-      ts))) ts') =
-     MAP (type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_inc sk inc
-       t) ts)))) ts')`,
+    (MAP (deBruijn_inc sk inc) (MAP (typeSystem_type_subst (alist_to_fmap
+      (ZIP tvs ts))) ts') =
+     MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP (\t.
+       deBruijn_inc sk inc t) ts)))) ts')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -206,19 +207,20 @@ let type_subst_deBruijn_subst_single = prove
    (LENGTH tvs = LENGTH ts) /\
    check_freevars 0 tvs t /\
    (s = alist_to_fmap (ZIP tvs ts)) ==>
-   (deBruijn_subst inc ts' (type_subst (alist_to_fmap (ZIP tvs ts)) t) =
-    type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_subst inc ts' t)
-      ts))) t)`,
+   (deBruijn_subst inc ts' (typeSystem_type_subst (alist_to_fmap (ZIP tvs
+     ts)) t) =
+    typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_subst
+      inc ts' t) ts))) t)`,
   CHEAT_TAC);;
 
 let type_subst_deBruijn_subst_list = prove
  (`!t tvs tvs' ts ts' ts'' inc.
     (LENGTH tvs = LENGTH ts) /\
     ALL (check_freevars 0 tvs) ts'' ==>
-    (MAP (deBruijn_subst inc ts') (MAP (type_subst (alist_to_fmap (ZIP tvs
-      ts))) ts'') =
-     MAP (type_subst (alist_to_fmap (ZIP tvs (MAP (\t. deBruijn_subst inc
-       ts' t) ts)))) ts'')`,
+    (MAP (deBruijn_subst inc ts') (MAP (typeSystem_type_subst (alist_to_fmap
+      (ZIP tvs ts))) ts'') =
+     MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP (\t.
+       deBruijn_subst inc ts' t) ts)))) ts'')`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -345,7 +347,7 @@ let tenv_abbrev_ok_merge = prove
 (* ---------- tenv_ctor stuff ----------*)
 
 let type_ctor_long = prove
- (`!ctMap mn id'. type_ctor ctMap (Long mn id') = type_ctor ctMap id'`,
+ (`!ctMap mn id. type_ctor ctMap (Long mn id) = type_ctor ctMap id`,
   CHEAT_TAC);;
 
 let tenv_ctor_ok_merge = prove
@@ -783,12 +785,12 @@ let type_def_to_ctMap_def,type_def_to_ctMap_ind = define_wf
   (pair_size (\x. 0) (list_size (pair_size mlstring_size ast_t_size1))))
   x2)`
   `(type_def_to_ctMap tenvT next_stamp [] [] = []) /\
-   (type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS id' ids)
+   (type_def_to_ctMap tenvT next_stamp (CONS (tvs,tn,ctors) tds) (CONS id ids)
     = APPEND (type_def_to_ctMap tenvT (next_stamp + 1) tds ids)
         (REVERSE
           (MAP (\(cn,ts).
             (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst tenvT)
-                ts,id')))
+                ts,id)))
             ctors)))`;;
 
 let mem_type_def_to_ctMap = prove
@@ -1039,7 +1041,8 @@ add_simp type_ds_sing;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["id"];;
+  ["check";
+   "id"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

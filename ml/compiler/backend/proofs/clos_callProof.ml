@@ -9,6 +9,7 @@
   Correctness proof for clos_call
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/db_vars.ml";;
@@ -25,7 +26,13 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "clos_callProof"
   ["backendProps"; "closProps"; "closSem"; "clos_call"; "db_vars"];;
 
-let _ = do_list hide_constant ["C"; "vars"];;
+let _ = do_list hide_constant ["C"; "exps"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["vars","vars"];;
 
 (* TODO These are the same. Put in closLang? *)
 (* HOL4 clos_callProofScript.sml:19-21: an overload that the source brings
@@ -46,7 +53,7 @@ let _ = do_list hide_constant ["C"; "vars"];;
 (* HOL4 clos_callProofScript.sml:23-28: an overload that the source brings
    to the front: wf, written out as sptree_wf *)
 (* HOL4 clos_callProofScript.sml:23-28: an overload that the source brings
-   to the front: domain *)
+   to the front: domain, written out as sptree_domain *)
 
 (* TODO: move *)
 
@@ -126,16 +133,17 @@ let subg_trans = prove
 
 let wfg'_def = new_definition
   `wfg' g <=>
-     set_of_list (MAP FST (SND g)) SUBSET IMAGE SUC (domain (FST g))`;;
+     set_of_list (MAP FST (SND g)) SUBSET IMAGE SUC (sptree_domain (FST
+       g))`;;
 
 let wfg_def = new_definition
   `wfg g <=>
-     set_of_list (MAP FST (SND g)) = IMAGE SUC (domain (FST g)) /\
+     set_of_list (MAP FST (SND g)) = IMAGE SUC (sptree_domain (FST g)) /\
      ALL_DISTINCT (MAP FST (SND g))`;;
 
 let make_g_def = new_definition
   `make_g d code =
-     if IMAGE SUC (domain d) SUBSET (FDOM code) then
+     if IMAGE SUC (sptree_domain d) SUBSET (FDOM code) then
        SOME (d,MAP (\k. (FST k + 1,THE (FLOOKUP code (FST k + 1)))) (toAList
          d))
      else NONE`;;
@@ -166,7 +174,7 @@ let make_g_IMP_subg = prove
     DISJOINT (FDOM code) (set_of_list (MAP FST progs1)) /\
     ALL_DISTINCT (MAP FST progs1) /\
     make_g r1 (code |++ progs1) = SOME g1 /\ subspt r0 r1 /\
-    set_of_list (MAP FST progs1) SUBSET IMAGE SUC (domain r1) ==>
+    set_of_list (MAP FST progs1) SUBSET IMAGE SUC (sptree_domain r1) ==>
     subg (r1,APPEND progs1 (SND g0)) g1`,
   CHEAT_TAC);;
 
@@ -196,15 +204,15 @@ let recclosure_rel_def = new_definition
         fns1 es then
         (?tra n. fns2 = calls_list tra n loc fns1) /\
         subg (code_list loc (ZIP (MAP FST fns1) es) new_g) g /\
-        set_of_list (code_locs (MAP SND fns1)) DIFF domain (FST new_g)
-          SUBSET l /\
+        set_of_list (code_locs (MAP SND fns1)) DIFF sptree_domain (FST
+          new_g) SUBSET l /\
         code_includes (SND (code_list loc (ZIP (MAP FST fns1) es) new_g))
           code
       else let (es,new_g) = calls (MAP SND fns1) g0 in
         fns2 = ZIP (MAP FST fns1) es /\
         subg new_g g /\
-        set_of_list (code_locs (MAP SND fns1)) DIFF domain (FST new_g)
-          SUBSET l /\
+        set_of_list (code_locs (MAP SND fns1)) DIFF sptree_domain (FST
+          new_g) SUBSET l /\
         set_of_list (list_of_seq (\i. 2 * i + loc) (LENGTH fns1)) SUBSET l
           /\
         code_includes (SND new_g) code))`;;
@@ -360,8 +368,8 @@ let calls_list_length = prove
 add_simp calls_list_length;;
 
 let domain_FST_insert_each = prove
- (`!p n g. domain (FST (insert_each p n g)) = set_of_list (list_of_seq (\i. 2
-  * i + p) n) UNION domain (FST g)`,
+ (`!p n g. sptree_domain (FST (insert_each p n g)) = set_of_list (list_of_seq
+  (\i. 2 * i + p) n) UNION sptree_domain (FST g)`,
   CHEAT_TAC);;
 
 let SND_code_list_change = prove
@@ -402,10 +410,12 @@ let calls_subspt = prove
 
 let calls_code_subset = prove
  (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
-      IMAGE SUC (domain (FST g0)) SUBSET IMAGE SUC (domain (FST g)) /\
+      IMAGE SUC (sptree_domain (FST g0)) SUBSET IMAGE SUC (sptree_domain
+        (FST g)) /\
       set_of_list (MAP FST (SND g0)) SUBSET set_of_list (MAP FST (SND g)) /\
       set_of_list (MAP FST (SND g)) SUBSET
-        IMAGE SUC (domain (FST g)) UNION set_of_list (MAP FST (SND g0))`,
+        IMAGE SUC (sptree_domain (FST g)) UNION set_of_list (MAP FST (SND
+          g0))`,
   CHEAT_TAC);;
 
 let calls_IS_SUFFIX = prove
@@ -444,13 +454,14 @@ let calls_subg = prove
 
 let calls_domain = prove
  (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
-    domain (FST g) SUBSET domain (FST g0) UNION IMAGE PRE (set_of_list
-      (MAP FST (SND g)))`,
+    sptree_domain (FST g) SUBSET sptree_domain (FST g0) UNION IMAGE PRE
+      (set_of_list (MAP FST (SND g)))`,
   CHEAT_TAC);;
 
 let calls_domain_locs = prove
  (`!xs g ys g2. calls xs g = (ys,g2) ==>
-   domain (FST g2) SUBSET domain (FST g) UNION set_of_list (code_locs xs)`,
+   sptree_domain (FST g2) SUBSET sptree_domain (FST g) UNION set_of_list
+     (code_locs xs)`,
   CHEAT_TAC);;
 
 let wfg'_insert_each = prove
@@ -460,7 +471,7 @@ let wfg'_insert_each = prove
 let wfg'_code_list = prove
  (`!ls g loc.
       wfg' g /\ set_of_list (list_of_seq (\i. loc + 2 * i) (LENGTH ls))
-        SUBSET domain (FST g) ==> wfg' (code_list loc ls g)`,
+        SUBSET sptree_domain (FST g) ==> wfg' (code_list loc ls g)`,
   CHEAT_TAC);;
 
 let closed_Fn = prove
@@ -535,8 +546,8 @@ let insert_each'_def,insert_each'_ind = define_wf
 let wfg_insert_each' = prove
  (`!gt p n g.
     wfg g /\
-    DISJOINT (set_of_list (list_of_seq (\i. p + 2 * i) n)) (domain (FST
-      g)) ==> wfg (insert_each' gt p n g)`,
+    DISJOINT (set_of_list (list_of_seq (\i. p + 2 * i) n)) (sptree_domain
+      (FST g)) ==> wfg (insert_each' gt p n g)`,
   CHEAT_TAC);;
 
 let FST_insert_each' = prove
@@ -571,8 +582,8 @@ let calls_el_sing = prove
          (MAP FST (SND ga))) /\
        set_of_list (MAP FST (SND ga)) SUBSET set_of_list (MAP FST (SND g0))
          UNION IMAGE SUC (set_of_list (code_locs (TAKE i xs))) /\
-       (set_of_list (code_locs [EL i xs]) DIFF (domain (FST gb))) SUBSET
-         (set_of_list (code_locs xs) DIFF (domain (FST g))))`,
+       (set_of_list (code_locs [EL i xs]) DIFF (sptree_domain (FST gb)))
+         SUBSET (set_of_list (code_locs xs) DIFF (sptree_domain (FST g))))`,
   CHEAT_TAC);;
 
 (* HOL4 clos_callProofScript.sml:1102-1114: a proof *)
@@ -618,7 +629,7 @@ let dest_closure_v_rel_lookup = prove
  (`dest_closure max_app (SOME loc) v1 env1 = SOME x /\
    clos_callProof_v_rel g l code v1 v2 /\
    ALL2 (clos_callProof_v_rel g l code) env1 env2 /\
-   wfg g /\ loc IN domain (FST g) /\ ~(loc IN l) ==>
+   wfg g /\ loc IN sptree_domain (FST g) /\ ~(loc IN l) ==>
    (?e l1 xs n ls g01 g1 l1' tra i.
      x = Full_app e (APPEND env1 l1) [] /\ EL n xs = (LENGTH env1,e) /\
      calls (MAP SND xs) g01 = (ls,g1) /\ n < LENGTH ls /\
@@ -690,8 +701,9 @@ let subg_insert_each' = prove
       SND new_g = APPEND l (SND g) /\
       LENGTH fns1 = LENGTH es /\ wfg g /\
       DISJOINT (set_of_list (list_of_seq (\i. 2 * i + loc + 1) (LENGTH
-        fns1))) (IMAGE SUC (domain (FST g))) /\
-      DISJOINT (set_of_list (MAP FST l)) (IMAGE SUC (domain (FST g))) /\
+        fns1))) (IMAGE SUC (sptree_domain (FST g))) /\
+      DISJOINT (set_of_list (MAP FST l)) (IMAGE SUC (sptree_domain (FST g)))
+        /\
       (!i. i < LENGTH fns1 ==> ALOOKUP g1 (2 * i + loc + 1) = SOME (FST (EL
         i fns1),EL i es)) ==>
       subg (FST new_g,APPEND l (SND (insert_each' g1 loc (LENGTH fns1) g)))
@@ -895,8 +907,8 @@ let NOT_IN_domain_FST_g = prove
  (`ALL_DISTINCT (APPEND (code_locs xs) (code_locs ys)) ==>
     calls ys g' = (e2,g) ==>
     wfg g' ==>
-    MEM x (code_locs xs) ==> ~(x IN domain (FST g')) ==> ~(x IN domain
-      (FST g))`,
+    MEM x (code_locs xs) ==> ~(x IN sptree_domain (FST g')) ==> ~(x IN
+      sptree_domain (FST g))`,
   CHEAT_TAC);;
 
 (* v_rel_Boolv *)
@@ -927,9 +939,9 @@ let co_ok_def,co_ok_ind = define_wf
          FST (FST (co 1)) = g' /\
          make_g g code = SOME (full_gs 0) /\
          (!i. subg (full_gs 0) (full_gs i)) /\
-         (!x i. MEM x (code_locs exp) /\ ~(x IN domain g') ==> ~(x IN domain
-           (FST (FST (co i))))) /\
-         DISJOINT (set_of_list (code_locs exp)) (domain g) /\
+         (!x i. MEM x (code_locs exp) /\ ~(x IN sptree_domain g') ==> ~(x IN
+           sptree_domain (FST (FST (co i))))) /\
+         DISJOINT (set_of_list (code_locs exp)) (sptree_domain g) /\
          DISJOINT (FDOM code) (set_of_list (MAP FST aux1)) /\
          ALL_DISTINCT (MAP FST aux1) /\
          co_ok (code |++ aux1) (misc_shift_seq 1 co) (misc_shift_seq 1
@@ -960,7 +972,7 @@ let code_inv_def = new_definition
      (?g aux. wfg (g,aux) /\
          FST (FST (s_co 0)) = g /\
          oracle_monotonic (set_of_list o code_locs o FST o SND) (<)
-             (domain g UNION l1) s_co /\
+             (sptree_domain g UNION l1) s_co /\
          t_code = alist_to_fmap aux /\
          (IS_SOME g1_opt ==> g1_opt = SOME (g,aux))) /\
      (!k. let (cfg,exp,aux) = s_co (k:num) in
@@ -1003,7 +1015,7 @@ let code_rel_state_rel_install = prove
      r 0 = (cfg,exps,aux) /\ closSem_state_compile_oracle
      t 0 = (cfg',progs) /\
      next_cfg = FST (misc_shift_seq 1 (closSem_state_compile_oracle r) 0) /\
-     DISJOINT l1 (domain (FST g1)) ==>
+     DISJOINT l1 (sptree_domain (FST g1)) ==>
      DISJOINT (FDOM (closSem_state_code t)) (set_of_list (MAP FST (SND
        progs))) /\
      ALL_DISTINCT (MAP FST (SND progs)) /\
@@ -1012,8 +1024,8 @@ let code_rel_state_rel_install = prove
        progs = (exp1,aux1) /\
        next_cfg' = FST (misc_shift_seq 1 (closSem_state_compile_oracle t) 0)
          /\
-       subg g1 g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain (FST g2)) /\
-       set_of_list (code_locs exps) DIFF domain (FST g2) SUBSET l2 /\
+       subg g1 g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (sptree_domain (FST g2)) /\
+       set_of_list (code_locs exps) DIFF sptree_domain (FST g2) SUBSET l2 /\
        calls exps g1 = (exp1,g2) /\
        clos_callProof_state_rel g2 l2
         (closSem_state_code_fupd (K (closSem_state_code r |++ aux))
@@ -1141,8 +1153,9 @@ let calls_correct = prove
      ALL_DISTINCT (code_locs xs) /\
      DISJOINT (IMAGE SUC (set_of_list (code_locs xs))) (set_of_list (MAP FST
        (SND g0))) /\
-     l = set_of_list (code_locs xs) DIFF domain (FST g) /\
-     subg g g1 /\ l SUBSET l1 /\ DISJOINT l1 (domain (FST g1)) /\ wfg g1 /\
+     l = set_of_list (code_locs xs) DIFF sptree_domain (FST g) /\
+     subg g g1 /\ l SUBSET l1 /\ DISJOINT l1 (sptree_domain (FST g1)) /\ wfg
+       g1 /\
      clos_callProof_env_rel (clos_callProof_v_rel g1 l1 (closSem_state_code
        t0)) env1 env2 0 (MAP (\x. (0,x)) ys) /\
      clos_callProof_state_rel g1 l1 s0 t0 /\ code_includes (SND g)
@@ -1153,8 +1166,8 @@ let calls_correct = prove
                              t) (closSem_state_compile t)
                                (closSem_state_compile_oracle t) /\
        wfv_state g2 l2 (closSem_state_code t) s /\
-       subg g1 g2 /\ wfg g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (domain (FST g2))
-         /\
+       subg g1 g2 /\ wfg g2 /\ l1 SUBSET l2 /\ DISJOINT l2 (sptree_domain
+         (FST g2)) /\
        every_result (ALL (wfv g2 l2 (closSem_state_code t))) (wfv g2 l2
          (closSem_state_code t)) res /\
        closSem_evaluate (ys,env2,closSem_state_clock_fupd (K
@@ -1173,7 +1186,7 @@ let calls_correct = prove
      wfv g l (closSem_state_code t0) f /\ ALL (wfv g l (closSem_state_code
        t0)) args /\
      wfv_state g l (closSem_state_code t0) s0 /\
-     wfg g /\ DISJOINT l (domain (FST g)) /\
+     wfg g /\ DISJOINT l (sptree_domain (FST g)) /\
      clos_callProof_v_rel g l (closSem_state_code t0) f f' /\ ALL2
        (clos_callProof_v_rel g l (closSem_state_code t0)) args args' /\
      clos_callProof_state_rel g l s0 t0 ==>
@@ -1188,8 +1201,8 @@ let calls_correct = prove
        evaluate_app loco f' args' (closSem_state_clock_fupd (K
          (closSem_state_clock t0 + ck)) t0) = (res',t) /\
        clos_callProof_state_rel g2 l2 s t /\
-       subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (domain (FST g2))
-         /\
+       subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (sptree_domain (FST
+         g2)) /\
        semanticPrimitivesProps_result_rel (ALL2 (clos_callProof_v_rel g2
          l2 (closSem_state_code t))) (clos_callProof_v_rel g2 l2
          (closSem_state_code t)) res res'))`,
@@ -1379,7 +1392,7 @@ let calls_no_Labels = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
-   "vars"];;
+   "exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

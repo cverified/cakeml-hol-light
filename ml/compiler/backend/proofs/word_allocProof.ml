@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/proofs/linear_scanProof.ml";;
@@ -32,7 +33,7 @@ let _ = cake_theory "word_allocProof"
    "reg_alloc"; "reg_allocProof"; "wordConvs"; "wordLang"; "wordProps";
    "wordSem"; "word_alloc"];;
 
-let _ = do_list hide_constant ["C"; "not"; "sloc"; "val"];;
+let _ = do_list hide_constant ["C"; "not"; "prog"; "sloc"; "unit"; "val"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -52,11 +53,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -146,7 +153,7 @@ let colouring_ok_def,colouring_ok_ind = define_wf
        // Normal live sets
        let s2_live = get_live s2 live lt in
        let s1_live = get_live s1 s2_live lt in
-         INJ f (domain s1_live) UNIV /\
+         INJ f (sptree_domain s1_live) UNIV /\
          // Internal clash sets
          colouring_ok f s2 live lt /\ colouring_ok f s1 s2_live lt
      | word_If cmp r1 ri e2 e3 ->
@@ -157,33 +164,35 @@ let colouring_ok_def,colouring_ok_ind = define_wf
          (sptree_insert r1 one union_live)
                          | _ -> sptree_insert r1 one union_live) in
          // All of them must be live at once
-         INJ f (domain merged) UNIV /\
+         INJ f (sptree_domain merged) UNIV /\
          // Internal clash sets
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt
      | word_Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h ->
        let args_set = word_alloc_numset_list_insert args LN in
        let all_names' = sptree_union (SND cutset) (FST cutset) in
-       INJ f (domain (sptree_union all_names' args_set)) UNIV /\
-       INJ f (domain (word_alloc_numset_list_insert v all_names')) UNIV /\
+       INJ f (sptree_domain (sptree_union all_names' args_set)) UNIV /\
+       INJ f (sptree_domain (word_alloc_numset_list_insert v all_names'))
+         UNIV /\
        // returning handler
        colouring_ok f ret_handler live lt /\
        (
         // exception handler
         match h with NONE -> T
        | SOME (v,prog,l1,l2) ->
-           INJ f (domain (sptree_insert v one all_names')) UNIV /\
+           INJ f (sptree_domain (sptree_insert v one all_names')) UNIV /\
            colouring_ok f prog live lt)
      | word_MustTerminate p ->
        colouring_ok f p live lt
      | word_Loop names body exit_names ->
-       (INJ f (domain names) UNIV /\
-       INJ f (domain exit_names) UNIV /\
+       (INJ f (sptree_domain names) UNIV /\
+       INJ f (sptree_domain exit_names) UNIV /\
        colouring_ok f body names (CONS (names,exit_names) lt))
      | prog ->
        // live before must be fine, and clash set must be fine
        let lset = get_live prog live lt in
        let iset = sptree_union (get_writes prog) live in
-         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV`;;
+         INJ f (sptree_domain lset) UNIV /\ INJ f (sptree_domain iset)
+           UNIV`;;
 
 (*Equivalence on everything except permutation and locals*)
 (* should we add local_size here? may be no, as locals are not included *)
@@ -226,15 +235,15 @@ let strong_locals_rel_def = new_definition
 
 (* [local] *)
 let strong_locals_rel_subset_domain = prove
- (`strong_locals_rel f s l1 l2 /\ s SUBSET domain l1 ==>
-   (!v. v IN s ==> f v IN domain l2)`,
+ (`strong_locals_rel f s l1 l2 /\ s SUBSET sptree_domain l1 ==>
+   (!v. v IN s ==> f v IN sptree_domain l2)`,
   CHEAT_TAC);;
 
 (* domain_numset_list_insert *)
 let word_allocProof_domain_numset_list_insert = prove
  (`!ls locs.
-   domain (word_alloc_numset_list_insert ls locs) = domain locs UNION
-     set_of_list ls`,
+   sptree_domain (word_alloc_numset_list_insert ls locs) = sptree_domain
+     locs UNION set_of_list ls`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -274,8 +283,8 @@ let strong_locals_rel_UNION = prove
 let domain_big_union_subset = prove
  (`!ls a.
    MEM a ls ==>
-   domain (get_live_exp a) SUBSET
-   domain (big_union (MAP get_live_exp ls))`,
+   sptree_domain (get_live_exp a) SUBSET
+   sptree_domain (big_union (MAP get_live_exp ls))`,
   CHEAT_TAC);;
 
 (* HOL4 word_allocProofScript.sml:265: ML code, not ported *)
@@ -283,52 +292,53 @@ let domain_big_union_subset = prove
 (* [local] *)
 let apply_nummap_key_domain = prove
  (`!f names.
-   domain (apply_nummap_key f names) =
-   IMAGE f (domain names)`,
+   sptree_domain (apply_nummap_key f names) =
+   IMAGE f (sptree_domain names)`,
   CHEAT_TAC);;
 
 let cut_names_lemma = prove
  (`!names sloc' tloc x f.
-   INJ f (domain names) UNIV /\
+   INJ f (sptree_domain names) UNIV /\
    cut_names names sloc' = SOME x /\
-   strong_locals_rel f (domain names) sloc' tloc ==>
+   strong_locals_rel f (sptree_domain names) sloc' tloc ==>
    (?y. cut_names (apply_nummap_key f names) tloc = SOME y /\
-       domain y = IMAGE f (domain x) /\
-       strong_locals_rel f (domain names) x y /\
-       INJ f (domain x) UNIV /\
-       domain x = domain names)`,
+       sptree_domain y = IMAGE f (sptree_domain x) /\
+       strong_locals_rel f (sptree_domain names) x y /\
+       INJ f (sptree_domain x) UNIV /\
+       sptree_domain x = sptree_domain names)`,
   CHEAT_TAC);;
 
 let cut_envs_lemma = prove
- (`INJ f (domain n1) UNIV /\
-   INJ f (domain n2) UNIV /\
+ (`INJ f (sptree_domain n1) UNIV /\
+   INJ f (sptree_domain n2) UNIV /\
    cut_envs (n1,n2) sloc = SOME (x1,x2) /\
-   strong_locals_rel f (domain n1) sloc tloc /\
-   strong_locals_rel f (domain n2) sloc tloc ==>
+   strong_locals_rel f (sptree_domain n1) sloc tloc /\
+   strong_locals_rel f (sptree_domain n2) sloc tloc ==>
    (?y1 y2.
      cut_envs (apply_nummaps_key f (n1,n2)) tloc = SOME (y1,y2) /\
-     domain y1 = IMAGE f (domain n1) /\
-     domain y2 = IMAGE f (domain n2) /\
-     strong_locals_rel f (domain n1) x1 y1 /\
-     strong_locals_rel f (domain n2) x2 y2 /\
-     INJ f (domain x1) UNIV /\
-     INJ f (domain x2) UNIV /\
-     domain x1 = domain n1 /\
-     domain x2 = domain n2)`,
+     sptree_domain y1 = IMAGE f (sptree_domain n1) /\
+     sptree_domain y2 = IMAGE f (sptree_domain n2) /\
+     strong_locals_rel f (sptree_domain n1) x1 y1 /\
+     strong_locals_rel f (sptree_domain n2) x2 y2 /\
+     INJ f (sptree_domain x1) UNIV /\
+     INJ f (sptree_domain x2) UNIV /\
+     sptree_domain x1 = sptree_domain n1 /\
+     sptree_domain x2 = sptree_domain n2)`,
   CHEAT_TAC);;
 
 let cut_env_lemma = prove
- (`INJ f (domain (FST names) UNION domain (SND names)) UNIV /\
+ (`INJ f (sptree_domain (FST names) UNION sptree_domain (SND names)) UNIV /\
    wordSem_cut_env names sloc = SOME x /\
-   strong_locals_rel f (domain (FST names) UNION domain (SND names)) sloc
-     tloc ==>
+   strong_locals_rel f (sptree_domain (FST names) UNION sptree_domain (SND
+     names)) sloc tloc ==>
    (?y.
      wordSem_cut_env (apply_nummaps_key f names) tloc = SOME y /\
-     domain y = IMAGE f (domain x) /\
-     strong_locals_rel f (domain (FST names) UNION domain (SND names)) x y
-       /\
-     INJ f (domain x) UNIV /\
-     domain x = domain (FST names) UNION domain (SND names))`,
+     sptree_domain y = IMAGE f (sptree_domain x) /\
+     strong_locals_rel f (sptree_domain (FST names) UNION sptree_domain (SND
+       names)) x y /\
+     INJ f (sptree_domain x) UNIV /\
+     sptree_domain x = sptree_domain (FST names) UNION sptree_domain (SND
+       names))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -378,9 +388,9 @@ let list_rearrange_MAP = prove
 (* [local] *)
 let env_to_list_perm = prove
  (`!y x f perm tperm.
-   domain y = IMAGE f (domain x) /\
-   INJ f (domain x) UNIV /\
-   strong_locals_rel f (domain x) x y ==>
+   sptree_domain y = IMAGE f (sptree_domain x) /\
+   INJ f (sptree_domain x) UNIV /\
+   strong_locals_rel f (sptree_domain x) x y ==>
    (let (l,permute) = env_to_list y perm in
    ?perm'.
      let (l',permute') = env_to_list x perm' in
@@ -396,11 +406,11 @@ let push_env_s_val_eq = prove
    st = wordSem_state_handler cst /\ wordSem_state_stack
    st = wordSem_state_stack cst /\ wordSem_state_locals_size
    st = wordSem_state_locals_size cst /\
-   domain y = IMAGE f (domain x) /\
-   INJ f (domain x) UNIV /\
-   domain y' = IMAGE f (domain x') /\
-   INJ f (domain x') UNIV /\
-   strong_locals_rel f (domain x) x y /\
+   sptree_domain y = IMAGE f (sptree_domain x) /\
+   INJ f (sptree_domain x) UNIV /\
+   sptree_domain y' = IMAGE f (sptree_domain x') /\
+   INJ f (sptree_domain x') UNIV /\
+   strong_locals_rel f (sptree_domain x) x y /\
    (match b with NONE -> b' = NONE
         | SOME (w,h,l1,l2) ->
            (match b' with NONE -> F
@@ -490,7 +500,7 @@ let strong_locals_rel_subset = prove
 (* [local] *)
 let env_to_list_keys = prove
  (`let (l,permute) = env_to_list x perm in
-   set_of_list (MAP FST l) = domain x`,
+   set_of_list (MAP FST l) = sptree_domain x`,
   CHEAT_TAC);;
 
 let list_rearrange_keys = prove
@@ -505,12 +515,12 @@ let list_rearrange_keys_2 = prove
 
 let MAP_FST_list_rearrange_keys_SORT = prove
  (`set_of_list (MAP FST (list_rearrange perm
-     (sort key_val_compare (toAList x)))) = domain x`,
+     (sort key_val_compare (toAList x)))) = sptree_domain x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let MAP_FST_keys_SORT = prove
- (`set_of_list (MAP FST (sort f (toAList x))) = domain x`,
+ (`set_of_list (MAP FST (sort f (toAList x))) = sptree_domain x`,
   CHEAT_TAC);;
 
 let pop_env_frame = prove
@@ -534,8 +544,8 @@ let apply_colour_exp_lemma = prove
  (`!st w cst f res.
      wordSem_word_exp st w = SOME res /\
      word_state_eq_rel st cst /\
-     strong_locals_rel f (domain (get_live_exp w)) (wordSem_state_locals st)
-       (wordSem_state_locals cst) ==>
+     strong_locals_rel f (sptree_domain (get_live_exp w))
+       (wordSem_state_locals st) (wordSem_state_locals cst) ==>
      wordSem_word_exp cst (apply_colour_exp f w) = SOME res`,
   CHEAT_TAC);;
 
@@ -560,7 +570,7 @@ let LASTN_LENGTH2 = prove
 
 (* [local] *)
 let toAList_not_empty = prove
- (`~(domain t = {}) ==> ~(toAList t = [])`,
+ (`~(sptree_domain t = {}) ==> ~(toAList t = [])`,
   CHEAT_TAC);;
 
 let PAIR_CASE_PAIR_MAP = prove
@@ -584,7 +594,7 @@ let MEM_ZIP_weak = prove
 let strong_locals_rel_set_vars_dom = prove
  (`LENGTH ns = LENGTH ls /\
    INJ f X UNIV /\
-   domain (wordSem_state_locals s) SUBSET X /\
+   sptree_domain (wordSem_state_locals s) SUBSET X /\
    set_of_list ns SUBSET X /\
    strong_locals_rel f d (wordSem_state_locals s) (wordSem_state_locals t)
      ==>
@@ -598,12 +608,12 @@ let s_key_eq_push_env_imp_MAP_FST = prove
      (CONS (StackFrame n' bb l opt) ls) /\
    env_to_list x'' (wordSem_state_permute s) = (ll,res) ==>
    MAP FST ll = MAP FST l /\
-   set_of_list (MAP FST bb) = domain x'`,
+   set_of_list (MAP FST bb) = sptree_domain x'`,
   CHEAT_TAC);;
 
 let strong_locals_rel_set_var_dom = prove
  (`INJ f X UNIV /\
-   domain (wordSem_state_locals s) SUBSET X /\
+   sptree_domain (wordSem_state_locals s) SUBSET X /\
    n IN X /\
    strong_locals_rel f d (wordSem_state_locals s) (wordSem_state_locals t)
      ==>
@@ -613,7 +623,7 @@ let strong_locals_rel_set_var_dom = prove
 
 (* [local] *)
 let strong_locals_rel_extend_aux = prove
- (`domain src SUBSET s /\
+ (`sptree_domain src SUBSET s /\
    strong_locals_rel f s src tgt ==>
    strong_locals_rel f t src tgt`,
   CHEAT_TAC);;
@@ -624,13 +634,13 @@ let evaluate_apply_colour_Loop_helper = prove
      colouring_ok f (word_Loop names body exit_names) live lt /\
      word_state_eq_rel st cst /\
      strong_locals_rel f
-       (domain (get_live (word_Loop names body exit_names) live lt))
+       (sptree_domain (get_live (word_Loop names body exit_names) live lt))
          (wordSem_state_locals
        st) (wordSem_state_locals cst) /\
      (!(st:('a,'c,'ffi)wordSem_state) cst f live lt.
         colouring_ok f body live lt /\
         word_state_eq_rel st cst /\
-        strong_locals_rel f (domain (get_live body live lt))
+        strong_locals_rel f (sptree_domain (get_live body live lt))
           (wordSem_state_locals
           st) (wordSem_state_locals cst) ==>
         (?perm'.
@@ -642,17 +652,17 @@ let evaluate_apply_colour_Loop_helper = prove
                res = res' /\ word_state_eq_rel rst rcst /\
                (match res with
                  NONE ->
-                   strong_locals_rel f (domain live) (wordSem_state_locals
-                     rst) (wordSem_state_locals rcst)
+                   strong_locals_rel f (sptree_domain live)
+                     (wordSem_state_locals rst) (wordSem_state_locals rcst)
                | SOME (wordSem_Break n) ->
                    (match oEL n lt with SOME (_,exit_names) ->
-                        strong_locals_rel f (domain exit_names)
+                        strong_locals_rel f (sptree_domain exit_names)
                           (wordSem_state_locals
                           rst) (wordSem_state_locals rcst)
                     | NONE -> T)
                | SOME (wordSem_Continue n) ->
                    (match oEL n lt with SOME (names,_) ->
-                        strong_locals_rel f (domain names)
+                        strong_locals_rel f (sptree_domain names)
                           (wordSem_state_locals
                           rst) (wordSem_state_locals rcst)
                     | NONE -> T)
@@ -670,17 +680,17 @@ let evaluate_apply_colour_Loop_helper = prove
             res = res' /\ word_state_eq_rel rst rcst /\
             (match res with
               NONE ->
-                strong_locals_rel f (domain live) (wordSem_state_locals rst)
-                  (wordSem_state_locals rcst)
+                strong_locals_rel f (sptree_domain live)
+                  (wordSem_state_locals rst) (wordSem_state_locals rcst)
             | SOME (wordSem_Break n) ->
                 (match oEL n lt with SOME (_,exit_names) ->
-                     strong_locals_rel f (domain exit_names)
+                     strong_locals_rel f (sptree_domain exit_names)
                        (wordSem_state_locals
                        rst) (wordSem_state_locals rcst)
                  | NONE -> T)
             | SOME (wordSem_Continue n) ->
                 (match oEL n lt with SOME (names,_) ->
-                     strong_locals_rel f (domain names)
+                     strong_locals_rel f (sptree_domain names)
                        (wordSem_state_locals
                        rst) (wordSem_state_locals rcst)
                  | NONE -> T)
@@ -693,7 +703,7 @@ let evaluate_apply_colour = prove
  (`!prog st cst f live lt.
    colouring_ok f prog live lt /\
    word_state_eq_rel (st:('a,'c,'ffi)wordSem_state) cst /\
-   strong_locals_rel f (domain (get_live prog live lt))
+   strong_locals_rel f (sptree_domain (get_live prog live lt))
      (wordSem_state_locals st) (wordSem_state_locals cst) ==>
    (?perm'.
    let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
@@ -703,17 +713,18 @@ let evaluate_apply_colour = prove
      res = res' /\
      word_state_eq_rel rst rcst /\
      (match res with
-       NONE -> strong_locals_rel f (domain live) (wordSem_state_locals
+       NONE -> strong_locals_rel f (sptree_domain live)
+         (wordSem_state_locals
                rst) (wordSem_state_locals rcst)
      | SOME (wordSem_Break n) ->
          (match oEL n lt with SOME (_,exit_names) ->
-              strong_locals_rel f (domain exit_names) (wordSem_state_locals
-                rst) (wordSem_state_locals rcst)
+              strong_locals_rel f (sptree_domain exit_names)
+                (wordSem_state_locals rst) (wordSem_state_locals rcst)
           | NONE -> T)
      | SOME (wordSem_Continue n) ->
          (match oEL n lt with SOME (names,_) ->
-              strong_locals_rel f (domain names) (wordSem_state_locals rst)
-                (wordSem_state_locals rcst)
+              strong_locals_rel f (sptree_domain names)
+                (wordSem_state_locals rst) (wordSem_state_locals rcst)
           | NONE -> T)
      | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
   CHEAT_TAC);;
@@ -808,7 +819,7 @@ let evaluate_apply_colour = prove
 (* [local] *)
 let every_var_exp_get_live_exp = prove
  (`!exp.
-   every_var_exp (\x. x IN domain (get_live_exp exp)) exp`,
+   every_var_exp (\x. x IN sptree_domain (get_live_exp exp)) exp`,
   CHEAT_TAC);;
 
 (* HOL4 word_allocProofScript.sml:2398-2589: code that the source has in a
@@ -819,8 +830,8 @@ let every_var_exp_get_live_exp = prove
 let word_allocProof_check_col_INJ = prove
  (`check_col f numset = SOME (q,r) ==>
    q = numset /\
-   INJ f (domain q) UNIV /\
-   domain r = IMAGE f (domain q)`,
+   INJ f (sptree_domain q) UNIV /\
+   sptree_domain r = IMAGE f (sptree_domain q)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -844,31 +855,31 @@ let numset_list_insert_swap = prove
 let word_allocProof_check_partial_col_INJ = prove
  (`!ls f live flive live' flive'.
    sptree_wf live /\
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_partial_col f ls live flive = SOME (live',flive') ==>
    sptree_wf live' /\
    live' = word_alloc_numset_list_insert ls live /\
-   INJ f (domain live') UNIV /\
-   domain flive' = IMAGE f (domain live')`,
+   INJ f (sptree_domain live') UNIV /\
+   sptree_domain flive' = IMAGE f (sptree_domain live')`,
   CHEAT_TAC);;
 
 (* [local] *)
 let domain_insert_eq_union = prove
- (`domain (sptree_insert num one live) = domain (sptree_union (sptree_insert
-  num one LN) live)`,
+ (`sptree_domain (sptree_insert num one live) = sptree_domain (sptree_union
+  (sptree_insert num one LN) live)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let domain_numset_list_insert_eq_union = prove
- (`domain (word_alloc_numset_list_insert ls live) = domain (sptree_union
-  (word_alloc_numset_list_insert ls LN) live)`,
+ (`sptree_domain (word_alloc_numset_list_insert ls live) = sptree_domain
+  (sptree_union (word_alloc_numset_list_insert ls LN) live)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_reads_exp_get_live_exp = prove
  (`!exp.
-   set_of_list (get_reads_exp exp) = domain (get_live_exp exp)`,
+   set_of_list (get_reads_exp exp) = sptree_domain (get_live_exp exp)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -882,7 +893,7 @@ let lookup_numset_list_insert = prove
 let numset_list_insert_eq_UNION = prove
  (`!t t' ls.
    sptree_wf t /\ sptree_wf t' /\
-   domain t' = set_of_list ls ==>
+   sptree_domain t' = set_of_list ls ==>
    word_alloc_numset_list_insert ls t =
    sptree_union t' t`,
   CHEAT_TAC);;
@@ -930,16 +941,16 @@ let clash_tree_colouring_ok = prove
    wf_cutsets prog /\
    sptree_wf live /\
    ALL (\(n,e). sptree_wf n /\ sptree_wf e) lt /\
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_clash_tree f (get_clash_tree prog lt) live flive = SOME
      (livein,flivein) ==>
    // very slow when this is not hidden...
    word_allocProof_hide (sptree_wf livein /\
-   INJ f (domain livein) UNIV /\
+   INJ f (sptree_domain livein) UNIV /\
    colouring_ok f prog live lt /\
    livein = get_live prog live lt /\
-   domain flivein = IMAGE f (domain livein))`,
+   sptree_domain flivein = IMAGE f (sptree_domain livein))`,
   CHEAT_TAC);;
 
 (* HOL4 word_allocProofScript.sml:3270-3279: a proof *)
@@ -953,7 +964,7 @@ let clash_tree_colouring_ok = prove
 (*Actually, it should probably be exactly 0,2,4,6...*)
 let even_starting_locals_def = new_definition
   `even_starting_locals (locs:('a word_loc) spt) <=>
-     (!x. x IN domain locs ==> is_phy_var x)`;;
+     (!x. x IN sptree_domain locs ==> is_phy_var x)`;;
 
 (* HOL4 word_allocProofScript.sml:3309: ML code, not ported *)
 
@@ -991,13 +1002,13 @@ let select_reg_alloc_correct = prove
      spcol /\
    check_clash_tree (sp_default spcol) tree LN LN = SOME (livein,flivein) /\
    (!r. in_clash_tree tree r ==>
-     r IN domain spcol /\
+     r IN sptree_domain spcol /\
      (if is_phy_var r then
        sp_default spcol r = r DIV 2
      else if is_stack_var r then
        k <= (sp_default spcol r)
      else T)) /\
-   (!r. r IN domain spcol ==> in_clash_tree tree r) /\
+   (!r. r IN sptree_domain spcol ==> in_clash_tree tree r) /\
    ALL (\(r1,r2). (sp_default spcol) r1 = (sp_default spcol) r2 ==> r1 =
      r2) forced)`,
   CHEAT_TAC);;
@@ -1079,8 +1090,8 @@ let strong_locals_rel_I_word_exp = prove
  (`!st exp res.
    wordSem_word_exp st exp = SOME res /\
    strong_locals_rel I
-     (domain (sptree_union (get_live_exp exp) live)) (wordSem_state_locals
-       st) t /\
+     (sptree_domain (sptree_union (get_live_exp exp) live))
+       (wordSem_state_locals st) t /\
    live_store_rel nlive (wordSem_state_store st) tstore /\
    nlive_store nlive exp ==>
    wordSem_word_exp (wordSem_state_store_fupd (K tstore)
@@ -1104,23 +1115,23 @@ let strong_locals_rel_I_get_vars' = prove
 
 (* [local] *)
 let strong_locals_rel_I_cut_envs = prove
- (`strong_locals_rel I (domain (FST cutset) UNION domain (SND cutset))
-  (wordSem_state_locals st) t /\
+ (`strong_locals_rel I (sptree_domain (FST cutset) UNION sptree_domain (SND
+  cutset)) (wordSem_state_locals st) t /\
    cut_envs cutset (wordSem_state_locals st) = SOME x ==>
    cut_envs cutset t = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let strong_locals_rel_I_cut_env = prove
- (`strong_locals_rel I (domain (FST cutset) UNION domain (SND cutset))
-  (wordSem_state_locals st) t /\
+ (`strong_locals_rel I (sptree_domain (FST cutset) UNION sptree_domain (SND
+  cutset)) (wordSem_state_locals st) t /\
    wordSem_cut_env cutset (wordSem_state_locals st) = SOME x ==>
    wordSem_cut_env cutset t = SOME x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_vars_eq = prove
- (`(set_of_list ls) SUBSET domain (wordSem_state_locals st) ==> (?z.
+ (`(set_of_list ls) SUBSET sptree_domain (wordSem_state_locals st) ==> (?z.
   wordSem_get_vars ls st = SOME z /\
                               z = MAP (\x. THE (sptree_lookup x
                                 (wordSem_state_locals st))) ls)`,
@@ -1130,7 +1141,7 @@ let get_vars_eq = prove
 let get_vars_exists = prove
  (`!ls.
    (?z. wordSem_get_vars ls st = SOME z) <=>
-   set_of_list ls SUBSET domain (wordSem_state_locals st)`,
+   set_of_list ls SUBSET sptree_domain (wordSem_state_locals st)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1181,7 +1192,8 @@ add_simp word_allocProof_with_same_locals;;
 let evaluate_remove_dead_Loop_helper = prove
  (`!(st:('a,'c,'ffi)wordSem_state) t tstore names body exit_names
      live nlive lt prog' livein nlivein res rst.
-     strong_locals_rel I (domain livein) (wordSem_state_locals st) t /\
+     strong_locals_rel I (sptree_domain livein) (wordSem_state_locals st) t
+       /\
      live_store_rel nlivein (wordSem_state_store st) tstore /\
      wordSem_evaluate (word_Loop names body exit_names,st) = (res,rst) /\
      flat_exp_conventions body /\
@@ -1190,8 +1202,8 @@ let evaluate_remove_dead_Loop_helper = prove
      nlivein = [] /\ ~(res = SOME wordSem_Error) /\
      (!(st':('a,'c,'ffi)wordSem_state) t' tstore' prog'' livein' nlivein'
        res' rst'.
-        strong_locals_rel I (domain livein') (wordSem_state_locals st') t'
-          /\
+        strong_locals_rel I (sptree_domain livein') (wordSem_state_locals
+          st') t' /\
         live_store_rel nlivein' (wordSem_state_store st') tstore' /\
         wordSem_evaluate (body,st') = (res',rst') /\
         remove_dead body names [] (CONS (names,exit_names) lt) =
@@ -1203,22 +1215,22 @@ let evaluate_remove_dead_Loop_helper = prove
               (wordSem_state_locals_fupd (K t'') rst')) /\
           (match res' with
              NONE ->
-               strong_locals_rel I (domain names) (wordSem_state_locals
-                 rst') t'' /\
+               strong_locals_rel I (sptree_domain names)
+                 (wordSem_state_locals rst') t'' /\
                live_store_rel [] (wordSem_state_store rst') tstore''
            | SOME (wordSem_Break n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (_,exit_names) ->
-                    strong_locals_rel I (domain exit_names)
+                    strong_locals_rel I (sptree_domain exit_names)
                       (wordSem_state_locals rst') t''
                 | NONE -> T)
            | SOME (wordSem_Continue n) -> wordSem_state_store
                rst' = tstore'' /\
                (match oEL n (CONS (names,exit_names) lt) with
                   SOME (names,_) ->
-                    strong_locals_rel I (domain names) (wordSem_state_locals
-                      rst') t''
+                    strong_locals_rel I (sptree_domain names)
+                      (wordSem_state_locals rst') t''
                 | NONE -> T)
            | SOME _ -> wordSem_state_locals rst' = t''
              /\ wordSem_state_store rst' = tstore''))) ==>
@@ -1229,22 +1241,22 @@ let evaluate_remove_dead_Loop_helper = prove
            (wordSem_state_locals_fupd (K t') rst)) /\
        (match res with
           NONE ->
-            strong_locals_rel I (domain live) (wordSem_state_locals rst) t'
-              /\
+            strong_locals_rel I (sptree_domain live) (wordSem_state_locals
+              rst) t' /\
             live_store_rel nlive (wordSem_state_store rst) tstore'
         | SOME (wordSem_Break n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (_,exit_names) ->
-                 strong_locals_rel I (domain exit_names)
+                 strong_locals_rel I (sptree_domain exit_names)
                    (wordSem_state_locals rst) t'
              | NONE -> T)
         | SOME (wordSem_Continue n) -> wordSem_state_store
             rst = tstore' /\
             (match oEL n lt with
                SOME (names,_) ->
-                 strong_locals_rel I (domain names) (wordSem_state_locals
-                   rst) t'
+                 strong_locals_rel I (sptree_domain names)
+                   (wordSem_state_locals rst) t'
              | NONE -> T)
         | SOME _ -> wordSem_state_locals rst = t' /\ wordSem_state_store
           rst = tstore'))`,
@@ -1252,7 +1264,7 @@ let evaluate_remove_dead_Loop_helper = prove
 
 let evaluate_remove_dead = prove
  (`!prog live nlive lt prog' livein nlivein st t tstore res rst.
-   strong_locals_rel I (domain livein) (wordSem_state_locals st) t /\
+   strong_locals_rel I (sptree_domain livein) (wordSem_state_locals st) t /\
    live_store_rel nlivein (wordSem_state_store st) tstore /\
    wordSem_evaluate (prog,st) = (res,rst) /\
    flat_exp_conventions prog /\
@@ -1265,21 +1277,22 @@ let evaluate_remove_dead = prove
          (K t') rst)) /\
      (match res with
        NONE ->
-         strong_locals_rel I (domain live) (wordSem_state_locals rst) t' /\
+         strong_locals_rel I (sptree_domain live) (wordSem_state_locals rst)
+           t' /\
          live_store_rel nlive (wordSem_state_store rst) tstore'
      | SOME (wordSem_Break n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (_,exit_names) ->
-              strong_locals_rel I (domain exit_names) (wordSem_state_locals
-                rst) t'
+              strong_locals_rel I (sptree_domain exit_names)
+                (wordSem_state_locals rst) t'
           | NONE -> T)
      | SOME (wordSem_Continue n) -> wordSem_state_store
          rst = tstore' /\
          (match oEL n lt with
             SOME (names,_) ->
-              strong_locals_rel I (domain names) (wordSem_state_locals rst)
-                t'
+              strong_locals_rel I (sptree_domain names)
+                (wordSem_state_locals rst) t'
           | NONE -> T)
      | SOME _ -> wordSem_state_locals rst = t' /\ wordSem_state_store rst
        = tstore'))`,
@@ -1363,9 +1376,9 @@ let evaluate_remove_dead_prog = prove
   restrictive on the ssa_mapping*)
 let ssa_locals_rel_def = new_definition
   `ssa_locals_rel na ssa st_locs cst_locs =
-   ((!x y. sptree_lookup x ssa = SOME y ==> y IN domain cst_locs) /\
+   ((!x y. sptree_lookup x ssa = SOME y ==> y IN sptree_domain cst_locs) /\
    (!x y. sptree_lookup x st_locs = SOME y ==>
-     x IN domain ssa /\
+     x IN sptree_domain ssa /\
      sptree_lookup (THE (sptree_lookup x ssa)) cst_locs = SOME y /\
      (is_alloc_var x ==> x < na)))`;;
 
@@ -1394,7 +1407,7 @@ let list_next_var_rename_lemma_2 = prove
    ALL_DISTINCT ls ==>
    (let (ls',ssa',na') = list_next_var_rename ls ssa na in
    ls' = MAP (\x. THE (sptree_lookup x ssa')) ls /\
-   domain ssa' = domain ssa UNION set_of_list ls /\
+   sptree_domain ssa' = sptree_domain ssa UNION set_of_list ls /\
    (!x. ~(MEM x ls) ==> sptree_lookup x ssa' = sptree_lookup x ssa) /\
    (!x. MEM x ls ==> (?y. sptree_lookup x ssa' = SOME y)))`,
   CHEAT_TAC);;
@@ -1405,7 +1418,7 @@ let list_next_var_rename_lemma_2' = prove
    list_next_var_rename ls ssa na = (ls',ssa',na') ==>
    ALL_DISTINCT ls ==>
    ls' = MAP (\x. THE (sptree_lookup x ssa')) ls /\
-   domain ssa' = domain ssa UNION set_of_list ls /\
+   sptree_domain ssa' = sptree_domain ssa UNION set_of_list ls /\
    (!x. ~(MEM x ls) ==> sptree_lookup x ssa' = sptree_lookup x ssa) /\
    (!x. MEM x ls ==> (?y. sptree_lookup x ssa' = SOME y))`,
   CHEAT_TAC);;
@@ -1464,9 +1477,9 @@ let merge_moves_frame2 = prove
  (`!ls na ssaL ssaR.
    let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls ssaL ssaR
      na in
-   domain ssaL' = domain ssaL /\
-   domain ssaR' = domain ssaR /\
-   (!x. MEM x ls /\ x IN domain (inter ssaL ssaR) ==>
+   sptree_domain ssaL' = sptree_domain ssaL /\
+   sptree_domain ssaR' = sptree_domain ssaR /\
+   (!x. MEM x ls /\ x IN sptree_domain (inter ssaL ssaR) ==>
      sptree_lookup x ssaL' = sptree_lookup x ssaR')`,
   CHEAT_TAC);;
 
@@ -1476,7 +1489,7 @@ let merge_moves_frame3 = prove
  (`!ls na ssaL ssaR.
    let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls ssaL ssaR
      na in
-   !x. ~(MEM x ls) \/ ~(x IN domain (inter ssaL ssaR)) ==>
+   !x. ~(MEM x ls) \/ ~(x IN sptree_domain (inter ssaL ssaR)) ==>
      sptree_lookup x ssaL' = sptree_lookup x ssaL /\
      sptree_lookup x ssaR' = sptree_lookup x ssaR`,
   CHEAT_TAC);;
@@ -1487,7 +1500,7 @@ Also, the cases are basically copy pasted... *)
 (* [local] *)
 let mov_eval_head = prove
  (`wordSem_evaluate (word_Move p moves,st) = (NONE,rst) /\
-   y IN domain (wordSem_state_locals st) /\
+   y IN sptree_domain (wordSem_state_locals st) /\
    ~(MEM y (MAP FST moves)) /\
    ~(MEM x (MAP FST moves)) ==>
    wordSem_evaluate (word_Move p (CONS (x,y) moves),st) =
@@ -1552,19 +1565,19 @@ let fake_moves_frame = prove
 let fake_moves_frame2 = prove
  (`!ls na ssaL ssaR.
    let (moveL,moveR,na',ssaL',ssaR') = fake_moves prio ls ssaL ssaR na in
-   domain ssaL' = domain ssaL UNION (set_of_list ls INTER (domain ssaR UNION
-     domain ssaL)) /\
-   domain ssaR' = domain ssaR UNION (set_of_list ls INTER (domain ssaR UNION
-     domain ssaL)) /\
-   (!x. MEM x ls /\ ~(x IN domain (inter ssaL ssaR)) ==> sptree_lookup x
-     ssaL' = sptree_lookup x ssaR')`,
+   sptree_domain ssaL' = sptree_domain ssaL UNION (set_of_list ls INTER
+     (sptree_domain ssaR UNION sptree_domain ssaL)) /\
+   sptree_domain ssaR' = sptree_domain ssaR UNION (set_of_list ls INTER
+     (sptree_domain ssaR UNION sptree_domain ssaL)) /\
+   (!x. MEM x ls /\ ~(x IN sptree_domain (inter ssaL ssaR)) ==>
+     sptree_lookup x ssaL' = sptree_lookup x ssaR')`,
   CHEAT_TAC);;
 
 (* [local] *)
 let fake_moves_frame3 = prove
  (`!ls na ssaL ssaR.
    let (moveL,moveR,na',ssaL',ssaR') = fake_moves prio ls ssaL ssaR na in
-   !x. ~(MEM x ls) \/ x IN domain (inter ssaL ssaR) ==>
+   !x. ~(MEM x ls) \/ x IN sptree_domain (inter ssaL ssaR) ==>
      sptree_lookup x ssaL' = sptree_lookup x ssaL /\
      sptree_lookup x ssaR' = sptree_lookup x ssaR`,
   CHEAT_TAC);;
@@ -1615,7 +1628,7 @@ let fake_moves_correctR = prove
 let ssa_eq_rel_swap = prove
  (`ssa_locals_rel na ssaR (wordSem_state_locals st) (wordSem_state_locals cst)
   /\
-   domain ssaL = domain ssaR /\
+   sptree_domain ssaL = sptree_domain ssaR /\
    (!x. sptree_lookup x ssaL = sptree_lookup x ssaR) ==>
    ssa_locals_rel na ssaL (wordSem_state_locals st) (wordSem_state_locals
      cst)`,
@@ -1681,7 +1694,7 @@ let list_next_var_rename_move_preserve = prove
  (`!st ssa na ls cst.
    ssa_locals_rel na ssa (wordSem_state_locals st) (wordSem_state_locals
      cst) /\
-   set_of_list ls SUBSET domain (wordSem_state_locals st) /\
+   set_of_list ls SUBSET sptree_domain (wordSem_state_locals st) /\
    ALL_DISTINCT ls /\
    ssa_map_ok na ssa /\
    word_state_eq_rel st cst ==>
@@ -1702,9 +1715,10 @@ let list_next_var_rename_move_preserve = prove
 (* [local] *)
 let option_lookup_subset_helper = prove
  (`!ssa cst_locs ls.
-     (!x y. sptree_lookup x ssa = SOME y ==> y IN domain cst_locs) /\
-     set_of_list ls SUBSET domain ssa ==>
-     set_of_list (MAP (option_lookup ssa) ls) SUBSET domain cst_locs`,
+     (!x y. sptree_lookup x ssa = SOME y ==> y IN sptree_domain cst_locs) /\
+     set_of_list ls SUBSET sptree_domain ssa ==>
+     set_of_list (MAP (option_lookup ssa) ls) SUBSET sptree_domain
+       cst_locs`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -1712,7 +1726,7 @@ let list_next_var_rename_move_preserve_weak = prove
  (`!st ssa na ls cst.
    ssa_locals_rel na ssa (wordSem_state_locals st) (wordSem_state_locals
      cst) /\
-   set_of_list ls SUBSET domain ssa /\
+   set_of_list ls SUBSET sptree_domain ssa /\
    ALL_DISTINCT ls /\
    ssa_map_ok na ssa /\
    word_state_eq_rel st cst ==>
@@ -2029,14 +2043,14 @@ let lookup_force_rename = prove
   CHEAT_TAC);;
 
 let domain_force_rename = prove
- (`domain (force_rename ls ssa) =
-     domain ssa UNION set_of_list (MAP FST ls)`,
+ (`sptree_domain (force_rename ls ssa) =
+     sptree_domain ssa UNION set_of_list (MAP FST ls)`,
   CHEAT_TAC);;
 
 let ssa_locals_rel_force_rename = prove
  (`ssa_locals_rel na ssa st1 st2 /\
    ALL (\x. sptree_lookup (FST x) st1 = sptree_lookup (SND x) st2) ls /\
-   set_of_list (MAP SND ls) SUBSET domain st2 ==>
+   set_of_list (MAP SND ls) SUBSET sptree_domain st2 ==>
    ssa_locals_rel na (force_rename ls ssa) st1 st2`,
   CHEAT_TAC);;
 
@@ -2067,14 +2081,14 @@ let get_vars_eq_alist_insert = prove
 
 let cut_envs_domain_SUBSET = prove
  (`cut_envs (x1,x2) locs = SOME x ==>
-   domain x1 SUBSET domain locs /\
-   domain x2 SUBSET domain locs`,
+   sptree_domain x1 SUBSET sptree_domain locs /\
+   sptree_domain x2 SUBSET sptree_domain locs`,
   CHEAT_TAC);;
 
 (* [local] *)
 let ssa_reconcile_distinct_lemma = prove
  (`!f g ns.
-     INJ f (domain ns) UNIV ==>
+     INJ f (sptree_domain ns) UNIV ==>
      ALL_DISTINCT (MAP FST
        (FILTER (\(a,b). ~(a = b))
          (MAP (\v. (f v,g v)) (MAP FST (toAList ns)))))`,
@@ -2103,7 +2117,7 @@ let ssa_reconcile_filtered_in_dom = prove
  (`!v. MEM v (FILTER (\v. match sptree_lookup v cur_ssa with NONE -> F
                           | SOME cv -> ~(option_lookup tgt_ssa v = cv))
                (MAP FST (toAList ns))) ==>
-     v IN domain ns /\
+     v IN sptree_domain ns /\
      (?cv. sptree_lookup v cur_ssa = SOME cv /\ ~(option_lookup tgt_ssa v =
        cv) /\
           THE (sptree_lookup v cur_ssa) = cv)`,
@@ -2136,10 +2150,10 @@ let alookup_zip_map_some = prove
 (* [local] *)
 let alookup_zip_map_option_lookup_none = prove
  (`!ls vs n ns f.
-     INJ f (domain ns) UNIV /\
-     n IN domain ns /\
+     INJ f (sptree_domain ns) UNIV /\
+     n IN sptree_domain ns /\
      ~(MEM n ls) /\
-     (!v. MEM v ls ==> v IN domain ns) /\
+     (!v. MEM v ls ==> v IN sptree_domain ns) /\
      LENGTH vs = LENGTH ls ==>
      ALOOKUP (ZIP (MAP f ls) vs) (f n) = NONE`,
   CHEAT_TAC);;
@@ -2147,20 +2161,20 @@ let alookup_zip_map_option_lookup_none = prove
 (* [local] *)
 let evaluate_ssa_reconcile = prove
  (`ssa_locals_rel na cur_ssa st_locs (wordSem_state_locals cst) /\
-   INJ (option_lookup tgt_ssa) (domain ns) UNIV ==>
+   INJ (option_lookup tgt_ssa) (sptree_domain ns) UNIV ==>
    (?cst'.
      wordSem_evaluate (ssa_reconcile cur_ssa tgt_ssa ns,cst) = (NONE,cst')
        /\
      word_state_eq_rel cst cst' /\
-     strong_locals_rel (option_lookup tgt_ssa) (domain ns) st_locs
+     strong_locals_rel (option_lookup tgt_ssa) (sptree_domain ns) st_locs
        (wordSem_state_locals cst'))`,
   CHEAT_TAC);;
 
 let lt_ok_def = new_definition
   `lt_ok lt <=>
      ALL (\(tgt_ssa,names,exit_names).
-       INJ (option_lookup tgt_ssa) (domain names) UNIV /\
-       INJ (option_lookup tgt_ssa) (domain exit_names) UNIV) lt`;;
+       INJ (option_lookup tgt_ssa) (sptree_domain names) UNIV /\
+       INJ (option_lookup tgt_ssa) (sptree_domain exit_names) UNIV) lt`;;
 
 (* [local] *)
 let foldr_insert_const_swap = prove
@@ -2186,8 +2200,8 @@ let evaluate_fake_const_chain_locals = prove
      let rcst = SND (wordSem_evaluate (ITLIST word_Seq
        (MAP (\r. (fake_move r):'a word_prog) rs) word_Skip,cst)) in
      word_state_eq_rel cst rcst /\
-     domain (wordSem_state_locals rcst) = domain (wordSem_state_locals cst)
-       UNION set_of_list rs /\
+     sptree_domain (wordSem_state_locals rcst) = sptree_domain
+       (wordSem_state_locals cst) UNION set_of_list rs /\
      (!r. ~(MEM r rs) ==> sptree_lookup r (wordSem_state_locals rcst) =
        sptree_lookup r (wordSem_state_locals cst)) /\
      (!r. MEM r rs ==> sptree_lookup r (wordSem_state_locals rcst) = SOME
@@ -2216,13 +2230,13 @@ let loop_setup_correct = prove
        na <= na_refreshed /\
        is_alloc_var na_refreshed /\
        ssa_map_ok na_refreshed ssa_refreshed /\
-       domain ssa_refreshed = domain ssa UNION domain (sptree_union names
-         exit_names) /\
-       INJ (option_lookup ssa_refreshed) (domain names) UNIV /\
-       INJ (option_lookup ssa_refreshed) (domain exit_names) UNIV /\
-       (!v. v IN domain ssa_refreshed ==>
-         option_lookup ssa_refreshed v IN domain (wordSem_state_locals
-           rcst)))`,
+       sptree_domain ssa_refreshed = sptree_domain ssa UNION sptree_domain
+         (sptree_union names exit_names) /\
+       INJ (option_lookup ssa_refreshed) (sptree_domain names) UNIV /\
+       INJ (option_lookup ssa_refreshed) (sptree_domain exit_names) UNIV /\
+       (!v. v IN sptree_domain ssa_refreshed ==>
+         option_lookup ssa_refreshed v IN sptree_domain
+           (wordSem_state_locals rcst)))`,
   CHEAT_TAC);;
 
 (* If P evaluates to (NONE, t), Seq P Q evaluates as Q from t. *)
@@ -2247,19 +2261,19 @@ let ssa_cc_trans_Loop_helper = prove
  (`!(st:('a,'b,'c)wordSem_state) cst ssa_refreshed na_refreshed
      names body exit_names lt body' ssa' na'.
      word_state_eq_rel st cst /\
-     strong_locals_rel (option_lookup ssa_refreshed) (domain names)
+     strong_locals_rel (option_lookup ssa_refreshed) (sptree_domain names)
        (wordSem_state_locals
        st) (wordSem_state_locals cst) /\
-     (!v. v IN domain names ==>
-        option_lookup ssa_refreshed v IN domain (wordSem_state_locals cst))
-          /\
+     (!v. v IN sptree_domain names ==>
+        option_lookup ssa_refreshed v IN sptree_domain (wordSem_state_locals
+          cst)) /\
      ssa_map_ok na_refreshed ssa_refreshed /\
      is_alloc_var na_refreshed /\
      word_every_var (\x. x < na_refreshed) body /\
-     INJ (option_lookup ssa_refreshed) (domain names) UNIV /\
-     INJ (option_lookup ssa_refreshed) (domain exit_names) UNIV /\
-     domain names SUBSET domain ssa_refreshed /\
-     domain exit_names SUBSET domain ssa_refreshed /\
+     INJ (option_lookup ssa_refreshed) (sptree_domain names) UNIV /\
+     INJ (option_lookup ssa_refreshed) (sptree_domain exit_names) UNIV /\
+     sptree_domain names SUBSET sptree_domain ssa_refreshed /\
+     sptree_domain exit_names SUBSET sptree_domain ssa_refreshed /\
      ALL (\x. x < na_refreshed) (MAP FST (toAList names)) /\
      ALL (\x. x < na_refreshed) (MAP FST (toAList exit_names)) /\
      lt_ok lt /\
@@ -2288,14 +2302,14 @@ let ssa_cc_trans_Loop_helper = prove
                        NONE -> T
                      | SOME (tgt_ssa,_,exit_names) ->
                          strong_locals_rel (option_lookup tgt_ssa)
-                           (domain exit_names) (wordSem_state_locals rst)
-                             (wordSem_state_locals rcst))
+                           (sptree_domain exit_names) (wordSem_state_locals
+                             rst) (wordSem_state_locals rcst))
                 | SOME (wordSem_Continue n') ->
                     (match oEL n' lt' with
                        NONE -> T
                      | SOME (tgt_ssa,names,_) ->
                          strong_locals_rel (option_lookup tgt_ssa)
-                           (domain names) (wordSem_state_locals rst)
+                           (sptree_domain names) (wordSem_state_locals rst)
                              (wordSem_state_locals rcst))
                 | SOME _ -> wordSem_state_locals rst = wordSem_state_locals
                   rcst))))) ==>
@@ -2321,14 +2335,14 @@ let ssa_cc_trans_Loop_helper = prove
                     NONE -> T
                   | SOME (tgt_ssa,_,exit_names) ->
                       strong_locals_rel (option_lookup tgt_ssa)
-                        (domain exit_names) (wordSem_state_locals rst)
-                          (wordSem_state_locals rcst))
+                        (sptree_domain exit_names) (wordSem_state_locals
+                          rst) (wordSem_state_locals rcst))
              | SOME (wordSem_Continue n') ->
                  (match oEL n' lt with
                     NONE -> T
                   | SOME (tgt_ssa,names,_) ->
                       strong_locals_rel (option_lookup tgt_ssa)
-                        (domain names) (wordSem_state_locals rst)
+                        (sptree_domain names) (wordSem_state_locals rst)
                           (wordSem_state_locals rcst))
              | SOME _ -> wordSem_state_locals rst = wordSem_state_locals
                rcst))
@@ -2338,10 +2352,10 @@ let ssa_cc_trans_Loop_helper = prove
 
 (* [local] *)
 let ssa_cut_inter_lemma = prove
- (`domain ssa' INTER domain (sptree_union x1 x2) = domain x1 UNION domain x2
-  ==>
-   xx IN domain (sptree_union x1 x2) ==>
-   xx IN domain ssa'`,
+ (`sptree_domain ssa' INTER sptree_domain (sptree_union x1 x2) = sptree_domain
+  x1 UNION sptree_domain x2 ==>
+   xx IN sptree_domain (sptree_union x1 x2) ==>
+   xx IN sptree_domain ssa'`,
   CHEAT_TAC);;
 
 let ssa_cc_trans_correct = prove
@@ -2370,15 +2384,15 @@ let ssa_cc_trans_correct = prove
      | SOME (wordSem_Break n) ->
          (match oEL n lt with
             SOME (tgt_ssa,_,exit_names) ->
-              strong_locals_rel (option_lookup tgt_ssa) (domain exit_names)
-                (wordSem_state_locals
+              strong_locals_rel (option_lookup tgt_ssa) (sptree_domain
+                exit_names) (wordSem_state_locals
                 rst) (wordSem_state_locals rcst)
           | NONE -> T)
      | SOME (wordSem_Continue n) ->
          (match oEL n lt with
             SOME (tgt_ssa,names,_) ->
-              strong_locals_rel (option_lookup tgt_ssa) (domain names)
-                (wordSem_state_locals
+              strong_locals_rel (option_lookup tgt_ssa) (sptree_domain
+                names) (wordSem_state_locals
                 rst) (wordSem_state_locals rcst)
           | NONE -> T)
      | SOME _ -> wordSem_state_locals rst = wordSem_state_locals rcst))`,
@@ -2495,7 +2509,7 @@ let ssa_cc_trans_correct = prove
 (* [local] *)
 let setup_ssa_props = prove
  (`is_alloc_var lim /\
-   domain (wordSem_state_locals st) = set_of_list (even_list n) ==>
+   sptree_domain (wordSem_state_locals st) = set_of_list (even_list n) ==>
    (let ((mov:'a word_prog),ssa,na) = setup_ssa n lim (prog:'a word_prog) in
    let (res,cst) = wordSem_evaluate (mov,st) in
      res = NONE /\
@@ -2515,8 +2529,8 @@ let max_var_exp_max = prove
 
 (* [local] *)
 let max_var_inst_max = prove
- (`!inst'.
-     every_var_inst (\x. x <= max_var_inst inst') inst'`,
+ (`!wordSem_inst.
+     every_var_inst (\x. x <= max_var_inst wordSem_inst) wordSem_inst`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2539,7 +2553,7 @@ let limit_var_props = prove
 (*Full correctness theorem*)
 let full_ssa_cc_trans_correct = prove
  (`!prog st n.
-    domain (wordSem_state_locals st) = set_of_list (even_list n) ==>
+    sptree_domain (wordSem_state_locals st) = set_of_list (even_list n) ==>
     (?perm'.
     let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
       perm') st) in
@@ -2584,9 +2598,9 @@ let every_name_def2 = prove
 
 (* [local] *)
 let union_apply_nummaps_key = prove
- (`domain (sptree_union (FST (apply_nummaps_key (f) p))
+ (`sptree_domain (sptree_union (FST (apply_nummaps_key (f) p))
                        (SND (apply_nummaps_key (f) p))) =
-   domain (apply_nummap_key (f) (sptree_union (FST p) (SND p)))`,
+   sptree_domain (apply_nummap_key (f) (sptree_union (FST p) (SND p)))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2754,10 +2768,10 @@ let call_arg_convention_preservation = prove
 
 (*Composing with a function using apply_colour*)
 let every_var_inst_apply_colour_inst = prove
- (`!P inst' Q f.
-   every_var_inst P inst' /\
+ (`!P wordSem_inst Q f.
+   every_var_inst P wordSem_inst /\
    (!x. P x ==> Q (f x)) ==>
-   every_var_inst Q (apply_colour_inst f inst')`,
+   every_var_inst Q (apply_colour_inst f wordSem_inst)`,
   CHEAT_TAC);;
 
 let every_var_exp_apply_colour_exp = prove
@@ -2856,7 +2870,9 @@ let _ = do_list unhide_constant
   ["C";
    "mem";
    "not";
+   "prog";
    "sloc";
+   "unit";
    "val"];;
 
 (* and the interface *)

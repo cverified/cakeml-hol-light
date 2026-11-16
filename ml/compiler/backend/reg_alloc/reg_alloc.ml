@@ -2,7 +2,7 @@
 (*  reg_alloc: ported from HOL4's
     compiler/backend/reg_alloc/reg_allocScript.sml
     A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 13 files of the port.  *)
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -206,15 +206,15 @@ let state_exn_INDUCT,state_exn_RECURSION = define_datatype
    ml_monadBaseLib); these are the definitions that it
    makes *)
 let raise_Fail_def = new_definition
-  `raise_Fail e1 =
+  `reg_alloc_raise_Fail e1 =
      (\state. (M_failure (reg_alloc_Fail e1),state))`;;
 
 let raise_Subscript_def = new_definition
-  `raise_Subscript =
+  `reg_alloc_raise_Subscript =
      (\state. (M_failure reg_alloc_Subscript,state))`;;
 
 let handle_Fail_def = new_definition
-  `handle_Fail x f =
+  `reg_alloc_handle_Fail x f =
      (\state.
        match x state with (res,state) ->
          match res with M_success y -> (M_success y,state)
@@ -223,7 +223,7 @@ let handle_Fail_def = new_definition
              reg_alloc_Subscript -> (M_failure reg_alloc_Subscript,state)))`;;
 
 let handle_Subscript_def = new_definition
-  `handle_Subscript x f =
+  `reg_alloc_handle_Subscript x f =
      (\state.
        match x state with (res,state) ->
          match res with M_success y -> (M_success y,state)
@@ -1341,8 +1341,8 @@ let biased_pref_def = new_definition
      st_ex_bind (coalesce_root n) (\v.
        let vs = (match sptree_lookup n mtable with NONE -> [] | SOME vs ->
          vs) in
-       handle_Subscript (first_match_col ks (CONS v vs)) (st_ex_return
-         NONE))
+       reg_alloc_handle_Subscript (first_match_col ks (CONS v vs))
+         (st_ex_return NONE))
      else st_ex_return NONE)`;;
 
 (* very similar to consistency_ok, but for initializing *)
@@ -1389,7 +1389,8 @@ let neg_biased_pref_def = new_definition
      if n < d then
        let vs = (match sptree_lookup n mtable with NONE -> [] | SOME vs ->
          vs) in
-       handle_Subscript (neg_first_match_col k bads vs) (st_ex_return NONE)
+       reg_alloc_handle_Subscript (neg_first_match_col k bads vs)
+         (st_ex_return NONE)
      else st_ex_return NONE)`;;
 
 (* Putting everything together in one call *)

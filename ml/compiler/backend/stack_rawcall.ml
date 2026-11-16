@@ -22,6 +22,8 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "stack_rawcall"
   ["data_to_word"; "stackLang"];;
 
+let _ = do_list hide_constant ["prog"];;
+
 (* collect stack allocation information *)
 
 let seq_stack_alloc_def = new_definition
@@ -100,6 +102,10 @@ let stack_rawcall_compile_def = new_definition
   `stack_rawcall_compile prog =
      let i = collect_info prog LN in
        MAP (\(n,(b:'a stack_prog)). (n,comp_top i b)) prog`;;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

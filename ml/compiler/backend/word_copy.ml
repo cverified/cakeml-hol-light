@@ -2,8 +2,7 @@
 (*  word_copy: ported from HOL4's
     compiler/backend/word_copyScript.sml
     A definition theory, with 14 definitions, 1 datatype and no
-    theorems.  Needed by backend.ml, backend_passes.ml,
-    wordConvsProof.ml, word_copyProof.ml and word_to_word.ml.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -108,12 +107,13 @@ let copy_prop_inst_def = new_definition
        let ri' = lookup_eq_imm cs ri in
        let ri'' = (if ri' = Reg r1 then ri else ri') in
        (word_Inst (asm_Arith (asm_Binop bop r1 r2' ri'')),cs')
-     | asm_Arith (asm_Shift shift' r1 r2 n) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 n) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
        let n'' = (if n' = Reg r1 then n else n') in
-       (word_Inst (asm_Arith (asm_Shift shift' r1 r2' n'')),cs')
+       (word_Inst (asm_Arith (asm_Shift backend_common_word_shift r1 r2'
+         n'')),cs')
      | asm_Arith (asm_Div r1 r2 r3) ->
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in

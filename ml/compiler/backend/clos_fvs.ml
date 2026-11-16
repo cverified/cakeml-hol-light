@@ -15,6 +15,8 @@ needs "compiler/backend/closLang.ml";;
 let _ = cake_theory "clos_fvs"
   ["closLang"];;
 
+let _ = do_list hide_constant ["exps"];;
+
 (* the clauses in three quotations: fns is ((num # exp) list) and (_#_)list;
    t is tra, (mlstring list) and mlstring; xs is (exp list) and (_)list,
    which one quotation cannot typecheck *)
@@ -143,6 +145,10 @@ let clos_fvs_compile_inc_def = new_definition
 let LENGTH_remove_fvs = prove
  (`!fvs xs. LENGTH (remove_fvs fvs xs) = LENGTH xs`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

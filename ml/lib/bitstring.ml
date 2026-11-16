@@ -2,8 +2,7 @@
 (*  bitstring: ported from HOL4's
     src/n-bit/bitstringScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by export_arm8.ml, misc.ml and
-    word_to_stackProof.ml.  *)
+    that CakeML needs.  Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/numposrep.ml";;
@@ -44,6 +43,13 @@ let shiftr_def = new_definition
 
 let field_def = new_definition
   `field h l v = fixwidth (SUC h - l) (shiftr v l)`;;
+
+let rotate_def = new_definition
+  `rotate v m =
+     let l = LENGTH v in
+     let x = m MOD l in
+       if (l = 0) \/ (x = 0) then v else APPEND (field (x - 1) 0 v)
+         (field (l - 1) x v)`;;
 
 let testbit_def = new_definition
   `testbit b v = (field b b v = [T])`;;

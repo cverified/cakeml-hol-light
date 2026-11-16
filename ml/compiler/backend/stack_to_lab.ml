@@ -2,8 +2,7 @@
 (*  stack_to_lab: ported from HOL4's
     compiler/backend/stack_to_labScript.sml
     A definition theory, with 9 definitions, 1 datatype and 1
-    theorem.  Needed by backend.ml, backendProof.ml,
-    backend_passes.ml and stack_to_labProof.ml.  *)
+    theorem.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -46,7 +45,7 @@ let negate_def = define_cases
 add_simp negate_def;;
 
 let find_lab_def = new_definition
-  `find_lab n labs =
+  `stack_to_lab_find_lab n labs =
      match oEL n labs with NONE -> (0:num)
      | SOME k -> k`;;
 
@@ -109,9 +108,9 @@ let stack_to_lab_flatten_def,stack_to_lab_flatten_ind = define_guess_cheat
      | stack_Return r -> (misc_List [(\a. lab_Asm (Asmi a)) (asm_JumpReg r)
        [] 0],T,m)
      | stack_Break k -> (misc_List [lab_LabAsm (lab_Jump (lab_Lab n
-       (find_lab k breaks))) (n2w 0) [] 0],T,m)
+       (stack_to_lab_find_lab k breaks))) (n2w 0) [] 0],T,m)
      | stack_Continue k -> (misc_List [lab_LabAsm (lab_Jump (lab_Lab n
-       (find_lab k conts))) (n2w 0) [] 0],T,m)
+       (stack_to_lab_find_lab k conts))) (n2w 0) [] 0],T,m)
      | stack_RawCall n -> (misc_List [lab_LabAsm (lab_Jump (lab_Lab n 1))
        (n2w 0) [] 0],T,m)
      | stack_Call NONE dest handler -> (misc_List [compile_jump dest],T,m)

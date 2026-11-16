@@ -2,8 +2,8 @@
 (*  source_to_flat: ported from HOL4's
     compiler/backend/source_to_flatScript.sml
     A definition theory, with 31 definitions, 6 datatypes and 8
-    theorems.  Needed by backend.ml, backendProof.ml, presLang.ml
-    and source_to_flatProof.ml.  *)
+    theorems.  Needed by backend.ml, backendProof.ml, presLang.ml,
+    source_to_flatProof.ml, to_data_cv.ml and to_flatProg.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -77,10 +77,10 @@ let compile_pat_def,compile_pat_ind = define_shaped_rec_clauses
   [`compile_pat env (ast_Pvar v) = flat_Pvar v`;
    `compile_pat env ast_Pany = flat_Pany`;
    `compile_pat env (ast_Plit l) = flat_Plit l`;
-   `compile_pat env (ast_Pcon id' ps) =
+   `compile_pat env (ast_Pcon id ps) =
         flat_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup (source_to_flat_environment_c
-              env)) id'))
+              env)) id))
           (MAP (compile_pat env) ps)`;
    `compile_pat env (ast_Pref p) = flat_Pref (compile_pat env p)`;
    `compile_pat env (ast_Pas p i) = flat_Pas (compile_pat env p) i`;
@@ -332,7 +332,7 @@ let empty_env_def = new_definition
   `source_to_flat_empty_env = mk_source_to_flat_environment nsEmpty nsEmpty`;;
 
 let extend_env_def = new_definition
-  `extend_env e1 e2 =
+  `source_to_flat_extend_env e1 e2 =
      mk_source_to_flat_environment (nsAppend
        (source_to_flat_environment_c e1) (source_to_flat_environment_c e2))
        (nsAppend (source_to_flat_environment_v e1)
@@ -368,9 +368,9 @@ let alloc_tags_def = new_definition
      (nsMap (\tag. (tag,data)) con_ns,cid_spt)`;;
 
 let env_id_tuple_def = new_definition
-  `env_id_tuple gen id' = flat_Con backend_common_None NONE
+  `env_id_tuple gen id = flat_Con backend_common_None NONE
      [flat_Lit backend_common_None (ast_IntLit (&gen)); flat_Lit
-       backend_common_None (ast_IntLit (&id'))]`;;
+       backend_common_None (ast_IntLit (&id))]`;;
 
 let simple_dlet_def = new_definition
   `simple_dlet p e =
@@ -447,7 +447,7 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
           next' env envs' lds in
         let (n'',next2,new_env2,envs'',ds') = source_to_flat_compile_decs t
           n' next1
-           (extend_env new_env1 env) envs' ds in
+           (source_to_flat_extend_env new_env1 env) envs' ds in
              (n'',next2,new_env2,envs'',APPEND lds' ds')
      | (t,[Denv nenv]) ->
         (n + 1,next_indices_vidx_fupd (K (next_indices_vidx next' + 1))
@@ -470,9 +470,10 @@ let source_to_flat_compile_decs_def,source_to_flat_compile_decs_ind =
         let (n',next1,new_env1,envs1,d') = source_to_flat_compile_decs t n
           next' env envs' [d] in
         let (n'',next2,new_env2,envs2,ds') =
-          source_to_flat_compile_decs t n' next1 (extend_env new_env1 env)
-            envs1 ds in
-          (n'',next2,extend_env new_env2 new_env1,envs2,APPEND d' ds')`;;
+          source_to_flat_compile_decs t n' next1 (source_to_flat_extend_env
+            new_env1 env) envs1 ds in
+          (n'',next2,source_to_flat_extend_env new_env2
+            new_env1,envs2,APPEND d' ds')`;;
 
 let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
   ["next","next_indices";
@@ -529,12 +530,12 @@ let lookup_env_id_def = new_definition
      | SOME env -> env)`;;
 
 let store_env_id_def = new_definition
-  `store_env_id gen id' =
+  `store_env_id gen id =
      flat_Let backend_common_None (SOME (implode "r")) (flat_App
        backend_common_None (flat_GlobalVarLookup 0) [])
        (flat_App backend_common_None (flat_Src ast_Opassign)
          [flat_Var_local backend_common_None (implode "r"); env_id_tuple gen
-         id'])`;;
+         id])`;;
 
 let inc_compile_prog_def = new_definition
   `inc_compile_prog env_id c p =
@@ -544,7 +545,8 @@ let inc_compile_prog_def = new_definition
      let (_,next',e,gen,p') = source_to_flat_compile_decs [] 1
        (source_to_flat_config_next c) env envs' p in
      let gen_envs = sptree_insert (environment_generation_store_next gen)
-       (extend_env e env) (environment_generation_store_envs gen) in
+       (source_to_flat_extend_env e env) (environment_generation_store_envs
+       gen) in
      let envs2 = mk_environment_store (environment_store_next
        (source_to_flat_config_envs c) + 1) (sptree_insert
        (environment_store_next (source_to_flat_config_envs c)) gen_envs

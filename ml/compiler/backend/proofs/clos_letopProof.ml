@@ -9,6 +9,7 @@
   Correctness proof for clos_letop
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_letop.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;

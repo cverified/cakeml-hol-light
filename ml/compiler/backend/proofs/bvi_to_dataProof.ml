@@ -9,6 +9,7 @@
   Correctness proof for bvi_to_data
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -29,7 +30,8 @@ let _ = cake_theory "bvi_to_dataProof"
   ["bviProps"; "bviSem"; "bvi_to_data"; "dataProps"; "dataSem";
    "data_liveProof"; "data_simpProof"; "data_spaceProof"];;
 
-let _ = do_list hide_constant ["isException"; "isResult"; "parts"];;
+let _ = do_list hide_constant ["concl"; "isException"; "isResult"; "parts";
+       "prog"];;
 
 (* value relation *)
 
@@ -37,7 +39,7 @@ let code_rel_def = new_definition
   `bvi_to_dataProof_code_rel (bvi_code:(num#bvi_exp) spt)
   (data_code:(num#data_prog) spt) <=>
      sptree_wf bvi_code /\ sptree_wf data_code /\
-     (domain bvi_code = domain data_code) /\
+     (sptree_domain bvi_code = sptree_domain data_code) /\
      (!n exp arg_count.
        (sptree_lookup n bvi_code = SOME (arg_count,exp)) ==>
        (sptree_lookup n data_code = SOME
@@ -165,7 +167,7 @@ let data_to_bvi_result_def = new_definition
   `data_to_bvi_result x1 =
    match x1 with
      Rval vs -> Rval (MAP data_to_bvi_v vs)
-   | Rerr (Rraise v) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
+   | Rerr (Rraise v) -> Rerr (Rraise (bviSem_Exn (data_to_bvi_v v)))
    | Rerr (Rabort err) -> Rerr (Rabort err)`;;
 add_simp data_to_bvi_result_def;;
 
@@ -302,7 +304,7 @@ add_simp data_to_bvi_ref_eq;;
 let data_to_bvi_result_eq = prove
  (`!x v.
     data_to_bvi_result x = Rerr (Rraise v) <=> (?z. x = Rerr (Rraise z)
-      /\ Exn (data_to_bvi_v z) = v)`,
+      /\ bviSem_Exn (data_to_bvi_v z) = v)`,
   CHEAT_TAC);;
 add_simp data_to_bvi_result_eq;;
 
@@ -339,8 +341,8 @@ let data_to_bvi_v_list_to_v_APPEND = prove
 let refs_rel_LEAST_eq = prove
  (`!s1 s2.
     (!n. FLOOKUP s1 n = sptree_lookup n (sptree_map data_to_bvi_ref s2))
-      ==> (minimal ptr. ~(ptr IN FDOM s1)) = (minimal ptr. ~(ptr IN domain
-      s2))`,
+      ==> (minimal ptr. ~(ptr IN FDOM s1)) = (minimal ptr. ~(ptr IN
+      sptree_domain s2))`,
   CHEAT_TAC);;
 
 let do_build_thm = prove
@@ -385,7 +387,7 @@ let data_to_bvi_do_app = prove
      (!b. ~(op = clos_MemOp (clos_CopyByte b))) /\ ~(op = clos_ThunkOp
        ForceThunk) /\
      bvi_to_dataProof_state_rel r t /\
-     dataSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
+     bviSem_do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
        pres.
         dataSem_do_app_aux op z t = Rval (pres,s2) /\
         res = data_to_bvi_v pres /\
@@ -432,7 +434,8 @@ let jump_exc_lss = prove
        (dataSem_state_locals_size_fupd (K ls) s) = SOME t`,
   CHEAT_TAC);;
 
-let state_rel_dest_thunk = prove
+(* state_rel_dest_thunk *)
+let bvi_to_dataProof_state_rel_dest_thunk = prove
  (`bvi_to_dataProof_state_rel s t /\
    bvlSem_dest_thunk (data_to_bvi_v z) (bviSem_state_refs s) = bvlSem_IsThunk
      ev v ==>
@@ -443,12 +446,12 @@ let state_rel_dest_thunk = prove
 
 (* [local] *)
 let domain_list_insert2 = prove
- (`domain (list_insert xs t) = set_of_list xs UNION domain t`,
+ (`sptree_domain (list_insert xs t) = set_of_list xs UNION sptree_domain t`,
   CHEAT_TAC);;
 
 (* [local] *)
 let domain_list_to_num_set2 = prove
- (`domain (list_to_num_set xs) = set_of_list xs`,
+ (`sptree_domain (list_to_num_set xs) = set_of_list xs`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -473,7 +476,7 @@ let evaluate_Return_GENLIST_Var = prove
      LENGTH ret_vs = rets ==>
      bviSem_evaluate ([bvi_Return (list_of_seq bvi_Var rets)],APPEND ret_vs
        env,s') =
-     (Rerr (Rraise (Ret ret_vs)),s')`,
+     (Rerr (Rraise (bviSem_Ret ret_vs)),s')`,
   CHEAT_TAC);;
 
 (* HOL4 bvi_to_dataProofScript.sml:817: ML code, not ported *)
@@ -489,24 +492,24 @@ let bvi_to_dataProof_compile_correct = prove
       (!k. n <= k ==> (sptree_lookup k (dataSem_state_locals t1) = NONE)) /\
       bvi_to_dataProof_state_rel s1 t1 /\
       ALL (\n. ~(sptree_lookup n (dataSem_state_locals t1) = NONE)) live /\
-      ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==> ~(dataSem_jump_exc t1 =
-        NONE)) ==> (?t2 prog pres vs next_var ls.
+      ((\x. ?v. x = Rerr (Rraise (bviSem_Exn v))) res ==> ~(dataSem_jump_exc
+        t1 = NONE)) ==> (?t2 prog pres vs next_var ls.
           bvi_to_data_compile n corr tail live xs = (prog,vs,next_var) /\
           dataSem_evaluate (prog,t1) = (pres,t2) /\
           bvi_to_dataProof_state_rel s2 t2 /\
           (match pres with SOME r ->
-              ((~((\x. ?vs. x = Rerr (Rraise (Ret vs))) res) ==>
+              ((~((\x. ?vs. x = Rerr (Rraise (bviSem_Ret vs))) res) ==>
                 data_to_bvi_result r = res) /\
-               ((\x. ?vs. x = Rerr (Rraise (Ret vs))) res ==>
+               ((\x. ?vs. x = Rerr (Rraise (bviSem_Ret vs))) res ==>
                   (?vs'. r = Rval vs' /\
-                        res = Rerr (Rraise (Ret (MAP data_to_bvi_v vs')))))
-                          /\
-               (((\x. ?v. x = Rval v) res \/ (\x. ?vs. x = Rerr (Rraise (Ret
-                 vs))) res) ==>
+                        res = Rerr (Rraise (bviSem_Ret (MAP data_to_bvi_v
+                          vs'))))) /\
+               (((\x. ?v. x = Rval v) res \/ (\x. ?vs. x = Rerr (Rraise
+                 (bviSem_Ret vs))) res) ==>
                   (dataSem_state_stack t1 = dataSem_state_stack t2) /\
                   (dataSem_state_handler t1 = dataSem_state_handler t2)) /\
                ((\x. ?v. x = Rval v) res ==> tail) /\
-               ((\x. ?v. x = Rerr (Rraise (Exn v))) res ==>
+               ((\x. ?v. x = Rerr (Rraise (bviSem_Exn v))) res ==>
                   (dataSem_jump_exc (dataSem_state_handler_fupd (K
                     (dataSem_state_handler t1)) (dataSem_state_stack_fupd (K
                     (dataSem_state_stack t1)) t2)) =
@@ -651,9 +654,11 @@ let compile_prog_good_code_labels = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["isException";
+  ["concl";
+   "isException";
    "isResult";
-   "parts"];;
+   "parts";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

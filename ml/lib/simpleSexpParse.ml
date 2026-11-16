@@ -2,8 +2,7 @@
 (*  simpleSexpParse: ported from HOL4's
     examples/formal-languages/context-free/simpleSexpParseScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by cmlPEG.ml, cmlParse.ml and
-    compiler.ml.  *)
+    that CakeML needs.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/ASCIInumbers.ml";;

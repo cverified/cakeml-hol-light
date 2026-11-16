@@ -2,7 +2,7 @@
 (*  mlstring: ported from HOL4's
     basis/pure/mlstringScript.sml
     A definition theory, with 49 definitions, 2 datatypes and 113
-    theorems.  Needed by 64 files of the port.  *)
+    theorems.  Needed by 176 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -247,7 +247,7 @@ let translate_aux_def,translate_aux_ind = define_wf
     s (n + 1) len))`;;
 
 let translate_def = new_definition
-  `translate f s = implode (translate_aux f s 0 (strlen s))`;;
+  `mlstring_translate f s = implode (translate_aux f s 0 (strlen s))`;;
 
 (* [local] *)
 let translate_aux_thm = prove
@@ -256,7 +256,7 @@ let translate_aux_thm = prove
   CHEAT_TAC);;
 
 let translate_thm = prove
- (`!f s. translate f s = implode (MAP f (explode s))`,
+ (`!f s. mlstring_translate f s = implode (MAP f (explode s))`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives, with
@@ -943,14 +943,15 @@ let make_app_list_ann_def,make_app_list_ann_ind = define_wf
             else (BigList ls,n))`;;
 
 let shrink_def,shrink_ind = define_rec
-  `(shrink (Small t) = misc_List [mlstring_concat (append t)]) /\
-   (shrink (BigList ls) = misc_List ls) /\
-   (shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2))`;;
+  `(mlstring_shrink (Small t) = misc_List [mlstring_concat (append t)]) /\
+   (mlstring_shrink (BigList ls) = misc_List ls) /\
+   (mlstring_shrink (BigAppend l1 l2) = misc_Append (mlstring_shrink l1)
+    (mlstring_shrink l2))`;;
 
 let str_app_list_opt_def = new_definition
   `str_app_list_opt l =
      let (t,n) = make_app_list_ann l in
-       shrink t`;;
+       mlstring_shrink t`;;
 
 (* [local] *)
 let str_app_list_opt_test = prove

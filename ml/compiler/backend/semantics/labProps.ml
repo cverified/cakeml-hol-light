@@ -10,6 +10,7 @@
   Properties about labLang and its semantics
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
@@ -873,8 +874,8 @@ let no_install_def = new_definition
 
 let no_share_mem_inst_def = new_definition
   `no_share_mem_inst code <=>
-   (!p op re a inst' len. ~(asm_fetch_aux p code =
-       SOME (lab_Asm (ShareMem op re a) inst' len)))`;;
+   (!p op re a wordSem_inst len. ~(asm_fetch_aux p code =
+       SOME (lab_Asm (ShareMem op re a) wordSem_inst len)))`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

@@ -9,6 +9,7 @@
   Properties about BVI and its semantics
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -20,7 +21,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bviProps"
   ["backendProps"; "bviSem"; "bvlProps"];;
 
-let _ = do_list hide_constant ["error"];;
+let _ = do_list hide_constant ["error"; "exps"];;
 
 (* initial_state_simp *)
 let bviProps_initial_state_simp = prove
@@ -106,7 +107,8 @@ let bvi_to_bvl_to_bvi_with_ffi = prove
   CHEAT_TAC);;
 
 let domain_bvi_to_bvl_code = prove
- (`domain (bvlSem_state_code (bvi_to_bvl s)) = domain (bviSem_state_code s)`,
+ (`sptree_domain (bvlSem_state_code (bvi_to_bvl s)) = sptree_domain
+  (bviSem_state_code s)`,
   CHEAT_TAC);;
 add_simp domain_bvi_to_bvl_code;;
 
@@ -365,7 +367,8 @@ let do_app_aux_const = prove
 (* do_app_with_code *)
 let bviProps_do_app_with_code = prove
  (`bviSem_do_app op vs s = Rval (r,s') ==>
-   domain (bviSem_state_code s) SUBSET domain c /\ ~(op = clos_Install) ==>
+   sptree_domain (bviSem_state_code s) SUBSET sptree_domain c /\ ~(op =
+     clos_Install) ==>
    bviSem_do_app op vs (bviSem_state_code_fupd (K c) s) = Rval
      (r,bviSem_state_code_fupd (K c) s')`,
   CHEAT_TAC);;
@@ -373,8 +376,8 @@ let bviProps_do_app_with_code = prove
 (* do_app_with_code_err *)
 let bviProps_do_app_with_code_err = prove
  (`bviSem_do_app op vs s = Rerr e ==>
-   (domain c SUBSET domain (bviSem_state_code s) \/ ~(e = Rabort
-     Rtype_error)) /\ ~(op = clos_Install) ==>
+   (sptree_domain c SUBSET sptree_domain (bviSem_state_code s) \/ ~(e =
+     Rabort Rtype_error)) /\ ~(op = clos_Install) ==>
    bviSem_do_app op vs (bviSem_state_code_fupd (K c) s) = Rerr e`,
   CHEAT_TAC);;
 
@@ -564,8 +567,8 @@ let adj_orac_rel_def = new_definition
 let do_app_cfg_swap = prove
  (`~(op = clos_Install) ==>
        ((bviSem_do_app op args s = Rval (value,s1) /\
-         domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t)
-           ==>
+         sptree_domain (bviSem_state_code s) SUBSET sptree_domain
+           (bviSem_state_code t) ==>
          bviSem_do_app op args
            (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -578,8 +581,8 @@ let do_app_cfg_swap = prove
              (bviSem_state_refs_fupd (K (bviSem_state_refs s1))
             t))))) /\
         (bviSem_do_app op args s = Rerr error /\
-         (domain (bviSem_state_code t) SUBSET domain (bviSem_state_code s)
-           \/ ~(error = Rabort Rtype_error)) ==>
+         (sptree_domain (bviSem_state_code t) SUBSET sptree_domain
+           (bviSem_state_code s) \/ ~(error = Rabort Rtype_error)) ==>
          bviSem_do_app op args
            (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -591,8 +594,8 @@ let do_app_cfg_swap = prove
 (* [local] *)
 let do_app_cfg_swap_Rval = prove
  (`!op args (s) (s1)
-       (t) value. ~(op = clos_Install) /\ domain (bviSem_state_code s) =
-         domain (bviSem_state_code t) /\
+       (t) value. ~(op = clos_Install) /\ sptree_domain (bviSem_state_code
+         s) = sptree_domain (bviSem_state_code t) /\
      bviSem_do_app op args s = Rval (value,s1) ==>
      bviSem_do_app op args
        (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
@@ -607,15 +610,14 @@ let do_app_cfg_swap_Rval = prove
 
 (* [local] *)
 let do_app_cfg_swap_Rerr = prove
- (`!op args (s) (t) error'. ~(op = clos_Install) /\ domain (bviSem_state_code
-  s) = domain (bviSem_state_code t) /\
-     bviSem_do_app op args s = Rerr error' ==>
+ (`!op args (s) (t) error. ~(op = clos_Install) /\ sptree_domain
+  (bviSem_state_code s) = sptree_domain (bviSem_state_code t) /\
+     bviSem_do_app op args s = Rerr error ==>
      bviSem_do_app op args
        (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
          (bviSem_state_global_fupd (K (bviSem_state_global s))
          (bviSem_state_clock_fupd (K (bviSem_state_clock s))
-         (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) = Rerr
-         error'`,
+         (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) = Rerr error`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -699,7 +701,8 @@ let semantics_CURRY_I = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["error"];;
+  ["error";
+   "exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

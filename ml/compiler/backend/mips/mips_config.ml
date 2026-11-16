@@ -50,7 +50,7 @@ let mips_config_mips_names_def =
   reg_imm_def; upd_reg_def; assert_def; aligned_def; align_def;
   arith_upd_def; mem_op_def; fp_upd_def; read_fp_reg_def; upd_fp_reg_def;
   mem_load_def; mem_store_def; addr_def; binop_upd_def;
-  asmSem_word_shift_def])) mips_names_def;;
+  asmSem_word_shift_def; return_def])) mips_names_def;;
 
 (* HOL4 mips_configScript.sml:38-44: the ML values that the definitions
    below antiquote *)

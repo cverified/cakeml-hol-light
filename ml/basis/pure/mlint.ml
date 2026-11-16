@@ -2,8 +2,7 @@
 (*  mlint: ported from HOL4's
     basis/pure/mlintScript.sml
     A definition theory, with 20 definitions and 41 theorems.
-    Needed by compiler.ml, displayLang.ml, export.ml, infer.ml,
-    infer_t.ml, jsonLang.ml and presLang.ml.  *)
+    Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -17,6 +16,8 @@ needs "lib/ternaryComparisons.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "mlint"
   ["mlstring"];;
+
+let _ = do_list hide_constant ["ABS"; "Num"];;
 (* HOL4 ancestors outside the port: gcd *)
 
 let toChar_def = new_definition
@@ -53,11 +54,13 @@ let maxSmall_DEC_def =
 (* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
 let num_to_chars_def,num_to_chars_ind = define_wf
   `MEASURE (\(x0,x1,x2,x3). (\n. n) x0)`
-  `(num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP exp_for_dec_enc))
+  `(mlint_num_to_chars i 0 k acc = mlint_num_to_chars (i DIV (10 EXP
+    exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k) acc) /\
-   (num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS (toChar k) acc
-          else num_to_chars i j (k DIV 10) (CONS (toChar (k MOD 10))
-              acc)))`;;
+   (mlint_num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then CONS (toChar
+    k) acc
+          else mlint_num_to_chars i j (k DIV 10) (CONS (toChar (k MOD
+              10)) acc)))`;;
 
 (* [local] *)
 let add_lt_divisible_iff = prove
@@ -66,15 +69,16 @@ let add_lt_divisible_iff = prove
 
 let num_to_chars_thm = prove
  (`!i j k acc.
-     num_to_chars i j k acc = APPEND (num_to_dec_string (k + (i * (10 EXP
-       j)))) acc`,
+     mlint_num_to_chars i j k acc = APPEND (num_to_dec_string (k + (i *
+       (10 EXP j)))) acc`,
   CHEAT_TAC);;
 
 let int_to_string_def = new_definition
   `int_to_string neg_char i =
-     (if (&0:int) <= i then implode (num_to_chars (num_of_int i) 0 0 [])
-         else implode (CONS neg_char (num_to_chars (num_of_int (abs i)) 0
-           0 [])))`;;
+     (if (&0:int) <= i then implode (mlint_num_to_chars (num_of_int i) 0 0
+       [])
+         else implode (CONS neg_char (mlint_num_to_chars (num_of_int (abs
+           i)) 0 0 [])))`;;
 
 let toString_def1 = new_definition
   `mlint_toString i = int_to_string (CHR 126) i`;;
@@ -392,6 +396,11 @@ let num_to_str_APPEND_11 = prove
    ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
    n1 = n2 /\ CONS x1 xs1 = CONS x2 xs2`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["ABS";
+   "Num"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

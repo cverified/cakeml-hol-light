@@ -2,7 +2,7 @@
 (*  infer_t: ported from HOL4's
     compiler/inference/infer_tScript.sml
     A definition theory, with 8 definitions, 1 datatype and 1
-    theorem.  Needed by 9 files of the port.  *)
+    theorem.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -33,8 +33,8 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
 
 let id_to_string_def,id_to_string_ind = define_rec
   `(id_to_string (Short s) = s) /\
-   (id_to_string (Long x id') =
-        mlstring_concat [x; implode "."; id_to_string id'])`;;
+   (id_to_string (Long x id) =
+        mlstring_concat [x; implode "."; id_to_string id])`;;
 
 (* HOL4 infer_tScript.sml: the case constant that its Datatype
    makes *)
@@ -154,7 +154,7 @@ let inf_type_to_string_rec_def,inf_type_to_string_rec_ind = define_shaped_wf
       (inf_type_to_string_rec_list tys ts))`;;
 
 let inf_type_to_string_def = new_definition
-  `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
+  `infer_t_inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

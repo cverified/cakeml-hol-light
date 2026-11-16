@@ -2,7 +2,7 @@
 (*  unify: ported from HOL4's
     compiler/inference/unifyScript.sml
     A definition theory, with 65 definitions, 2 datatypes and 224
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -29,6 +29,8 @@ needs "lib/walkstar.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "unify"
   ["infer_t"];;
+
+let _ = do_list hide_constant ["cf"];;
 (* HOL4 ancestors outside the port: unifProps transfer cps *)
 
 (* HOL4 unifyScript.sml:20-21: ML code, not ported *)
@@ -39,8 +41,8 @@ let i_o_f = prove
   CHEAT_TAC);;
 add_simp i_o_f;;
 
-let atom_INDUCT,atom_RECURSION = define_datatype
-  "atom =
+let unify_atom_INDUCT,unify_atom_RECURSION = define_datatype
+  "unify_atom =
      TC_tag type_ident
    | DB_tag num
    | Tapp_tag
@@ -150,7 +152,7 @@ let substR_def = new_definition
 
 (* [transfer_rule] *)
 let substR_FDOM = prove
- (`(FUN_REL substR (=)) FDOM domain`,
+ (`(FUN_REL substR (=)) FDOM sptree_domain`,
   CHEAT_TAC);;
 
 (* [transfer_rule] *)
@@ -261,7 +263,7 @@ let fm2sp_delete = prove
   CHEAT_TAC);;
 
 let domain_fm2sp = prove
- (`!fm. domain (fm2sp fm) = FDOM fm`,
+ (`!fm. sptree_domain (fm2sp fm) = FDOM fm`,
   CHEAT_TAC);;
 
 let swalk_encode_infer_ts_EQ_VAR = prove
@@ -430,11 +432,11 @@ let decode_infer_ts_walkstar = prove
 (* [local] *)
 let walkstar_def' =
   MATCH_MP (GEN_ALL walkstar_def) (ASSUME `wfs (sp2fm (sptree_map
-  encode_infer_t s):(num,atom term)fmap)`);;
+  encode_infer_t s):(num,unify_atom term)fmap)`);;
 (* [local] *)
 let walkstar_thm' =
   MATCH_MP (GEN_ALL walkstar_thm) (ASSUME `wfs (sp2fm (sptree_map
-  encode_infer_t s):(num,atom term)fmap)`);;
+  encode_infer_t s):(num,unify_atom term)fmap)`);;
 let infer_t_CASE_RAND = prove
  (`f (infer_t_CASE it tvf taf tuf) =
    infer_t_CASE it (f o tvf) (\l n. f (taf l n)) (f o tuf)`,
@@ -664,35 +666,36 @@ let walkstarR_trans = prove
   CHEAT_TAC);;
 
 let subterm_def = new_definition
-  `subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair t a))`;;
+  `unify_subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair t
+  a))`;;
 
 let subterm_thm = prove
- (`(subterm t (term_Pair u v) <=> t = u \/ t = v \/ subterm t u \/ subterm t v)
-  /\
-   (subterm t (term_Var vnm) <=> F) /\
-   (subterm t (term_Const c) <=> F)`,
+ (`(unify_subterm t (term_Pair u v) <=> t = u \/ t = v \/ unify_subterm t u \/
+  unify_subterm t v) /\
+   (unify_subterm t (term_Var vnm) <=> F) /\
+   (unify_subterm t (term_Const c) <=> F)`,
   CHEAT_TAC);;
 add_simp subterm_thm;;
 
 let subterm_pair_count = prove
- (`!t u. subterm t u ==> pair_count t < pair_count u`,
+ (`!t u. unify_subterm t u ==> pair_count t < pair_count u`,
   CHEAT_TAC);;
 
 let subterm_REFL = prove
- (`~(subterm t t)`,
+ (`~(unify_subterm t t)`,
   CHEAT_TAC);;
 add_simp subterm_REFL;;
 
 let subterm_TRANS = prove
- (`subterm t u /\ subterm u v ==> subterm t v`,
+ (`unify_subterm t u /\ unify_subterm u v ==> unify_subterm t v`,
   CHEAT_TAC);;
 
 let subterm_walkstarR = prove
- (`!t u. subterm t u ==> walkstarR s t u`,
+ (`!t u. unify_subterm t u ==> walkstarR s t u`,
   CHEAT_TAC);;
 
 let MEM_subterm_encode = prove
- (`!i is. MEM i is ==> subterm (encode_infer_t i) (encode_infer_ts is)`,
+ (`!i is. MEM i is ==> unify_subterm (encode_infer_t i) (encode_infer_ts is)`,
   CHEAT_TAC);;
 
 let walkstar_opth = prove
@@ -1073,12 +1076,13 @@ let mlt_BAG_INSERT2 = prove
   CHEAT_TAC);;
 
 let cwfs_insert_tvar_db = prove
- (`~(v IN domain s) /\ cwfs s ==> cwfs (sptree_insert v (Infer_Tvar_db c) s)`,
+ (`~(v IN sptree_domain s) /\ cwfs s ==> cwfs (sptree_insert v (Infer_Tvar_db
+  c) s)`,
   CHEAT_TAC);;
 
 let tcwalk_EQ_Infer_Tuvar = prove
- (`cwfs s /\ tcwalk s t = Infer_Tuvar v ==> ~(v IN domain s) /\ (?u. t =
-  Infer_Tuvar u)`,
+ (`cwfs s /\ tcwalk s t = Infer_Tuvar v ==> ~(v IN sptree_domain s) /\ (?u. t
+  = Infer_Tuvar u)`,
   CHEAT_TAC);;
 
 (* HOL4 unifyScript.sml:1814-1818: a theorem that HOL4 states as the value
@@ -1086,7 +1090,7 @@ let tcwalk_EQ_Infer_Tuvar = prove
 
 let tcvwalk_substvars = prove
  (`cwfs s /\ tcvwalk s v = t ==>
-   t = Infer_Tuvar v /\ ~(v IN domain s) \/
+   t = Infer_Tuvar v /\ ~(v IN sptree_domain s) \/
    vars (encode_infer_t t) SUBSET substvars (encode_infer_t o_f sp2fm s)`,
   CHEAT_TAC);;
 
@@ -1098,7 +1102,8 @@ let tcwalk_rangevars = prove
   CHEAT_TAC);;
 
 let cwfs_var2_extend = prove
- (`cwfs s /\ ~(v1 = v2) /\ ~(v1 IN domain s) /\ ~(v2 IN domain s) ==>
+ (`cwfs s /\ ~(v1 = v2) /\ ~(v1 IN sptree_domain s) /\ ~(v2 IN sptree_domain s)
+  ==>
    cwfs (sptree_insert v1 (Infer_Tuvar v2) s)`,
   CHEAT_TAC);;
 
@@ -1641,6 +1646,10 @@ let t_compat_eqs_t_unify = prove
       t_compat s sx /\ (t_walkstar sx t1 = t_walkstar sx t2) ==>
       (?si. (t_unify s t1 t2 = SOME si) /\ t_compat si sx)`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["cf"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

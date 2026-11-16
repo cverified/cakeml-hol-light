@@ -655,14 +655,13 @@ let closSem_do_app_def = new_definition
           | _ -> ((Rerr (Rabort
             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
             ,closSem_v)semanticPrimitives_result))
-     | (clos_IntOp int_op',vs) ->
-         (match closSem_do_int_app int_op' vs with SOME res -> Rval (res,s)
+     | (clos_IntOp int_op,vs) ->
+         (match closSem_do_int_app int_op vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result))
-     | (clos_WordOp word_op',vs) ->
-         (match closSem_do_word_app word_op' vs with SOME res -> Rval
-           (res,s)
+     | (clos_WordOp word_op,vs) ->
+         (match closSem_do_word_app word_op vs with SOME res -> Rval (res,s)
          | _ -> ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result))

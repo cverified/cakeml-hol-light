@@ -2,7 +2,8 @@
 (*  arm8_config: ported from HOL4's
     compiler/backend/arm8/arm8_configScript.sml
     A definition theory, with 2 definitions and 1 theorem.  Needed
-    by compiler.ml.  *)
+    by arm8BootstrapProof.ml, arm8_configProof.ml,
+    backend_arm8_cv.ml and compiler.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -42,7 +43,7 @@ let arm8_names_def = new_definition
 
 (* [compute,allow_rebind] *)
 let arm8_config_arm8_names_def =
-  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def])) arm8_names_def;;
+  CONV_RULE (RAND_CONV (CAKE_EVAL [can_def; return_def])) arm8_names_def;;
 
 (* HOL4 arm8_configScript.sml:35-37: the ML values that the definitions
    below antiquote *)

@@ -2,7 +2,8 @@
 (*  lexer_impl: ported from HOL4's
     compiler/parsing/lexer_implScript.sml
     A definition theory, with 13 definitions and 23 theorems.
-    Needed by compiler.ml.  *)
+    Needed by camlPtreeConversion.ml, caml_lex.ml, compiler.ml,
+    lexerProg.ml and sexp_parserProg.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -14,6 +15,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
+needs "lib/sum.ml";;
 needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
@@ -22,14 +24,14 @@ needs "semantics/tokens.ml";;
 let _ = cake_theory "lexer_impl"
   ["lexer_fun"; "misc"; "tokens"];;
 
-let _ = do_list hide_constant ["val"];;
+let _ = do_list hide_constant ["local"; "val"];;
 (* HOL4 ancestors outside the port: rich_list *)
 
 (* HOL4 lexer_implScript.sml:16-20: a proof *)
 
 let get_token_eqn = prove
  (`!s.
-    get_token s =
+    lexer_fun_get_token s =
       match s with
            [] -> tokens_LexErrorT
          | [c] ->
@@ -117,12 +119,12 @@ let get_token_eqn = prove
   CHEAT_TAC);;
 
 let unhex_alt_def = new_definition
-  `unhex_alt x = (if isHexDigit x then UNHEX x else 0)`;;
+  `lexer_impl_unhex_alt x = (if isHexDigit x then UNHEX x else 0)`;;
 
 let num_from_dec_string_alt_def = new_definition
-  `num_from_dec_string_alt = s2n 10 unhex_alt`;;
+  `lexer_impl_num_from_dec_string_alt = s2n 10 lexer_impl_unhex_alt`;;
 let num_from_hex_string_alt_def = new_definition
-  `num_from_hex_string_alt = s2n 16 unhex_alt`;;
+  `num_from_hex_string_alt = s2n 16 lexer_impl_unhex_alt`;;
 
 (* the termination relation that HOL4 gives is
      MEASURE (LENGTH o FST)
@@ -134,85 +136,93 @@ let next_sym_alt_def,next_sym_alt_ind = define_guess
    (next_sym_alt (CONS c str) loc =
          if c = (CHR 10) then
             // skip new line
-            next_sym_alt str (next_line loc)
+            next_sym_alt str (lexer_fun_next_line loc)
          else if isSpace c then
            // skip blank space
-           next_sym_alt str (next_loc 1 loc)
+           next_sym_alt str (lexer_fun_next_loc 1 loc)
          else if isDigit c then
            // read number
            if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
-             if TL str = "" then SOME (ErrorS,Locs loc loc,"")
+             if TL str = "" then SOME (lexer_fun_ErrorS,Locs loc loc,"")
              else if isDigit (HD (TL str)) then
-               let (n,rest) = read_while isDigit (TL str) [] in
-                 SOME (WordS (num_from_dec_string_alt n),
-                       Locs loc (next_loc (LENGTH n + 1) loc),
+               let (n,rest) = lexer_fun_read_while isDigit (TL str) [] in
+                 SOME (lexer_fun_WordS (lexer_impl_num_from_dec_string_alt
+                     n),
+                       Locs loc (lexer_fun_next_loc (LENGTH n + 1) loc),
                        rest)
              else if HD (TL str) = (CHR 120) then
-               let (n,rest) = read_while isHexDigit (TL (TL str)) [] in
-                 SOME (WordS (num_from_hex_string_alt n),
-                       Locs loc (next_loc (LENGTH n + 2) loc),
+               let (n,rest) = lexer_fun_read_while isHexDigit (TL (TL str))
+                   [] in
+                 SOME (lexer_fun_WordS (num_from_hex_string_alt n),
+                       Locs loc (lexer_fun_next_loc (LENGTH n + 2) loc),
                        rest)
-             else SOME (ErrorS,Locs loc loc,TL str)
+             else SOME (lexer_fun_ErrorS,Locs loc loc,TL str)
            else if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120) then
-               let (n,rest) = read_while isHexDigit (TL str) [] in
-                 SOME (NumberS (&(num_from_hex_string_alt n)),
-                       Locs loc (next_loc (LENGTH n) loc),
+               let (n,rest) = lexer_fun_read_while isHexDigit (TL str) []
+                   in
+                 SOME (lexer_fun_NumberS (&(num_from_hex_string_alt n)),
+                       Locs loc (lexer_fun_next_loc (LENGTH n) loc),
                        rest)
-             else let (n,rest) = read_while isDigit str [] in
-                 SOME (NumberS (&(num_from_dec_string_alt (CONS c n))),
-                       Locs loc (next_loc (LENGTH n) loc),
+             else let (n,rest) = lexer_fun_read_while isDigit str [] in
+                 SOME (lexer_fun_NumberS
+                     (&(lexer_impl_num_from_dec_string_alt (CONS c n))),
+                       Locs loc (lexer_fun_next_loc (LENGTH n) loc),
                        rest)
          else if c = (CHR 126) /\ ~(str = "") /\ isDigit (HD str) then
            // read negative number
-           let (n,rest) = read_while isDigit str [] in
-             SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
-                   Locs loc (next_loc (LENGTH n + 1) loc),
+           let (n,rest) = lexer_fun_read_while isDigit str [] in
+             SOME (lexer_fun_NumberS ((&0) -
+                 &(lexer_impl_num_from_dec_string_alt n)),
+                   Locs loc (lexer_fun_next_loc (LENGTH n + 1) loc),
                    rest)
          else if c = (CHR 39) then
            // read type variable
-           let (n,rest) = read_while isAlphaNumPrime str [c] in
-             SOME (OtherS n,
-                   Locs loc (next_loc (LENGTH n - 1) loc),
+           let (n,rest) = lexer_fun_read_while isAlphaNumPrime str [c] in
+             SOME (lexer_fun_OtherS n,
+                   Locs loc (lexer_fun_next_loc (LENGTH n - 1) loc),
                    rest)
          else if c = (CHR 34) then
            // read string
-           let (t,loc',rest) = lexer_fun_read_string str "" (next_loc 1
-               loc) in
+           let (t,loc',rest) = lexer_fun_read_string str ""
+               (lexer_fun_next_loc 1 loc) in
              SOME (t,Locs loc loc',rest)
          else if isPREFIX "*)" (CONS c str) then
-           SOME (ErrorS,Locs loc (next_loc 2 loc),TL str)
+           SOME (lexer_fun_ErrorS,Locs loc (lexer_fun_next_loc 2 loc),TL
+               str)
          else if isPREFIX "#\"" (CONS c str) then
-           let (t,loc',rest) = lexer_fun_read_string (TL str) "" (next_loc
-               2 loc) in
+           let (t,loc',rest) = lexer_fun_read_string (TL str) ""
+               (lexer_fun_next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest)
          else if isPREFIX "#(" (CONS c str) then
            let (t,loc',rest) =
-                 read_FFIcall (TL str) "" (next_loc 2 loc) in
+                 read_FFIcall (TL str) "" (lexer_fun_next_loc 2 loc) in
              SOME (t,Locs loc loc',rest)
          else if isPREFIX "(*" (CONS c str) then
-           match skip_comment (TL str) (0:num) (next_loc 2 loc) with NONE
-               -> SOME (ErrorS,Locs loc (next_loc 2 loc),"")
+           match lexer_fun_skip_comment (TL str) (0:num)
+               (lexer_fun_next_loc 2 loc) with NONE -> SOME
+               (lexer_fun_ErrorS,Locs loc (lexer_fun_next_loc 2 loc),"")
            | SOME (rest,loc') -> next_sym_alt rest loc'
-         else if c = (CHR 95) then SOME (OtherS "_",Locs loc loc,str) else
-             let (tok',end_loc,rest) = read_Ident (CONS c str) loc [] in
-             SOME (tok',Locs loc end_loc,rest))`;;
+         else if c = (CHR 95) then SOME (lexer_fun_OtherS "_",Locs loc
+             loc,str) else let (tok,end_loc,rest) = read_Ident (CONS c str) loc
+             [] in
+             SOME (tok,Locs loc end_loc,rest))`;;
 
 (* [local] *)
 let EVERY_isDigit_imp = prove
  (`ALL isDigit x ==>
-   MAP UNHEX x = MAP unhex_alt x`,
+   MAP UNHEX x = MAP lexer_impl_unhex_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let toNum_rw = prove
  (`!x. ALL isDigit x ==>
-   num_from_dec_string x = num_from_dec_string_alt x`,
+   num_from_dec_string x = lexer_impl_num_from_dec_string_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let EVERY_isHexDigit_imp = prove
  (`ALL isHexDigit x ==>
-   MAP UNHEX x = MAP unhex_alt x`,
+   MAP UNHEX x = MAP lexer_impl_unhex_alt x`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -231,17 +241,17 @@ let EVERY_IMPLODE = prove
 let read_while_P_lem = prove
  (`!ls rest P x y.
      ALL P rest /\
-     read_while P ls rest = (x,y) ==>
+     lexer_fun_read_while P ls rest = (x,y) ==>
      ALL P x`,
   CHEAT_TAC);;
 
 (* [local] *)
 let read_while_P = prove
- (`!ls P x y. read_while P ls "" = (x,y) ==> ALL P x`,
+ (`!ls P x y. lexer_fun_read_while P ls "" = (x,y) ==> ALL P x`,
   CHEAT_TAC);;
 
 let next_sym_eq = prove
- (`!x l. next_sym x l = next_sym_alt x l`,
+ (`!x l. lexer_fun_next_sym x l = next_sym_alt x l`,
   CHEAT_TAC);;
 
 (* lex_until_toplevel_semicolon *)
@@ -255,14 +265,14 @@ let next_sym_eq = prove
    replacing the CHEAT_TAC is all that is left *)
 let lexer_impl_lex_aux_def,lexer_impl_lex_aux_ind = define_guess_cheat
   `lexer_impl_lex_aux acc (d:num) input loc =
-     match next_token input loc with
+     match lexer_fun_next_token input loc with
        // case: end of input
        NONE -> NONE
      |
        // case: token found
        SOME (token,Locs loc' loc'',rest) ->
          let new_acc = (CONS (token,Locs loc' loc'') acc) in
-         let newloc = next_loc 1 loc'' in
+         let newloc = lexer_fun_next_loc 1 loc'' in
            if token = tokens_SemicolonT /\ (d = 0) then SOME (REVERSE
              new_acc,newloc,rest)
            else if token = tokens_LetT then lexer_impl_lex_aux new_acc (d +
@@ -306,20 +316,23 @@ let lex_until_toplevel_semicolon_LESS = prove
    replacing the CHEAT_TAC is all that is left *)
 let lex_aux_alt_def,lex_aux_alt_ind = define_guess_cheat
   `lex_aux_alt acc (d:num) input l =
-     match next_sym input l with
+     match lexer_fun_next_sym input l with
        // case: end of input
        NONE -> NONE
      |
        // case: token found
        SOME (token,Locs loc' loc'',rest) ->
          let new_acc = (CONS (token,Locs loc' loc'') acc) in
-         let newloc = next_loc 1 loc'' in
-           if (token = OtherS ";") /\ (d = 0) then SOME (REVERSE
+         let newloc = lexer_fun_next_loc 1 loc'' in
+           if (token = lexer_fun_OtherS ";") /\ (d = 0) then SOME (REVERSE
              new_acc,newloc,rest)
-           else if MEM token [OtherS "let"; OtherS "struct";
-                              OtherS "sig"; OtherS "("] then
+           else if MEM token [lexer_fun_OtherS "let"; lexer_fun_OtherS
+             "struct";
+                              lexer_fun_OtherS "sig"; lexer_fun_OtherS "("]
+                                then
              lex_aux_alt new_acc (d + 1) rest newloc
-           else if MEM token [OtherS ")"; OtherS "end"] then
+           else if MEM token [lexer_fun_OtherS ")"; lexer_fun_OtherS "end"]
+             then
              lex_aux_alt new_acc (d - 1) rest newloc
            else lex_aux_alt new_acc d rest newloc`;;
 
@@ -341,13 +354,13 @@ let lex_until_top_semicolon_alt_LESS = prove
 
 (* [local] *)
 let token_of_sym_EQ_LEMMA = prove
- (`((token_of_sym q = tokens_LetT) = (q = OtherS "let")) /\
-   ((token_of_sym q = tokens_EndT) = (q = OtherS "end")) /\
-   ((token_of_sym q = tokens_SigT) = (q = OtherS "sig")) /\
-   ((token_of_sym q = tokens_StructT) = (q = OtherS "struct")) /\
-   ((token_of_sym q = tokens_SemicolonT) = (q = OtherS ";")) /\
-   ((token_of_sym q = tokens_RparT) = (q = OtherS ")")) /\
-   ((token_of_sym q = tokens_LparT) = (q = OtherS "("))`,
+ (`((token_of_sym q = tokens_LetT) = (q = lexer_fun_OtherS "let")) /\
+   ((token_of_sym q = tokens_EndT) = (q = lexer_fun_OtherS "end")) /\
+   ((token_of_sym q = tokens_SigT) = (q = lexer_fun_OtherS "sig")) /\
+   ((token_of_sym q = tokens_StructT) = (q = lexer_fun_OtherS "struct")) /\
+   ((token_of_sym q = tokens_SemicolonT) = (q = lexer_fun_OtherS ";")) /\
+   ((token_of_sym q = tokens_RparT) = (q = lexer_fun_OtherS ")")) /\
+   ((token_of_sym q = tokens_LparT) = (q = lexer_fun_OtherS "("))`,
   CHEAT_TAC);;
 
 
@@ -429,11 +442,11 @@ let lex_impl_all_tokens_def,lex_impl_all_tokens_ind = define_guess_cheat
 (* [local] *)
 let lex_aux_tokens_thm_1 = prove
  (`!input l acc d res1 res2.
-       (lex_aux_tokens acc d (lexer_fun_aux input l) = res1) /\
+       (lex_aux_tokens acc d (lexer_fun_lexer_fun_aux input l) = res1) /\
        (lexer_impl_lex_aux acc d input l = res2) ==>
        (match res2 with NONE -> (res1 = NONE)
            | SOME (ts,l',rest) ->
-               (res1 = SOME (ts,lexer_fun_aux rest l')))`,
+               (res1 = SOME (ts,lexer_fun_lexer_fun_aux rest l')))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -442,7 +455,7 @@ let lex_aux_tokens_thm = SIMP_RULE [] lex_aux_tokens_thm_1;;
 (* [local] *)
 let lex_impl_all_tokens_thm = prove
  (`!input l. lex_impl_all input l =
-             lex_impl_all_tokens (lexer_fun_aux input l)`,
+             lex_impl_all_tokens (lexer_fun_lexer_fun_aux input l)`,
   CHEAT_TAC);;
 
 (* lex_aux_tokens_thm_1[local] *)
@@ -466,13 +479,14 @@ let split_top_level_semi_thm = prove
   CHEAT_TAC);;
 
 let lexer_correct = prove
- (`!input. split_top_level_semi (lexer_fun_aux input l) = lex_impl_all input
-  l`,
+ (`!input. split_top_level_semi (lexer_fun_lexer_fun_aux input l) =
+  lex_impl_all input l`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["val"];;
+  ["local";
+   "val"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

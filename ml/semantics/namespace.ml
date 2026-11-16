@@ -2,7 +2,7 @@
 (*  namespace: ported from HOL4's
     semantics/namespaceScript.sml
     A definition theory, with 19 definitions, 2 datatypes and no
-    theorems.  Needed by 31 files of the port.  *)
+    theorems.  Needed by 69 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -31,11 +31,11 @@ let mk_id_def,mk_id_ind = define_rec
 
 let id_to_n_def,id_to_n_ind = define_rec
   `(id_to_n (Short n) = n) /\
-   (id_to_n (Long _ id') = id_to_n id')`;;
+   (id_to_n (Long _ id) = id_to_n id)`;;
 
 let id_to_mods_def,id_to_mods_ind = define_rec
   `(id_to_mods (Short _) = []) /\
-   (id_to_mods (Long mn id') = CONS mn (id_to_mods id'))`;;
+   (id_to_mods (Long mn id) = CONS mn (id_to_mods id))`;;
 
 let namespace_INDUCT,namespace_RECURSION = define_datatype
   "namespace =
@@ -48,15 +48,15 @@ let nsLookup_def,nsLookup_ind = define_wf
   `MEASURE (\(x0,x1). namespace_id_size (\x. 0) (\x. 0) x1)`
   `(nsLookup ((Bind v m):('m,'n,'v)namespace) (Short n) =
       ALOOKUP v n) /\
-   (nsLookup (Bind v m) (Long mn id') =
+   (nsLookup (Bind v m) (Long mn id) =
       match ALOOKUP m mn with NONE -> NONE
-      | SOME env -> nsLookup env id')`;;
+      | SOME env -> nsLookup env id)`;;
 
 let nsLookupMod_def,nsLookupMod_ind = define_guess
   `(nsLookupMod (e:('m,'n,'v)namespace) [] = SOME (e:('m,'n,'v)namespace)) /\
-   (nsLookupMod (Bind v m) (CONS mn path') =
+   (nsLookupMod (Bind v m) (CONS mn path) =
     match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookupMod env
-        path')`;;
+        path)`;;
 
 let nsEmpty_def = new_definition
   `nsEmpty = Bind [] []`;;
@@ -84,14 +84,14 @@ let nsSing_def = new_definition
 
 let nsSub_def = new_definition
   `nsSub r env1 env2 <=>
-      (!id' v1.
-         nsLookup env1 id' = SOME v1 ==>
-         (?v2. nsLookup env2 id' = SOME v2 /\ r id' v1 v2)) /\
-      (!path'. nsLookupMod env2 path' = NONE ==> nsLookupMod env1 path' =
+      (!id v1.
+         nsLookup env1 id = SOME v1 ==>
+         (?v2. nsLookup env2 id = SOME v2 /\ r id v1 v2)) /\
+      (!path. nsLookupMod env2 path = NONE ==> nsLookupMod env1 path =
         NONE)`;;
 
 let nsAll_def = new_definition
-  `nsAll f env <=> (!id' v. nsLookup env id' = SOME v ==> f id' v)`;;
+  `nsAll f env <=> (!id v. nsLookup env id = SOME v ==> f id v)`;;
 
 let nsAll2_def = new_definition
   `nsAll2 r env1 env2 <=>

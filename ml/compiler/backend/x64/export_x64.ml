@@ -2,7 +2,7 @@
 (*  export_x64: ported from HOL4's
     compiler/backend/x64/export_x64Script.sml
     A definition theory, with 6 definitions and no theorems.  Needed
-    by compiler.ml.  *)
+    by backend_x64_cv.ml and compiler.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -2,7 +2,7 @@
 (*  grammar: ported from HOL4's
     examples/formal-languages/context-free/grammarScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 10 files of the port.  *)
+    that CakeML needs.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/location.ml";;
@@ -39,16 +39,16 @@ let ptree_list_loc_def = new_definition
   `ptree_list_loc l = merge_list_locs (MAP ptree_loc l)`;;
 
 let ptree_head_def = define_cases
-  `(ptree_head (Lf (tok',l)) = tok') /\
-   (ptree_head (Nd (nt',l) children) = grammar_NT nt')`;;
+  `(ptree_head (Lf (tok,l)) = tok) /\
+   (ptree_head (Nd (nt,l) children) = grammar_NT nt)`;;
 add_simp ptree_head_def;;
 
 let valid_ptree_def,valid_ptree_ind = define_shaped_rec
   "nested"
   `(valid_ptree G (Lf _) <=> T) /\
-   (valid_ptree G (Nd (nt',l) children) <=>
-        nt' IN FDOM (grammar_rules G) /\ MAP ptree_head children IN FAPPLY
-            (grammar_rules G) nt' /\
+   (valid_ptree G (Nd (nt,l) children) <=>
+        nt IN FDOM (grammar_rules G) /\ MAP ptree_head children IN FAPPLY
+            (grammar_rules G) nt /\
         (!pt. pt IN set_of_list children ==> valid_ptree G pt))`;;
 add_simp valid_ptree_def;;
 

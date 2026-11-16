@@ -3,20 +3,20 @@
     examples/machine-code/hoare-triple/tailrecScript.sml
     A HOL4 library theory, of which the port has the definitions and
     2 theorems that CakeML needs, all of them from LightCake.
-    Needed by unify.ml and word_bignumProof.ml.  *)
+    Needed by prog.ml, unify.ml and word_bignumProof.ml.  *)
 (* ======================================================== *)
 
-(* this file needs nothing of the port *)
+needs "lib/sum.ml";;
 
 (* of no theory of the port: what it registers is in the scope of every file *)
 let _ = cake_library ();;
-(* HOL4 ancestors outside the port: pred_set arithmetic While sum *)
+(* HOL4 ancestors outside the port: pred_set arithmetic While *)
 
 let TAILREC_PRE_def = new_definition
-  `TAILREC_PRE f1 guard' precondition' (x:'a) <=>
-     (!k. (!m. m < k ==> guard' (ITER m f1 x)) ==> precondition' (ITER k f1
+  `TAILREC_PRE f1 guard precondition' (x:'a) <=>
+     (!k. (!m. m < k ==> guard (ITER m f1 x)) ==> precondition' (ITER k f1
        x)) /\
-     (?n. ~(guard' (ITER n f1 x)))`;;
+     (?n. ~(guard (ITER n f1 x)))`;;
 
 let TAILREC_def = new_definition
   `tailrec_TAILREC f1 (f2:'a->'b) g x = f2 (WHILE g f1 x)`;;

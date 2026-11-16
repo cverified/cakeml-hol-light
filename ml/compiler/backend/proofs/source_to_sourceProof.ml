@@ -9,6 +9,7 @@
   Proof of correctness for source_to_source.
  *)
 
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/proofs/source_evalProof.ml";;
 needs "compiler/backend/proofs/source_letProof.ml";;
 needs "compiler/backend/source_to_source.ml";;
@@ -26,6 +27,8 @@ let _ = cake_theory "source_to_sourceProof"
   ["ast"; "evaluate"; "evaluateProps"; "misc"; "semanticPrimitives";
    "semanticPrimitivesProps"; "semantics"; "source_evalProof";
    "source_letProof"; "source_to_source"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 
 (* compile_semantics *)
@@ -48,6 +51,10 @@ let source_to_sourceProof_compile_semantics_oracle = prove
              (adjust_oracle ci (source_to_source_compile o f)) s)
          env prog outcome`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

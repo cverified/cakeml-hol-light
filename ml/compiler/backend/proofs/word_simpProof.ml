@@ -11,6 +11,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -24,7 +25,7 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_simpProof"
   ["mllist"; "wordLang"; "wordProps"; "wordSem"; "word_simp"];;
 
-let _ = do_list hide_constant ["addr"; "dummy"];;
+let _ = do_list hide_constant ["addr"; "dummy"; "prog"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the definitions
@@ -33,8 +34,8 @@ let _ = do_list hide_constant ["addr"; "dummy"];;
 (** verification of Seq_assoc **)
 
 let evaluate_SmartSeq = prove
- (`wordSem_evaluate (SmartSeq p1 p2,s) = wordSem_evaluate (word_Seq p1
-  p2,(s:('a,'c,'ffi)wordSem_state))`,
+ (`wordSem_evaluate (word_simp_SmartSeq p1 p2,s) = wordSem_evaluate (word_Seq
+  p1 p2,(s:('a,'c,'ffi)wordSem_state))`,
   CHEAT_TAC);;
 
 (* evaluate_Seq_Skip *)
@@ -226,7 +227,7 @@ let get_var_set_var_thm = prove
   CHEAT_TAC);;
 
 let get_var_mem_store_thm = prove
- (`!v addr' x s. wordSem_mem_store addr' x s = SOME s' ==>
+ (`!v addr x s. wordSem_mem_store addr x s = SOME s' ==>
                 wordSem_get_var v s' = wordSem_get_var v s`,
   CHEAT_TAC);;
 
@@ -501,8 +502,8 @@ let evaluate_drop_consts_1 = prove
 let evaluate_drop_consts = prove
  (`(!v w. sptree_lookup v cs = SOME w ==> wordSem_get_var v s = SOME (word_Word
   w)) ==>
-   wordSem_evaluate (SmartSeq (drop_consts cs vs) p,s) = wordSem_evaluate
-     (p,s)`,
+   wordSem_evaluate (word_simp_SmartSeq (drop_consts cs vs) p,s) =
+     wordSem_evaluate (p,s)`,
   CHEAT_TAC);;
 add_simp evaluate_drop_consts;;
 
@@ -543,8 +544,8 @@ let evaluate_const_fp = prove
 
 (* [local] *)
 let evaluate_try_if_hoist2 = prove
- (`!N p1 interm dummy' p2 s.
-   try_if_hoist2 N p1 interm dummy' p2 = SOME p3 ==>
+ (`!N p1 interm dummy p2 s.
+   try_if_hoist2 N p1 interm dummy p2 = SOME p3 ==>
    gc_fun_const_ok (wordSem_state_gc_fun s) ==>
    wordSem_evaluate (p3,s) = wordSem_evaluate (word_Seq (word_Seq p1
      interm) p2,s)`,
@@ -588,7 +589,8 @@ let compile_exp_thm = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
-   "dummy"];;
+   "dummy";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

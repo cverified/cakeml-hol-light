@@ -2,8 +2,7 @@
 (*  word_remove: ported from HOL4's
     compiler/backend/word_removeScript.sml
     A definition theory, with 1 definition and 1 theorem.  Needed by
-    backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_removeProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
+    7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -18,7 +17,7 @@ needs "compiler/backend/wordLang.ml";;
 let _ = cake_theory "word_remove"
   ["wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"; "prog"];;
 
 (*Removes MustTerminate*)
 
@@ -72,7 +71,8 @@ let remove_must_terminate_pmatch = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch"];;
+  ["pmatch";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

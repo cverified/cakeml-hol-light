@@ -9,6 +9,8 @@
   Correctness proof for clos_known
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_fvs.ml";;
 needs "compiler/backend/clos_known.ml";;
@@ -32,8 +34,10 @@ let _ = cake_theory "clos_knownProof"
    "clos_known"; "clos_knownProps"; "clos_letopProof"; "clos_opProof";
    "clos_ticksProof"; "db_vars"];;
 
+let _ = do_list hide_constant ["exps"];;
+
 (* HOL4 clos_knownProofScript.sml:19: an overload that the source brings to
-   the front: domain *)
+   the front: domain, written out as sptree_domain *)
 
 (* HOL4 clos_knownProofScript.sml:21-22: ML code, not ported *)
 
@@ -52,16 +56,16 @@ let _ = cake_theory "clos_knownProof"
 let known_op_changed_globals = prove
  (`!opn aenv g0 a g.
      known_op opn aenv g0 = (a,g) ==>
-     (!i. i IN domain g /\ (i IN domain g0 ==> ~(sptree_lookup i g =
-       sptree_lookup i g0)) ==>
+     (!i. i IN sptree_domain g /\ (i IN sptree_domain g0 ==> ~(sptree_lookup
+       i g = sptree_lookup i g0)) ==>
          i IN SET_OF_BAG (closProps_op_gbag opn))`,
   CHEAT_TAC);;
 
 let known_changed_globals = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-     (!i. i IN domain g /\ (i IN domain g0 ==> ~(sptree_lookup i g =
-       sptree_lookup i g0)) ==>
+     (!i. i IN sptree_domain g /\ (i IN sptree_domain g0 ==> ~(sptree_lookup
+       i g = sptree_lookup i g0)) ==>
          i IN SET_OF_BAG (closProps_elist_globals xs))`,
   CHEAT_TAC);;
 
@@ -75,28 +79,29 @@ let known_unchanged_globals = prove
 let known_op_changed_globals_alt = prove
  (`!opn aenv g0 a g.
      known_op opn aenv g0 = (a,g) ==>
-       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
-         (closProps_op_gbag opn)`,
+       BAG_OF_SET (sptree_domain g) <= (BAG_UNION) (BAG_OF_SET
+         (sptree_domain g0)) (closProps_op_gbag opn)`,
   CHEAT_TAC);;
 
 let known_op_changed_globals_alt_set = prove
  (`!opn aenv g0 a g.
      known_op opn aenv g0 = (a,g) ==>
-       domain g SUBSET domain g0 UNION SET_OF_BAG (closProps_op_gbag opn)`,
+       sptree_domain g SUBSET sptree_domain g0 UNION SET_OF_BAG
+         (closProps_op_gbag opn)`,
   CHEAT_TAC);;
 
 let known_changed_globals_alt = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-       BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
-         (closProps_elist_globals xs)`,
+       BAG_OF_SET (sptree_domain g) <= (BAG_UNION) (BAG_OF_SET
+         (sptree_domain g0)) (closProps_elist_globals xs)`,
   CHEAT_TAC);;
 
 let known_changed_globals_alt_set = prove
  (`!c xs aenv g0 alist g.
      known c xs aenv g0 = (alist,g) ==>
-       domain g SUBSET domain g0 UNION SET_OF_BAG (closProps_elist_globals
-         xs)`,
+       sptree_domain g SUBSET sptree_domain g0 UNION SET_OF_BAG
+         (closProps_elist_globals xs)`,
   CHEAT_TAC);;
 
 (* Take the first n expression lists returned by the compile oracle. *)
@@ -522,14 +527,14 @@ let mk_Ticks_set_globals = prove
 add_simp mk_Ticks_set_globals;;
 
 let gapprox_disjoint_def = new_definition
-  `gapprox_disjoint g xs <=> DISJOINT (domain g) (SET_OF_BAG
+  `gapprox_disjoint g xs <=> DISJOINT (sptree_domain g) (SET_OF_BAG
   (closProps_elist_globals xs))`;;
 
 let gapprox_disjoint_rw = prove
  (`(gapprox_disjoint g (CONS x (CONS y xs)) <=>
       gapprox_disjoint g [x] /\ gapprox_disjoint g (CONS y xs)) /\
    (gapprox_disjoint g [clos_Op tr opn xs] <=>
-      gapprox_disjoint g xs /\ DISJOINT (domain g) (SET_OF_BAG
+      gapprox_disjoint g xs /\ DISJOINT (sptree_domain g) (SET_OF_BAG
         (closProps_op_gbag opn)))`,
   CHEAT_TAC);;
 
@@ -814,8 +819,8 @@ let mglobals_disjoint_evaluate = prove
 
 let gapprox_extend_def = new_definition
   `gapprox_extend g1 gd g2 <=>
-     (!i. i IN domain g2 /\ (i IN domain g1 ==> ~(sptree_lookup i g2 =
-       sptree_lookup i g1)) ==>
+     (!i. i IN sptree_domain g2 /\ (i IN sptree_domain g1 ==>
+       ~(sptree_lookup i g2 = sptree_lookup i g1)) ==>
          i IN gd)`;;
 
 let state_globals_approx_disjoint_extends = prove
@@ -946,8 +951,8 @@ let pure_co_oracle_props = prove
 
 let state_oracle_domain = prove
  (`is_state_oracle (clos_known_compile_inc c) co ==>
-   BAG_OF_SET (domain (FST (FST (co n)))) <= (BAG_UNION)
-     (BAG_OF_SET (domain (FST (FST (co 0)))))
+   BAG_OF_SET (sptree_domain (FST (FST (co n)))) <= (BAG_UNION)
+     (BAG_OF_SET (sptree_domain (FST (FST (co 0)))))
      (closProps_elist_globals (FLAT (first_n_exps co n)))`,
   CHEAT_TAC);;
 
@@ -1312,9 +1317,10 @@ let decide_inline_inlD_LetInline_sgc_free = prove
 let known_op_subspt = prove
  (`!opn aargs g0 a g.
      known_op opn aargs g0 = (a,g) /\
-     BAG_DISJOINT (BAG_OF_SET (domain g0)) (closProps_op_gbag opn) ==>
-     BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
-       (closProps_op_gbag opn) /\
+     BAG_DISJOINT (BAG_OF_SET (sptree_domain g0)) (closProps_op_gbag opn)
+       ==>
+     BAG_OF_SET (sptree_domain g) <= (BAG_UNION) (BAG_OF_SET (sptree_domain
+       g0)) (closProps_op_gbag opn) /\
      subspt g0 g`,
   CHEAT_TAC);;
 
@@ -1323,10 +1329,10 @@ let known_subspt = prove
      known c xs aenv g0 = (eas,g) /\
      ALL closProps_esgc_free xs /\ ALL val_approx_sgc_free aenv
        /\ globals_approx_sgc_free g0 /\
-     BAG_ALL_DISTINCT ((BAG_UNION) (BAG_OF_SET (domain g0))
+     BAG_ALL_DISTINCT ((BAG_UNION) (BAG_OF_SET (sptree_domain g0))
        (closProps_elist_globals xs)) ==>
-     BAG_OF_SET (domain g) <= (BAG_UNION) (BAG_OF_SET (domain g0))
-       (closProps_elist_globals xs) /\
+     BAG_OF_SET (sptree_domain g) <= (BAG_UNION) (BAG_OF_SET (sptree_domain
+       g0)) (closProps_elist_globals xs) /\
      subspt g0 g`,
   CHEAT_TAC);;
 
@@ -1867,6 +1873,10 @@ let get_code_labels_mk_Ticks = prove
   closProps_get_code_labels d`,
   CHEAT_TAC);;
 add_simp get_code_labels_mk_Ticks;;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

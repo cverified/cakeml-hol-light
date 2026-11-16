@@ -34,6 +34,8 @@ let _ = cake_theory "flat_to_closProof"
    "closSem"; "clos_interpProof"; "ffi"; "flatLang"; "flatProps"; "flatSem";
    "flat_to_clos"; "misc"; "semanticPrimitives"; "semanticPrimitivesProps"];;
 
+let _ = do_list hide_constant ["db"; "exps"; "test"];;
+
 let LIST_REL_EL = prove
  (`// TODO: move
    !xs ys r.
@@ -484,7 +486,8 @@ let op_eq_gc = prove
          flat_to_closProof_v_rel (list_result res2) res2'))`,
   CHEAT_TAC);;
 
-let v_rel_v_to_char_list = prove
+(* v_rel_v_to_char_list *)
+let flat_to_closProof_v_rel_v_to_char_list = prove
  (`!x ls y.
      flatSem_v_to_char_list x = SOME ls /\ flat_to_closProof_v_rel x y ==>
      closSem_v_to_list y = SOME (MAP (closSem_Number o (&)) (MAP ORD ls))`,
@@ -907,7 +910,7 @@ let set_globals_SmartCons = prove
   CHEAT_TAC);;
 
 let esgc_free_SmartCons = prove
- (`closProps_esgc_free (SmartCons t tag xs) = ALL flatProps_esgc_free xs`,
+ (`closProps_esgc_free (SmartCons t tag xs) = ALL closProps_esgc_free xs`,
   CHEAT_TAC);;
 
 let flat_FINITE_BAG_set_globals = prove
@@ -1050,6 +1053,12 @@ let FST_inc_compile_esgc_free = prove
    no_Mat_decs decs ==>
    ALL closProps_esgc_free (FST (inc_compile_decs decs))`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["db";
+   "exps";
+   "test"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

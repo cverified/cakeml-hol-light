@@ -10,7 +10,9 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
@@ -19,7 +21,7 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/indexedLists.ml";;
-needs "lib/sptree.ml";;
+needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -31,6 +33,8 @@ let _ = cake_theory "flat_patternProof"
   ["backendProps"; "backend_common"; "ffi"; "flatLang"; "flatProps";
    "flatSem"; "flat_pattern"; "misc"; "mlstring"; "pattern_semantics";
    "semanticPrimitives"; "semanticPrimitivesProps"];;
+
+let _ = do_list hide_constant ["exps"; "prog"; "test"];;
 (* HOL4 ancestors outside the port: bag *)
 
 (* HOL4 flat_patternProofScript.sml:14: ML code, not ported *)
@@ -261,7 +265,7 @@ let compile_pat_bindings_simulation = prove
      bindings /\
    flatSem_evaluate env s [exp2] = (s2,res) /\
    ALL2 (\(_,k,v_exp) v. !env2.
-         k IN domain spt /\
+         k IN sptree_domain spt /\
          ALOOKUP_rel ((\k. k > j /\ k < i) o dec_name_to_num) (=)
            (flatSem_environment_v env2) (flatSem_environment_v env) ==>
          pure_eval_to s env2 v_exp v)
@@ -819,7 +823,7 @@ let set_globals_naive_pattern_matches = prove
   CHEAT_TAC);;
 
 let set_toList_fromList = prove
- (`set_of_list (sptree_toList (fromList xs)) = set_of_list xs`,
+ (`set_of_list (sptree_toList (sptree_fromList xs)) = set_of_list xs`,
   CHEAT_TAC);;
 
 let set_globals_compile_pats = prove
@@ -978,6 +982,12 @@ let compile_exp_no_Mat = prove
 let compile_decs_no_Mat = prove
  (`!decs. no_Mat_decs (MAP (compile_dec cfg) decs)`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps";
+   "prog";
+   "test"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

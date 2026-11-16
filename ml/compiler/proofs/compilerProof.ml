@@ -139,7 +139,7 @@ let compile_correct_gen = prove
               (backend_config_stack_conf (compiler_config_backend_config cc))))
               mc (lab_to_target_config_shmem_extra (backend_config_lab_conf c))
               ms ==>
-            machine_sem mc (semanticPrimitives_state_ffi
+            targetSem_machine_sem mc (semanticPrimitives_state_ffi
               (semantics_state_sem_st st)) ms SUBSET
               extend_with_resource_limit'
                 (compilerProof_is_safe_for_space
@@ -175,7 +175,7 @@ let compilerProof_compile_correct_lemma = prove
              (backend_config_stack_conf (compiler_config_backend_config cc))))
              mc (lab_to_target_config_shmem_extra (backend_config_lab_conf c))
              ms ==>
-             machine_sem mc ffi ms SUBSET
+             targetSem_machine_sem mc ffi ms SUBSET
                extend_with_resource_limit'
                  (compilerProof_is_safe_for_space ffi cc
                     (APPEND prelude source_decs) (compilerProof_read_limits
@@ -203,7 +203,7 @@ let compile_correct_safe_for_space = prove
                (backend_config_stack_conf (compiler_config_backend_config
                cc)))) mc (lab_to_target_config_shmem_extra
                (backend_config_lab_conf c)) ms ==>
-           machine_sem mc ffi ms = behaviours))
+           targetSem_machine_sem mc ffi ms = behaviours))
    // <-- equality`,
   CHEAT_TAC);;
 
@@ -228,7 +228,7 @@ let compilerProof_compile_correct = prove
                  (backend_config_stack_conf (compiler_config_backend_config
                  cc)))) mc (lab_to_target_config_shmem_extra
                  (backend_config_lab_conf c)) ms ==>
-             machine_sem mc ffi ms SUBSET
+             targetSem_machine_sem mc ffi ms SUBSET
                extend_with_resource_limit behaviours)))`,
   CHEAT_TAC);;
 (* see the compile_correct_safe_for_space version above

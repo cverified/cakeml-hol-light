@@ -9,8 +9,10 @@
   Correctness proof for clos_annotate
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
@@ -24,6 +26,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "clos_annotateProof"
   ["backendProps"; "closProps"; "closSem"; "clos_annotate"; "db_vars"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 
 (* HOL4 clos_annotateProofScript.sml:11-12: an overload that the source
@@ -117,7 +121,7 @@ let clos_annotateProof_v_rel = cake_inductive
    (clos_annotateProof_v_rel (closSem_RefPtr b r1) (closSem_RefPtr b r1)) /\
    ((clos_annotate_shift (FST (alt_free [c])) m num_args i = [c']) /\
     (!n. (\x y. alt_fv y x) [c] n /\ num_args <= n ==>
-         env_ok m 0 i env env' (n - num_args)) /\
+         clos_annotateProof_env_ok m 0 i env env' (n - num_args)) /\
     every_Fn_vs_NONE [c] /\
     (LENGTH env = m) /\ ALL2 clos_annotateProof_v_rel vals vals' ==>
     clos_annotateProof_v_rel (closSem_Closure p vals env num_args c)
@@ -128,33 +132,36 @@ let clos_annotateProof_v_rel = cake_inductive
         (clos_annotate_shift (FST (alt_free [c1])) m (LENGTH cs + num_args)
           i = [c1']) /\
         (!n. (\x y. alt_fv y x) [c1] n /\ num_args + LENGTH cs <= n ==>
-           env_ok m 0 i env env' (n - (num_args + LENGTH cs))) /\
+           clos_annotateProof_env_ok m 0 i env env' (n - (num_args + LENGTH
+             cs))) /\
         every_Fn_vs_NONE [c1] /\
         (LENGTH env = m)) cs cs' /\
     ALL2 clos_annotateProof_v_rel vals vals' /\ index < LENGTH cs ==>
     clos_annotateProof_v_rel (closSem_Recclosure p vals env cs index)
       (closSem_Recclosure p vals' env' cs' index)) /\
    (l + m <= n ==>
-    env_ok m l i (env2:closSem_v list) (env2':closSem_v list) n) /\
+    clos_annotateProof_env_ok m l i (env2:closSem_v list) (env2':closSem_v
+      list) n) /\
    (n < l /\ clos_annotateProof_v_rel (EL n env2) (EL n env2') /\
     n < LENGTH env2 /\ n < LENGTH env2' ==>
-    env_ok m l i env2 env2' n) /\
+    clos_annotateProof_env_ok m l i env2 env2' n) /\
    (l <= n /\ n < l + m /\
     n < l + m /\ (sptree_lookup (n - l) i = SOME v) /\
     n < LENGTH env2 /\
     l + v < LENGTH env2' /\
     clos_annotateProof_v_rel (EL n env2) (EL (l + v) env2') ==>
-    env_ok m l i env2 env2' n)`;;
+    clos_annotateProof_env_ok m l i env2 env2' n)`;;
 
 (* HOL4 clos_annotateProofScript.sml:148-164: a theorem that HOL4 states as
    the value of an ML expression: v_rel_simp *)
 
-let v_rel_Boolv = prove
+(* v_rel_Boolv *)
+let clos_annotateProof_v_rel_Boolv = prove
  (`(clos_annotateProof_v_rel x (closSem_Boolv b) <=> (x = closSem_Boolv b)) /\
     (clos_annotateProof_v_rel (closSem_Boolv b) x <=> (x = closSem_Boolv
       b))`,
   CHEAT_TAC);;
-add_simp v_rel_Boolv;;
+add_simp clos_annotateProof_v_rel_Boolv;;
 
 let v_rel_Unit = prove
  (`(clos_annotateProof_v_rel x closSem_Unit <=> (x = closSem_Unit)) /\
@@ -167,8 +174,9 @@ add_simp v_rel_Unit;;
 (* [local] *)
 let env_ok_EXTEND = prove
  (`ALL2 clos_annotateProof_v_rel env1 env2 /\ (l1 = LENGTH env1) /\
-     (l1 <= n ==> env_ok m l i env1' env2' (n - l1)) ==>
-     env_ok m (l + l1) i (APPEND env1 env1') (APPEND env2 env2') n`,
+     (l1 <= n ==> clos_annotateProof_env_ok m l i env1' env2' (n - l1)) ==>
+     clos_annotateProof_env_ok m (l + l1) i (APPEND env1 env1') (APPEND
+       env2 env2') n`,
   CHEAT_TAC);;
 
 (* HOL4 clos_annotateProofScript.sml:211-213: ML code, not ported *)
@@ -182,8 +190,9 @@ let env_ok_EXTEND = prove
 (* [local] *)
 let env_ok_EXTEND_IGNORE = prove
  (`(LENGTH env2 = LENGTH env1) /\ LENGTH env1 <= n /\ l1 = LENGTH env1 /\
-    env_ok m l i env1' env2' (n - l1) ==>
-    env_ok m (l + l1) i (APPEND env1 env1') (APPEND env2 env2') n`,
+    clos_annotateProof_env_ok m l i env1' env2' (n - l1) ==>
+    clos_annotateProof_env_ok m (l + l1) i (APPEND env1 env1') (APPEND
+      env2 env2') n`,
   CHEAT_TAC);;
 
 let clos_annotateProof_state_rel_def = new_definition
@@ -328,12 +337,13 @@ let lookup_EL_shifted_env = prove
 
 (* [local] *)
 let env_ok_shifted_env = prove
- (`env_ok m l i env env2 k /\ MEM k live /\ ALL_DISTINCT live /\
+ (`clos_annotateProof_env_ok m l i env env2 k /\ MEM k live /\ ALL_DISTINCT
+  live /\
      (lookup_vars (MAP (clos_annotate_get_var m l i) (FILTER (\n. n < m + l)
        live)) env2 =
        SOME x) ==>
-     env_ok (m + l) 0 (shifted_env 0 (FILTER (\n. n < m + l) live)) env x
-       k`,
+     clos_annotateProof_env_ok (m + l) 0 (shifted_env 0 (FILTER (\n. n < m
+       + l) live)) env x k`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -414,7 +424,8 @@ let shift_correct = prove
       (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
         Rtype_error)) /\
       (LENGTH env = m + l) /\
-      (\x y. alt_fv y x) xs SUBSET env_ok m l i env env' /\
+      (\x y. alt_fv y x) xs SUBSET clos_annotateProof_env_ok m l i env env'
+        /\
       every_Fn_vs_NONE xs /\ FEVERY (\p. every_Fn_vs_NONE [SND (SND p)])
         (closSem_state_code s1) /\
       (!n. every_Fn_vs_NONE (FST (SND (closSem_state_compile_oracle s1 n)))
@@ -448,7 +459,7 @@ let shift_correct = prove
 
 (* [local] *)
 let env_set_default = prove
- (`x SUBSET env_ok 0 0 LN [] env'`,
+ (`x SUBSET clos_annotateProof_env_ok 0 0 LN [] env'`,
   CHEAT_TAC);;
 
 let annotate_correct =
@@ -621,6 +632,10 @@ let every_Fn_SOME_ann = prove
       every_Fn_SOME (MAP (SND o SND) xs) ==>
       every_Fn_SOME (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

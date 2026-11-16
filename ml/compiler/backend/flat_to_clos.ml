@@ -2,8 +2,8 @@
 (*  flat_to_clos: ported from HOL4's
     compiler/backend/flat_to_closScript.sml
     A definition theory, with 17 definitions and 9 theorems.  Needed
-    by backend.ml, backendProof.ml, flat_to_closProof.ml and
-    source_evalProof.ml.  *)
+    by backend.ml, backendProof.ml, flat_to_closProof.ml,
+    source_evalProof.ml, to_closProg.ml and to_data_cv.ml.  *)
 (* ======================================================== *)
 
 (*

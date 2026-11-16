@@ -9,6 +9,8 @@
   Correctness proof for word_copy
 *)
 
+needs "candle/standard/syntax/holSyntaxExtra.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
@@ -22,7 +24,7 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_copyProof"
   ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_copy"];;
 
-let _ = do_list hide_constant ["addr"; "val"];;
+let _ = do_list hide_constant ["addr"; "db"; "prog"; "val"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -42,11 +44,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -68,7 +76,8 @@ let CPstate_inv_def = new_definition
      // cs.next is a fresh class
      !v c. sptree_lookup v (copy_state_to_eq cs) = SOME c ==> c <
        copy_state_next cs) /\
-    (!c. c IN domain (copy_state_from_eq cs) ==> c < copy_state_next cs) /\
+    (!c. c IN sptree_domain (copy_state_from_eq cs) ==> c < copy_state_next
+      cs) /\
     (!s c. ALOOKUP (copy_state_store_to_eq cs) s = SOME c ==> c <
       copy_state_next cs) /\
     (
@@ -82,9 +91,10 @@ let CPstate_inv_def = new_definition
 (* [local] *)
 let unique_rep = prove
  (`CPstate_inv cs ==>
-   c IN domain (copy_state_from_eq cs) /\
-   c' IN domain (copy_state_from_eq cs) /\ ~(c = c') ==> ~(sptree_lookup c
-     (copy_state_from_eq cs) = sptree_lookup c' (copy_state_from_eq cs))`,
+   c IN sptree_domain (copy_state_from_eq cs) /\
+   c' IN sptree_domain (copy_state_from_eq cs) /\ ~(c = c') ==>
+     ~(sptree_lookup c (copy_state_from_eq cs) = sptree_lookup c'
+     (copy_state_from_eq cs))`,
   CHEAT_TAC);;
 
 let empty_eq_inv = prove
@@ -683,6 +693,8 @@ let evaluate_copy_prop = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
+   "db";
+   "prog";
    "val"];;
 
 (* and the interface *)

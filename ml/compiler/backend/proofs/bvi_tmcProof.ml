@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mlvector.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tmc.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -25,7 +26,13 @@ let _ = cake_theory "bvi_tmcProof"
   ["backend_common"; "bviProps"; "bviSem"; "bvi_tmc"; "bvlSem";
    "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["all"; "parts"; "vars"];;
+let _ = do_list hide_constant ["all"; "parts"; "prog"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["vars","vars"];;
 
 (* HOL4 bvi_tmcProofScript.sml:10: the ML values that the definitions below
    antiquote *)
@@ -33,7 +40,7 @@ let _ = do_list hide_constant ["all"; "parts"; "vars"];;
 (* HOL4 bvi_tmcProofScript.sml:12: the overload in_ns_3, which the port
    expands *)
 
-let v_rel = cake_inductive
+let bvi_tmcProof_v_rel = cake_inductive
   `(!f i. bvi_tmcProof_v_rel f (bvlSem_Number i) (bvlSem_Number i)) /\
    (!f w. bvi_tmcProof_v_rel f (bvlSem_Word64 w) (bvlSem_Word64 w)) /\
    (!f n xs ys.
@@ -105,7 +112,8 @@ let bvi_tmcProof_code_rel_def = new_definition
 (* code_rel_domain *)
 let bvi_tmcProof_code_rel_domain = prove
  (`!c1 c2.
-     bvi_tmcProof_code_rel c1 c2 ==> domain c1 SUBSET domain c2`,
+     bvi_tmcProof_code_rel c1 c2 ==> sptree_domain c1 SUBSET sptree_domain
+       c2`,
   CHEAT_TAC);;
 
 let bvi_tmcProof_free_names_def = new_definition
@@ -114,12 +122,13 @@ let bvi_tmcProof_free_names_def = new_definition
 
 let bvi_tmcProof_namespace_rel_def = new_definition
   `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
-     (!n. n IN domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
-       bvl_to_bvi_namespaces = 3) n then ~(n IN domain c1) else n IN domain
-       c1)) /\
-     (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
+     (!n. n IN sptree_domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
+       bvl_to_bvi_namespaces = 3) n then ~(n IN sptree_domain c1) else n IN
+       sptree_domain c1)) /\
+     (!n. n IN sptree_domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 3) n)) /\
-     (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
+     (!n. n IN sptree_domain c2 /\ n < bvl_num_stubs ==> n IN
+       sptree_domain c1)`;;
 
 (* This should say: expression in prog satisfies no-mutblock property *)
 let bvi_tmcProof_input_condition_def = new_definition
@@ -174,7 +183,7 @@ let bvi_tmcProof_state_rel_def = new_definition
        /\
      (!n. let ((next',cfg),prog) = bviSem_state_compile_oracle s n in
              bvi_tmcProof_input_condition next' prog) /\
-     (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
+     (!n. n IN sptree_domain (bviSem_state_code t) /\ (\n. n MOD
        bvl_to_bvi_namespaces = 3) n ==> n < FST (FST
        (bviSem_state_compile_oracle s 0))) /\
      fmap_inj f`;;
@@ -323,14 +332,14 @@ let bvi_tmcProof_compile_each_namespace_rel = prove
 (* namespace_rel_union *)
 let bvi_tmcProof_namespace_rel_union = prove
  (`bvi_tmcProof_namespace_rel x y /\ bvi_tmcProof_namespace_rel t s /\ DISJOINT
-  (domain s) (domain y) ==>
+  (sptree_domain s) (sptree_domain y) ==>
    bvi_tmcProof_namespace_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
 (* code_rel_union *)
 let bvi_tmcProof_code_rel_union = prove
- (`bvi_tmcProof_code_rel x y /\ bvi_tmcProof_code_rel t s /\ DISJOINT (domain
-  s) (domain y) ==>
+ (`bvi_tmcProof_code_rel x y /\ bvi_tmcProof_code_rel t s /\ DISJOINT
+  (sptree_domain s) (sptree_domain y) ==>
    bvi_tmcProof_code_rel (sptree_union x t) (sptree_union y s)`,
   CHEAT_TAC);;
 
@@ -382,8 +391,9 @@ let bvi_tmcProof_compile_each_code_rel = prove
 let eor_rel_def = new_definition
   `eor_rel f x2 x3 =
      match (x2,x3) with
-       (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
-     | (Ret vs1,Ret vs2) -> ALL2 (bvi_tmcProof_v_rel f) vs1 vs2
+       (bviSem_Exn v1,bviSem_Exn v2) -> bvi_tmcProof_v_rel f v1 v2
+     | (bviSem_Ret vs1,bviSem_Ret vs2) -> ALL2 (bvi_tmcProof_v_rel f) vs1
+       vs2
      | (_,_) -> F`;;
 add_simp eor_rel_def;;
 
@@ -2073,7 +2083,7 @@ let bvi_tmcProof_compile_prog_keeps_names = prove
 let _ = do_list unhide_constant
   ["all";
    "parts";
-   "vars"];;
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

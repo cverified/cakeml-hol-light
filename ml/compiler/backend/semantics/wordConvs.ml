@@ -20,13 +20,13 @@ needs "semantics/ast.ml";;
 let _ = cake_theory "wordConvs"
   ["asm"; "reg_alloc"; "wordLang"];;
 
-let _ = do_list hide_constant ["inst"];;
+let _ = do_list hide_constant ["inst"; "prog"];;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
 let every_var_inst_mono = prove
- (`!P inst' Q.
+ (`!P inst Q.
    (!x. P x ==> Q x) /\
-   every_var_inst P inst' ==>
-   every_var_inst Q inst'`,
+   every_var_inst P inst ==>
+   every_var_inst Q inst`,
   CHEAT_TAC);;
 
 let every_var_exp_mono = prove
@@ -51,9 +51,9 @@ let every_var_mono = prove
 
 (*Conjunct*)
 let every_var_inst_conj = prove
- (`!P inst' Q.
-   every_var_inst P inst' /\ every_var_inst Q inst' <=>
-   every_var_inst (\x. P x /\ Q x) inst'`,
+ (`!P inst Q.
+   every_var_inst P inst /\ every_var_inst Q inst <=>
+   every_var_inst (\x. P x /\ Q x) inst`,
   CHEAT_TAC);;
 
 let every_var_exp_conj = prove
@@ -590,7 +590,8 @@ let no_share_inst_subprogs_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["inst"];;
+  ["inst";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

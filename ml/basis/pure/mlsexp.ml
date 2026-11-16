@@ -2,8 +2,8 @@
 (*  mlsexp: ported from HOL4's
     basis/pure/mlsexpScript.sml
     A definition theory, with 25 definitions, 4 datatypes and 25
-    theorems.  Needed by compiler.ml, displayLang.ml and
-    presLang.ml.  *)
+    theorems.  Needed by SexpProg.ml, basis_cv.ml, compiler.ml,
+    displayLang.ml, pan_passes.ml, presLang.ml and printTweaks.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -19,6 +19,8 @@ needs "semantics/ast.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "mlsexp"
   ["mlstring"];;
+
+let _ = do_list hide_constant ["test"];;
 
 (*--------------------------------------------------------------*
    Definition of s-expression
@@ -546,6 +548,10 @@ let fromString_sexp_to_string = prove
 let fromString_sexp_to_pretty_string = prove
  (`mlsexp_fromString (sexp_to_pretty_string x) = SOME x`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["test"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

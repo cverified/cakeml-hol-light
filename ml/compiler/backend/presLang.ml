@@ -2,7 +2,7 @@
 (*  presLang: ported from HOL4's
     compiler/backend/presLangScript.sml
     A definition theory, with 91 definitions, 1 datatype and 15
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -48,6 +48,8 @@ let _ = cake_theory "presLang"
   ["ast"; "bvi"; "bvl"; "closLang"; "clos_to_bvl"; "dataLang"; "displayLang";
    "flatLang"; "labLang"; "mlint"; "mloption"; "source_to_flat"; "stackLang";
    "wordLang"];;
+
+let _ = do_list hide_constant ["exps"];;
 
 (* basics *)
 
@@ -298,9 +300,9 @@ let ast_t_to_display_def,ast_t_to_display_ind = assume_definition_rec
           [ast_t_to_display t1; ast_t_to_display t2]
       | Attup ts -> display_Item NONE (implode "Attup") [display_Tuple
           (ast_t_to_display_list ts)]
-      | Atapp ts id' -> display_Item NONE (implode "Attup") [display_Tuple
+      | Atapp ts id -> display_Item NONE (implode "Attup") [display_Tuple
           (ast_t_to_display_list ts);
-                              id_to_display id']) /\
+                              id_to_display id]) /\
    (ast_t_to_display_list [] = []) /\
    (ast_t_to_display_list (CONS x xs) = CONS (ast_t_to_display x)
     (ast_t_to_display_list xs))`;;
@@ -338,8 +340,7 @@ let exp_to_display_def,exp_to_display_ind = assume_definition_rec_clauses
               | SOME opt' -> display_Item NONE (implode "some") [f opt'])
                   id_to_display opt_id;
                               display_Tuple (exp_to_display_list es)]
-      | ast_Var id' -> display_Item NONE (implode "Var") [id_to_display
-          id']
+      | ast_Var id -> display_Item NONE (implode "Var") [id_to_display id]
       | ast_Fun n e -> display_Item NONE (implode "Fun") [display_String n;
           exp_to_display e]
       | ast_App op es -> display_Item NONE (implode "App") (CONS
@@ -449,7 +450,7 @@ let flat_pat_to_display_def,flat_pat_to_display_ind = assume_definition_rec
            | flat_Pany -> empty_item (implode "Pany")
            | flat_Plit lit -> display_Item NONE (implode "Plit")
                [lit_to_display lit]
-           | flat_Pcon id' pats -> display_Item NONE (implode "Pcon")
+           | flat_Pcon id pats -> display_Item NONE (implode "Pcon")
                 (flat_pat_to_display_list pats)
            | flat_Pas pat varN -> display_Item NONE (implode "Pas")
                [flat_pat_to_display pat;
@@ -1091,15 +1092,15 @@ let asm_binop_to_display_def = new_definition
      | asm_Xor -> empty_item (implode "Xor")`;;
 
 let asm_reg_imm_to_display_def = new_definition
-  `asm_reg_imm_to_display reg_imm' = match reg_imm' with Reg reg ->
-  item_with_num (implode "Reg") reg
+  `asm_reg_imm_to_display reg_imm = match reg_imm with Reg reg -> item_with_num
+  (implode "Reg") reg
      | Imm imm -> item_with_word (implode "Imm") imm`;;
 
 let asm_arith_to_display_def = new_definition
-  `asm_arith_to_display op = match op with asm_Binop bop n1 n2 reg_imm' ->
+  `asm_arith_to_display op = match op with asm_Binop bop n1 n2 reg_imm ->
   display_Item NONE (implode "Binop")
          [asm_binop_to_display bop; num_to_display n1; num_to_display n2;
-             asm_reg_imm_to_display reg_imm']
+             asm_reg_imm_to_display reg_imm]
      | asm_Shift sh n1 n2 n3 -> display_Item NONE (implode "Shift")
          [shift_to_display sh;
           num_to_display n1;
@@ -1118,7 +1119,7 @@ let asm_arith_to_display_def = new_definition
        "SubOverflow") [n1; n2; n3; n4]`;;
 
 let asm_addr_to_display_def = new_definition
-  `asm_addr_to_display addr' = match addr' with Addr reg w -> display_Item NONE
+  `asm_addr_to_display addr = match addr with Addr reg w -> display_Item NONE
   (implode "Addr")
                           [num_to_display reg; word_to_display w]`;;
 
@@ -1167,22 +1168,22 @@ let asm_fp_to_display_def = new_definition
      | FPFromInt n1 n2 -> item_with_nums (implode "FPFromInt") [n1; n2]`;;
 
 let asm_inst_to_display_def = new_definition
-  `asm_inst_to_display inst' = match inst' with asm_Skip -> empty_item (implode
+  `asm_inst_to_display inst = match inst with asm_Skip -> empty_item (implode
   "Skip")
      | asm_Const reg w -> display_Item NONE (implode "Const")
        [num_to_display reg;
                               word_to_display w]
      | asm_Arith a -> display_Item NONE (implode "Arith")
        [asm_arith_to_display a]
-     | asm_Mem mop r addr' -> display_Item NONE (implode "Mem")
+     | asm_Mem mop r addr -> display_Item NONE (implode "Mem")
        [asm_memop_to_display mop;
-         num_to_display r; asm_addr_to_display addr']
+         num_to_display r; asm_addr_to_display addr]
      | asm_FP fp -> display_Item NONE (implode "FP") [asm_fp_to_display
        fp]`;;
 
 let asm_asm_to_display_def = new_definition
-  `asm_asm_to_display inst' = match inst' with asm_Inst i ->
-  asm_inst_to_display i
+  `asm_asm_to_display inst = match inst with asm_Inst i -> asm_inst_to_display
+  i
      | asm_Jump w -> item_with_word (implode "Jump") w
      | asm_JumpCmp c r to w -> display_Item NONE (implode "JumpCmp")
        [asm_cmp_to_display c; num_to_display r; asm_reg_imm_to_display to;
@@ -1698,6 +1699,10 @@ val data_prog_tm =
 val _ = data_to_strs data_prog_tm names_tm |> print_strs
 
 *)
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

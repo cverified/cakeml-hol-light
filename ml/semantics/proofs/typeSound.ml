@@ -2,7 +2,7 @@
 (*  typeSound: ported from HOL4's
     semantics/proofs/typeSoundScript.sml
     A proof theory, with 1 definition and 45 theorems.  Needed by
-    compilerProof.ml and semanticsProps.ml.  *)
+    compilerProof.ml, repl_types.ml and semanticsProps.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -356,7 +356,8 @@ let build_conv_type_sound = prove
    ALL (check_freevars (num_tvs (bind_tvar tvs tenvE)) []) ts' /\
    LENGTH tvs' = LENGTH ts' /\
    ALL2 (type_v tvs ctMap tenvS) vs
-     (REVERSE (MAP (type_subst (alist_to_fmap (ZIP tvs' ts'))) ts)) /\
+     (REVERSE (MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs' ts')))
+       ts)) /\
    nsLookup tenvC cn = SOME (tvs',ts,tn) ==>
    (?v.
      build_conv envC (SOME cn) (REVERSE vs) = SOME v /\
@@ -406,7 +407,8 @@ let pat_type_sound = prove
 
 let lookup_var_sound = prove
  (`!n tvs tenvE targs t ctMap tenvS env tenv.
-    lookup_var n (bind_tvar tvs tenvE) tenv = SOME (LENGTH targs,t) /\
+    typeSystem_lookup_var n (bind_tvar tvs tenvE) tenv = SOME (LENGTH
+      targs,t) /\
     ctMap_ok ctMap /\
     tenv_val_exp_ok tenvE /\
     num_tvs tenvE = 0 /\
@@ -517,15 +519,15 @@ let type_e_con_check = prove
  (`(!tenv tenvE e t.
      type_e tenv tenvE e t ==>
      nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
-     every_exp (one_con_check envc) e) /\
+     ast_every_exp (one_con_check envc) e) /\
    (!tenv tenvE es ts.
      type_es tenv tenvE es ts ==>
      nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
-     ALL (every_exp (one_con_check envc)) es) /\
+     ALL (ast_every_exp (one_con_check envc)) es) /\
    (!tenv tenvE funs env.
      type_funs tenv tenvE funs env ==>
      nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
-     ALL (\(f,n,e). every_exp (one_con_check envc) e) funs)`,
+     ALL (\(f,n,e). ast_every_exp (one_con_check envc) e) funs)`,
   CHEAT_TAC);;
 
 let decs_type_sound_no_check = prove

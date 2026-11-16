@@ -12,7 +12,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
-needs "lib/sptree.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "clos_knownProps"
@@ -118,8 +117,8 @@ add_simp subapprox_Tuple;;
 
 let better_definedg_def = new_definition
   `better_definedg g1 g2 <=>
-     (!k. k IN domain g1 ==> k IN domain g2 /\ subapprox (THE
-       (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;
+     (!k. k IN sptree_domain g1 ==> k IN sptree_domain g2 /\ subapprox
+       (THE (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;
 
 let better_definedg_refl = prove
  (`better_definedg g g`,

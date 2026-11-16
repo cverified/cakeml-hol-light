@@ -2,8 +2,8 @@
 (*  backend_passes: ported from HOL4's
     compiler/backend/backend_passesScript.sml
     A definition theory, with 18 definitions, 1 datatype and 20
-    theorems.  Needed by backendProof.ml, compiler.ml and
-    compilerProof.ml.  *)
+    theorems.  Needed by backendProof.ml, backend_asm.ml,
+    compiler.ml, compilerProof.ml and pan_passes.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -25,7 +25,6 @@ needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
-needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
@@ -278,7 +277,7 @@ let word_internal_all_def = new_definition
      (p,ps)`;;
 
 let to_word_all_def = new_definition
-  `to_word_all asm_conf (c:backend_config) p =
+  `backend_passes_to_word_all asm_conf (c:backend_config) p =
      (let (ps,c,p,names) = to_data_all c p in
      let word_conf = backend_config_word_to_word_conf c in
      let data_conf = backend_config_data_conf c in
@@ -323,12 +322,13 @@ let ZIP_MAP_1 = prove
 
 (* to_word_thm *)
 let backend_passes_to_word_thm = prove
- (`SND (to_word_all asm_conf (c:backend_config) p) = to_word asm_conf c p`,
+ (`SND (backend_passes_to_word_all asm_conf (c:backend_config) p) =
+  backend_to_word asm_conf c p`,
   CHEAT_TAC);;
 
 let to_stack_all_def = new_definition
-  `to_stack_all asm_conf (c:backend_config) p =
-     let (ps,c,p,names) = to_word_all asm_conf c p in
+  `backend_passes_to_stack_all asm_conf (c:backend_config) p =
+     let (ps,c,p,names) = backend_passes_to_word_all asm_conf c p in
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p in
      let ps = APPEND ps [((implode
@@ -337,12 +337,13 @@ let to_stack_all_def = new_definition
        ((ps:(mlstring#'a any_prog) list),bm,c,p,names)`;;
 
 let to_stack_thm = prove
- (`SND (to_stack_all asm_conf (c:backend_config) p) = to_stack asm_conf c p`,
+ (`SND (backend_passes_to_stack_all asm_conf (c:backend_config) p) = to_stack
+  asm_conf c p`,
   CHEAT_TAC);;
 
 let to_lab_all_def = new_definition
-  `to_lab_all asm_conf (c:backend_config) p =
-     (let (ps,bm,c,p,names) = to_stack_all asm_conf c p in
+  `backend_passes_to_lab_all asm_conf (c:backend_config) p =
+     (let (ps,bm,c,p,names) = backend_passes_to_stack_all asm_conf c p in
      let stack_conf = backend_config_stack_conf c in
      let data_conf = backend_config_data_conf c in
      let max_heap = 2 * max_heap_limit (:'a) (backend_config_data_conf c) -
@@ -372,17 +373,20 @@ let to_lab_all_def = new_definition
          sec) list),names))`;;
 
 let to_lab_thm = prove
- (`SND (to_lab_all asm_conf (c:backend_config) p) = to_lab asm_conf c p`,
+ (`SND (backend_passes_to_lab_all asm_conf (c:backend_config) p) = to_lab
+  asm_conf c p`,
   CHEAT_TAC);;
 
 let to_target_all_def = new_definition
   `to_target_all asm_conf (c:backend_config) p =
-     let (ps,bm,c,p,names) = to_lab_all asm_conf c p in
+     let (ps,bm,c,p,names) = backend_passes_to_lab_all asm_conf c p in
      let p = filter_skip p in
      let ps = APPEND ps [((implode "after filter_skip"),backend_passes_Lab p
        names)] in
-     let p = compile_lab asm_conf (backend_config_lab_conf c) p in
-       ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm p)`;;
+     let p = lab_to_target_compile_lab asm_conf (backend_config_lab_conf c)
+       p in
+       ((ps:(mlstring#'a any_prog) list),backend_attach_bitmaps names c
+         bm p)`;;
 
 let to_target_thm = prove
  (`SND (to_target_all asm_conf c p) = to_target asm_conf c p`,
@@ -393,12 +397,14 @@ let from_lab_all_def = new_definition
      let p = filter_skip p in
      let ps = APPEND ps [((implode "after filter_skip"),backend_passes_Lab p
        names)] in
-     let p = compile_lab asm_conf (backend_config_lab_conf c) p in
-       ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm p)`;;
+     let p = lab_to_target_compile_lab asm_conf (backend_config_lab_conf c)
+       p in
+       ((ps:(mlstring#'a any_prog) list),backend_attach_bitmaps names c
+         bm p)`;;
 
 let from_lab_thm = prove
- (`SND (from_lab_all ps asm_conf c names p bm) = from_lab asm_conf c names p
-  bm`,
+ (`SND (from_lab_all ps asm_conf c names p bm) = backend_from_lab asm_conf c
+  names p bm`,
   CHEAT_TAC);;
 
 let from_stack_all_def = new_definition
@@ -431,8 +437,8 @@ let from_stack_all_def = new_definition
        from_lab_all ps asm_conf c names p bm)`;;
 
 let from_stack_thm = prove
- (`SND (from_stack_all ps asm_conf c names p bm) = from_stack asm_conf c
-  names p bm`,
+ (`SND (from_stack_all ps asm_conf c names p bm) = backend_from_stack
+  asm_conf c names p bm`,
   CHEAT_TAC);;
 
 let from_word_all_def = new_definition
@@ -445,7 +451,8 @@ let from_word_all_def = new_definition
        from_stack_all ps asm_conf c names p bm`;;
 
 let from_word_thm = prove
- (`SND (from_word_all ps asm_conf c names p) = from_word asm_conf c names p`,
+ (`SND (from_word_all ps asm_conf c names p) = backend_from_word asm_conf c
+  names p`,
   CHEAT_TAC);;
 
 let from_word_0_all_def = new_definition
@@ -470,8 +477,8 @@ let from_word_0_all_def = new_definition
        from_word_all ps asm_conf c names p)`;;
 
 let from_word_0_thm = prove
- (`SND (from_word_0_all ps asm_conf c names p) = from_word_0 asm_conf c names
-  p`,
+ (`SND (from_word_0_all ps asm_conf c names p) = backend_from_word_0 asm_conf
+  c names p`,
   CHEAT_TAC);;
 
 let from_data_all_def = new_definition

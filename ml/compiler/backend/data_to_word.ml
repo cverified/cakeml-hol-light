@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 20 files of the port.  *)
+    theorems.  Needed by 26 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -193,8 +193,8 @@ let real_byte_offset_def = new_definition
 
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
   "word_op_type =
-     Bitwise binop
-   | Carried binop";;
+     Bitwise asm_binop
+   | Carried asm_binop";;
 
 let lookup_word_op_def = define_cases
   `(lookup_word_op backend_common_Andw = Bitwise asm_And) /\
@@ -2119,7 +2119,7 @@ let assign_LessConstSmall_def = new_definition
                        word))),l):'a word_prog#num)`;;
 
 let assign_BoolTest_def = new_definition
-  `assign_BoolTest (l:num) (dest:num) (test:test) v1 v2 =
+  `assign_BoolTest (l:num) (dest:num) (test:ast_test) v1 v2 =
                   ((word_If asm_Equal (adjust_var v1) (Reg (adjust_var v2))
                     (word_Assign (adjust_var dest) (word_Const (n2w 18:'a
                       word)))
@@ -2133,7 +2133,7 @@ let assign_BoolNot_def = new_definition
                        word_Const (n2w 16)]),l):'a word_prog#num)`;;
 
 let assign_WordTest_def = new_definition
-  `assign_WordTest (l:num) (dest:num) (test:test) v1 v2 =
+  `assign_WordTest (l:num) (dest:num) (test:ast_test) v1 v2 =
         (((match test with ast_Equal -> word_If asm_Equal (adjust_var v1)
           (Reg (adjust_var v2))
                               (word_Assign (adjust_var dest) (word_Const
@@ -2158,8 +2158,8 @@ let assign_BoundsCheckByte_def = new_definition
   `assign_BoundsCheckByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) leq v1 v2 =
                     ((data_to_word_list_Seq [word_Assign 1
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let extra = (if dimindex (:'a) = 32 then 2
                                 else 3) in
                               let k = dimindex (:'a) -
@@ -2180,8 +2180,8 @@ let assign_BoundsCheckArray_def = new_definition
   `assign_BoundsCheckArray (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
                     ((data_to_word_list_Seq [word_Assign 1
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               (\sh e n. word_Shift sh e (word_Const (n2w
@@ -2201,8 +2201,8 @@ let assign_BoundsCheckBlock_def = new_definition
                       v1) (Imm (n2w 1))
                               (word_Assign 1 (word_Const (n2w 0)))
                               (word_Assign 1
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               (\sh e n. word_Shift sh e (word_Const (n2w
@@ -2278,8 +2278,8 @@ let assign_LengthBlock_def = new_definition
                             (word_Assign (adjust_var dest) (word_Const (n2w
                               0)))
                             (word_Assign (adjust_var dest)
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               let len = (\sh e n. word_Shift sh e
@@ -2291,8 +2291,8 @@ let assign_Length_def = new_definition
   `assign_Length (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 =
                            ((word_Assign (adjust_var dest)
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               let len = (\sh e n. word_Shift sh e
@@ -2304,8 +2304,8 @@ let assign_LengthByte_def = new_definition
   `assign_LengthByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
   (names:(1 spt) option) v1 =
              ((word_Assign (adjust_var dest)
-                (let addr' = real_addr c (adjust_var v1) in
-                 let header = word_Load addr' in
+                (let addr = real_addr c (adjust_var v1) in
+                 let header = word_Load addr in
                  let k = dimindex (:'a) - backend_common_word_shift (:'a) -
                    data_to_word_config_len_size c in
                  let fakelen = (\sh e n. word_Shift sh e (word_Const (n2w
@@ -2388,8 +2388,8 @@ let assign_LenEq_def = new_definition
                               word_If asm_Test (adjust_var v1) (Imm (n2w 1))
                                 word_Skip
                               (word_Assign 1
-                              (let addr' = real_addr c (adjust_var v1) in
-                              let header = word_Load addr' in
+                              (let addr = real_addr c (adjust_var v1) in
+                              let header = word_Load addr in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               let len = (\sh e n. word_Shift sh e

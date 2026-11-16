@@ -1,9 +1,8 @@
 (* ======================================================== *)
 (*  envRel: ported from HOL4's
     compiler/inference/proofs/envRelScript.sml
-    A proof theory, with 8 definitions and 37 theorems.  Needed by
-    compilerProof.ml, inferComplete.ml, inferSound.ml,
-    infer_eComplete.ml, infer_eSound.ml and type_eDeterm.ml.  *)
+    A proof theory, with 8 definitions and 37 theorems.  Needed by 7
+    files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -28,6 +27,12 @@ let _ = cake_theory "envRel"
    "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
 
 let _ = do_list hide_constant ["id"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
 
 (* ---------- Converting infer types and envs to type system ones ---------- *)
 
@@ -109,12 +114,14 @@ let convert_t_subst = prove
       (LENGTH tvs = LENGTH ts') /\
       check_freevars 0 tvs t ==>
       convert_t (infer_type_subst (ZIP tvs ts') t) =
-      type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts'))) t) /\
+      typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts'))) t)
+        /\
    (!ts tvs ts'.
       (LENGTH tvs = LENGTH ts') /\
       ALL (check_freevars 0 tvs) ts ==>
       MAP convert_t (MAP (infer_type_subst (ZIP tvs ts')) ts) =
-      MAP (type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts')))) ts)`,
+      MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs (MAP convert_t
+        ts')))) ts)`,
   CHEAT_TAC);;
 
 let deBruijn_subst_convert = prove
@@ -242,23 +249,23 @@ let env_rel_sound_def = new_definition
        nsLookup (inf_env_inf_v ienv) x = SOME ts ==>
        (?tvs' t'.
          check_freevars (tvs' + num_tvs tenvE) [] t' /\
-         lookup_var x tenvE tenv = SOME (tvs',t') /\
+         typeSystem_lookup_var x tenvE tenv = SOME (tvs',t') /\
          tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t t')))`;;
 
 let env_rel_sound_lookup_none = prove
- (`!ienv tenv s tenvE id'.
+ (`!ienv tenv s tenvE id.
     env_rel_sound s ienv tenv tenvE /\
-    lookup_var id' tenvE tenv = NONE ==>
-    nsLookup (inf_env_inf_v ienv) id' = NONE`,
+    typeSystem_lookup_var id tenvE tenv = NONE ==>
+    nsLookup (inf_env_inf_v ienv) id = NONE`,
   CHEAT_TAC);;
 
 let env_rel_sound_lookup_some = prove
- (`!id' ts s ienv tenv tenvE.
-    nsLookup (inf_env_inf_v ienv) id' = SOME ts /\ env_rel_sound s ienv tenv
+ (`!id ts s ienv tenv tenvE.
+    nsLookup (inf_env_inf_v ienv) id = SOME ts /\ env_rel_sound s ienv tenv
       tenvE ==>
     (?tvs' t'.
       check_freevars (tvs' + num_tvs tenvE) [] t' /\
-      lookup_var id' tenvE tenv = SOME (tvs',t') /\
+      typeSystem_lookup_var id tenvE tenv = SOME (tvs',t') /\
       tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t t'))`,
   CHEAT_TAC);;
 
@@ -345,7 +352,7 @@ let env_rel_complete_def = new_definition
      ienv = type_env_t tenv /\ inf_env_inf_c
      ienv = type_env_c tenv /\
      (!x tvs t.
-       lookup_var x tenvE tenv = SOME (tvs,t) ==>
+       typeSystem_lookup_var x tenvE tenv = SOME (tvs,t) ==>
        (
         // t cannot have tyvars inside
         ?n. check_freevars n [] t) /\

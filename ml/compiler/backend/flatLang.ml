@@ -2,7 +2,7 @@
 (*  flatLang: ported from HOL4's
     compiler/backend/flatLangScript.sml
     A definition theory, with 4 definitions, 3 datatypes and 8
-    theorems.  Needed by 12 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -147,8 +147,8 @@ let flat_Bool_def = new_definition
 let SmartIf_def = new_definition
   `SmartIf t e p q =
      match e with
-       flat_Con _ (SOME (tag,SOME id')) [] ->
-         if id' = bool_id then
+       flat_Con _ (SOME (tag,SOME id)) [] ->
+         if id = bool_id then
            if tag = true_tag then p
            else if tag = false_tag then q
            else flat_If t e p q
@@ -159,8 +159,8 @@ let SmartIf_PMATCH = prove
  (`!t e p q.
      SmartIf t e p q =
        match e with
-         flat_Con _ (SOME (tag,SOME id')) [] ->
-           if id' = bool_id then
+         flat_Con _ (SOME (tag,SOME id)) [] ->
+           if id = bool_id then
              if tag = true_tag then p
              else if tag = false_tag then q
              else flat_If t e p q

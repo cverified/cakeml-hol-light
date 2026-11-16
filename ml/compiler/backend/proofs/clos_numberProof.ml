@@ -9,6 +9,7 @@
   Correctness proof for clos_number
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;

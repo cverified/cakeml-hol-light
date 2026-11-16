@@ -35,6 +35,12 @@ let _ = cake_theory "inferComplete"
    "infer_t"; "namespaceProps"; "semanticPrimitives"; "typeSysProps";
    "typeSystem"; "type_dCanon"; "type_eDeterm"; "unify"];;
 
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
+
 
 (* [local] *)
 let generalise_no_uvars = prove
@@ -88,12 +94,12 @@ let unconvert_type_subst = prove
  (`(!t subst fvs.
      check_freevars 0 fvs t /\ set_of_list fvs SUBSET set_of_list (MAP FST
        subst) ==>
-     unconvert_t (type_subst (alist_to_fmap subst) t) =
+     unconvert_t (typeSystem_type_subst (alist_to_fmap subst) t) =
      infer_type_subst (MAP (\(x,y). (x,unconvert_t y)) subst) t) /\
    (!ts subst fvs.
      ALL (check_freevars 0 fvs) ts /\ set_of_list fvs SUBSET set_of_list
        (MAP FST subst) ==>
-     MAP (unconvert_t o type_subst (alist_to_fmap subst)) ts =
+     MAP (unconvert_t o typeSystem_type_subst (alist_to_fmap subst)) ts =
      MAP (infer_type_subst (MAP (\(x,y). (x,unconvert_t y)) subst)) ts)`,
   CHEAT_TAC);;
 
@@ -105,7 +111,7 @@ let env_rel_binding = prove
      (mk_type_env
         (nsSing name
           (LENGTH fvs,
-           type_subst
+           typeSystem_type_subst
              (alist_to_fmap (ZIP fvs (MAP Tvar_db (list_of_seq (\x. x)
                (LENGTH fvs)))))
              t)) nsEmpty nsEmpty)

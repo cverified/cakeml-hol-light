@@ -21,6 +21,8 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_depthProof"
   ["backendProps"; "wordLang"; "wordProps"; "wordSem"; "word_depth"];;
 
+let _ = do_list hide_constant ["prog"];;
+
 (* [local] *)
 let option_le_X_MAX_X = prove
  (`option_le x (OPTION_MAP2 MAX m x) /\
@@ -71,8 +73,8 @@ let option_le_max_depth_graphs = prove
 (* [local] *)
 let LENGTH_LESS_size = prove
  (`!name ns funs y.
-     ~(MEM name ns) /\ set_of_list ns SUBSET domain funs /\ ALL_DISTINCT ns
-       /\
+     ~(MEM name ns) /\ set_of_list ns SUBSET sptree_domain funs
+       /\ ALL_DISTINCT ns /\
      sptree_lookup name funs = SOME y ==>
      LENGTH ns < sptree__size funs`,
   CHEAT_TAC);;
@@ -84,7 +86,8 @@ let max_depth_call_graph_lemma = prove
        /\ wordSem_state_locals_size
      s = sptree_lookup n (wordSem_state_stack_size s) /\ ~(res = SOME
        wordSem_Error) /\
-     MEM n ns /\ ALL_DISTINCT ns /\ set_of_list ns SUBSET domain funs2 ==>
+     MEM n ns /\ ALL_DISTINCT ns /\ set_of_list ns SUBSET sptree_domain
+       funs2 ==>
      option_le (wordSem_state_stack_max s1)
        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
          (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s))
@@ -154,6 +157,10 @@ let max_depth_Call_NONE = prove
          (max_depth (wordSem_state_stack_size s) (full_call_graph dest
            funs))))`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

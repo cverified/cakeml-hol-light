@@ -2,7 +2,7 @@
 (*  stackLang: ported from HOL4's
     compiler/backend/stackLangScript.sml
     A definition theory, with 3 definitions, 2 datatypes and 2
-    theorems.  Needed by 34 files of the port.  *)
+    theorems.  Needed by 36 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -50,7 +50,7 @@ let stack_prog_INDUCT,stack_prog_RECURSION = define_datatype
    | stack_Inst ('a asm_inst)
    | stack_Get num store_name
    | stack_Set store_name num
-   | stack_OpCurrHeap binop num num
+   | stack_OpCurrHeap asm_binop num num
    | stack_Call ((stack_prog#num#num#num) option) (num+num)
        ((stack_prog#num#num) option)
      // target of call

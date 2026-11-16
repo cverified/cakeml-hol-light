@@ -2,8 +2,7 @@
 (*  word_inst: ported from HOL4's
     compiler/backend/word_instScript.sml
     A definition theory, with 14 definitions and 7 theorems.  Needed
-    by backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_instProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
+    by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -20,7 +19,7 @@ needs "lib/sorting.ml";;
 let _ = cake_theory "word_inst"
   ["stackLang"; "wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"];;
+let _ = do_list hide_constant ["pmatch"; "prog"];;
 
 (* HOL4 word_instScript.sml:11-12: an overload that the source brings to the
    front: Shift, written out as word_Shift *)
@@ -130,8 +129,8 @@ let pull_exp_def,pull_exp_ind = define_wf
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls
      | word_Load exp -> word_Load (pull_exp exp)
-     | word_Shift shift' exp nexp -> word_Shift shift' (pull_exp exp)
-       (pull_exp nexp)
+     | word_Shift backend_common_word_shift exp nexp -> word_Shift
+       backend_common_word_shift (pull_exp exp) (pull_exp nexp)
      | exp -> exp`;;
 
 let pull_exp_pmatch = prove
@@ -176,8 +175,8 @@ let flatten_exp_def,flatten_exp_ind = define_wf
      | word_Op op (CONS x xs) -> word_Op op [flatten_exp (word_Op op xs);
        flatten_exp x]
      | word_Load exp -> word_Load (flatten_exp exp)
-     | word_Shift shift' exp nexp -> word_Shift shift' (flatten_exp exp)
-       (flatten_exp nexp)
+     | word_Shift backend_common_word_shift exp nexp -> word_Shift
+       backend_common_word_shift (flatten_exp exp) (flatten_exp nexp)
      | exp -> exp`;;
 
 
@@ -586,7 +585,8 @@ let three_to_two_reg_prog_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch"];;
+  ["pmatch";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

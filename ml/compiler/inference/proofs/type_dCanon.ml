@@ -10,6 +10,8 @@
   succeeds.
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/inference/inferProps.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
@@ -23,7 +25,7 @@ let _ = cake_theory "type_dCanon"
   ["ast"; "inferProps"; "namespace"; "namespaceProps"; "typeSoundInvariants";
    "typeSysProps"; "typeSystem"];;
 
-let _ = do_list hide_constant ["all"; "id"];;
+let _ = do_list hide_constant ["all"; "check"; "id"];;
 
 (* TODO: move *)
 
@@ -54,7 +56,8 @@ let check_type_names_tenv_equiv = prove
   CHEAT_TAC);;
 
 let lookup_var_tenv_equiv = prove
- (`tenv_equiv tenv1 tenv2 ==> lookup_var n bvs tenv1 = lookup_var n bvs tenv2`,
+ (`tenv_equiv tenv1 tenv2 ==> typeSystem_lookup_var n bvs tenv1 =
+  typeSystem_lookup_var n bvs tenv2`,
   CHEAT_TAC);;
 
 let type_name_subst_tenv_equiv = prove
@@ -218,8 +221,8 @@ let good_remap_def = new_definition
 (* [local] *)
 let ts_tid_rename_type_subst = prove
  (`!s t f.
-   ts_tid_rename f (type_subst s t) =
-   type_subst (ts_tid_rename f o_f s) (ts_tid_rename f t)`,
+   ts_tid_rename f (typeSystem_type_subst s t) =
+   typeSystem_type_subst (ts_tid_rename f o_f s) (ts_tid_rename f t)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -397,8 +400,8 @@ let deBruijn_inc_ts_tid_rename = prove
 (* [local] *)
 let lookup_varE_remap_tenvE = prove
  (`!n tenvE.
-   lookup_varE n (remap_tenvE f tenvE) = OPTION_MAP (\(id',t).
-     (id',ts_tid_rename f t)) (lookup_varE n tenvE)`,
+   lookup_varE n (remap_tenvE f tenvE) = OPTION_MAP (\(id,t).
+     (id,ts_tid_rename f t)) (lookup_varE n tenvE)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -650,6 +653,7 @@ let type_d_canon_tenv_ok = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
+   "check";
    "id"];;
 
 (* and the interface *)

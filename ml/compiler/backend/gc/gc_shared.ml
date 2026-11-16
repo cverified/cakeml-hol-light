@@ -56,8 +56,8 @@ let gc_state_FIELDS = define_record "gc_state"
    (* old heap *)
   ];;
 
-let empty_state_def = new_definition
-  `empty_state =
+let gc_shared_empty_state_def = new_definition
+  `gc_shared_empty_state =
      mk_gc_state [] [] [] [] [] [] [] 0 0 T [] []
    // ; r := 0`;;
 

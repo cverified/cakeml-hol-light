@@ -10,6 +10,7 @@
   Correctness proof for stack_remove
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
@@ -29,7 +30,7 @@ needs "semantics/proofs/semanticsProps.ml";;
 let _ = cake_theory "stack_removeProof"
   ["semanticsProps"; "stackLang"; "stackProps"; "stackSem"; "stack_remove"];;
 
-let _ = do_list hide_constant ["C"; "gen_gc"; "num_stubs"; "shift"];;
+let _ = do_list hide_constant ["C"; "gen_gc"; "num_stubs"; "prog"; "shift"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -134,7 +135,7 @@ let stack_removeProof_code_rel_def = new_definition
        sptree_lookup n code1 = SOME prog ==>
        reg_bound prog k /\
        sptree_lookup n code2 = SOME (stack_remove_comp jump off k prog)) /\
-     domain code2 = domain code1 UNION {0,1,2}`;;
+     sptree_domain code2 = sptree_domain code1 UNION {0,1,2}`;;
 (* exact characterization for Install *)
 
 let is_SOME_Word_def = new_definition
@@ -998,8 +999,8 @@ let init_prop_def = new_definition
 let init_code_pre_def = new_definition
   `init_code_pre k bitmaps data_sp s <=>
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       good_dimindex (:'a) /\ 8 <= k /\ 1 IN domain (stackSem_state_code s)
-         /\
+       good_dimindex (:'a) /\ 8 <= k /\ 1 IN sptree_domain
+         (stackSem_state_code s) /\
        {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s /\
        ~(stackSem_state_use_stack s) /\ ~(stackSem_state_use_store s)
          /\ ~(stackSem_state_use_alloc s) /\
@@ -1354,7 +1355,7 @@ let discharge_these_def = new_definition
          /\ stackSem_state_code
        s2 = fromAList (stack_remove_compile jump off gen_gc' max_heap k
          start' code) /\
-       8 <= k /\ 1 IN domain (stackSem_state_code s2) /\
+       8 <= k /\ 1 IN sptree_domain (stackSem_state_code s2) /\
        {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s2
          /\ ~(stackSem_state_use_stack s2) /\
        ~(stackSem_state_use_store s2) /\ ~(stackSem_state_use_alloc s2)
@@ -1538,6 +1539,7 @@ let _ = do_list unhide_constant
   ["C";
    "gen_gc";
    "num_stubs";
+   "prog";
    "shift"];;
 
 (* and the interface *)

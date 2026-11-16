@@ -2,7 +2,7 @@
 (*  closLang: ported from HOL4's
     compiler/backend/closLangScript.sml
     A definition theory, with 4 definitions, 9 datatypes and 1
-    theorem.  Needed by 48 files of the port.  *)
+    theorem.  Needed by 53 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -66,7 +66,7 @@ let clos_word_op_INDUCT,clos_word_op_RECURSION = define_datatype
   "clos_word_op =
      WordOpw word_size opw
    | WordShift word_size ast_shift num
-   | WordTest word_size test
+   | WordTest word_size ast_test
    | WordFromInt
    | WordToInt
    | WordFromWord bool
@@ -89,7 +89,7 @@ let block_op_INDUCT,block_op_RECURSION = define_datatype
      // check Block's tag
    | clos_LengthBlock
      // get length of Block
-   | clos_BoolTest test
+   | clos_BoolTest ast_test
      // tests for bools
    | clos_BoolNot
      // boolean not

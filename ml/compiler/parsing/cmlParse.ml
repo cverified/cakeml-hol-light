@@ -2,7 +2,8 @@
 (*  cmlParse: ported from HOL4's
     compiler/parsing/cmlParseScript.sml
     A definition theory, with 8 definitions and no theorems.  Needed
-    by compiler.ml and compilerProof.ml.  *)
+    by camlPtreeConversion.ml, compiler.ml, compiler64Prog.ml,
+    compilerProof.ml and parserProg.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -17,7 +18,6 @@ needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/simpleSexpParse.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
-needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -76,16 +76,16 @@ let optlift_def = define_general
 
 let cmlParseExpr_def = new_definition
   `cmlParseExpr = pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
-  (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\pts.
-  pegresult_bind (optlift (oHD pts)) (\pt. pegresult_bind (optlift (ptree_Expr
-  nE pt)) (\ast.
+  (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) gram_nE) (\pts.
+  pegresult_bind (optlift (oHD pts)) (\pt. pegresult_bind (optlift
+  (cmlPtreeConversion_ptree_Expr gram_nE pt)) (\ast.
      (\a inp. peg_Success inp a NONE) ast)))`;;
 
 let parse_prog_def = new_definition
   `parse_prog =
      pegresult_bind (cmlParse_destResult o (\n t. peg_exec cmlPEG
-       (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nTopLevelDecs)
-       (\pts. pegresult_bind (optlift (oHD pts)) (\pt.
+       (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed)
+       gram_nTopLevelDecs) (\pts. pegresult_bind (optlift (oHD pts)) (\pt.
        optlift (ptree_TopLevelDecs pt)))`;;
 
 (* and the interface *)

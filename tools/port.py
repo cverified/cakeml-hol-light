@@ -1503,7 +1503,11 @@ class Porter:
         self.out.append(
           '\n'.join(fill('(* PORT FAILED: %s %s:' % (b.kind, b.name),
                           str(ex).split(), 76)) + ' *)\n'
-          + self.at(b, 'the %s' % b.kind.lower()))
+          # "the ml" is no English and no pointer that
+          # tools/nohol4.py can test; an ML block that the port
+          # could not read is ML code like any other
+          + self.at(b, 'the ML code' if b.kind == 'ML'
+                       else 'the %s' % b.kind.lower()))
       new = self.out[before:]
       if new:
         # the needs of the port start a paragraph of their own

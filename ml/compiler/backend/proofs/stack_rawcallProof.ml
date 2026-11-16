@@ -22,6 +22,8 @@ let _ = cake_theory "stack_rawcallProof"
   ["labProps"; "stackLang"; "stackProps"; "stackSem"; "stack_rawcall";
    "wordSem"];;
 
+let _ = do_list hide_constant ["prog"];;
+
 
 (* HOL4 stack_rawcallProofScript.sml:12: ML code, not ported *)
 
@@ -47,7 +49,7 @@ let stack_rawcallProof_state_rel_def = new_definition
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
        // co cc
-       domain c = domain (stackSem_state_code s) /\
+       sptree_domain c = sptree_domain (stackSem_state_code s) /\
        t = stackSem_state_code_fupd (K c) s /\
        // ;
        // compile := cc ;
@@ -123,7 +125,8 @@ let stack_rawcallProof_comp_correct = prove
   CHEAT_TAC);;
 
 let domain_fromAList_compile = prove
- (`domain (fromAList (stack_rawcall_compile code)) = domain (fromAList code)`,
+ (`sptree_domain (fromAList (stack_rawcall_compile code)) = sptree_domain
+  (fromAList code)`,
   CHEAT_TAC);;
 
 let lookup_collect_info = prove
@@ -218,6 +221,10 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (comp_top i p) =
      stack_get_handler_labels k p`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -9,6 +9,7 @@
   Correctness for the source_let pass.
  *)
 
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/proofs/source_evalProof.ml";;
 needs "compiler/backend/source_let.ml";;
 needs "misc/misc.ml";;
@@ -25,6 +26,8 @@ needs "semantics/semantics.ml";;
 let _ = cake_theory "source_letProof"
   ["ast"; "evaluate"; "evaluateProps"; "misc"; "semanticPrimitives";
    "semanticPrimitivesProps"; "semantics"; "source_evalProof"; "source_let"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 
 (* [local] *)
@@ -93,6 +96,10 @@ let compile_semantics_oracle = prove
              (adjust_oracle ci (source_let_compile_decs o f)) s)
          env prog outcome`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

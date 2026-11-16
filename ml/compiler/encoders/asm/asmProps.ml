@@ -2,8 +2,7 @@
 (*  asmProps: ported from HOL4's
     compiler/encoders/asm/asmPropsScript.sml
     A proof theory about asm.ml, with 9 definitions, 1 datatype and
-    31 theorems.  Needed by bvi_inlineProof.ml,
-    lab_to_targetProof.ml, targetProps.ml and targetSem.ml.  *)
+    31 theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -22,7 +21,9 @@ let _ = cake_theory "asmProps"
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["failed","pegexec_failed"];;
+  ["failed","pegexec_failed";
+   "state_ok","candle_prover_inv_state_ok";
+   "state_ok","evaluate_init_state_ok"];;
 
 (* -- semantics is deterministic -- *)
 

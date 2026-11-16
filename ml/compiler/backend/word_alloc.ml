@@ -2,7 +2,7 @@
 (*  word_alloc: ported from HOL4's
     compiler/backend/word_allocScript.sml
     A definition theory, with 68 definitions and 4 theorems.  Needed
-    by 7 files of the port.  *)
+    by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -29,7 +29,7 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 let _ = cake_theory "word_alloc"
   ["asm"; "linear_scan"; "misc"; "mllist"; "reg_alloc"; "wordLang"];;
 
-let _ = do_list hide_constant ["inst"];;
+let _ = do_list hide_constant ["inst"; "prog"];;
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port expands *)
 (* HOL4 word_allocScript.sml:20: the overload Move1, which the port expands *)
@@ -158,18 +158,19 @@ let ssa_cc_trans_inst_def = new_definition
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (word_Inst (asm_Arith (asm_Binop bop r1' r2' ri)),ssa',na'))
-     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
        (match ri with Reg r3 ->
          let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let mov_in = (word_Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (word_Seq mov_in (word_Inst (asm_Arith (asm_Shift shift' r1' r2'
-             (Reg 8)))),ssa',na')
+           (word_Seq mov_in (word_Inst (asm_Arith (asm_Shift
+             backend_common_word_shift r1' r2' (Reg 8)))),ssa',na')
        | _ ->
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (word_Inst (asm_Arith (asm_Shift shift' r1' r2' ri)),ssa',na'))
+           (word_Inst (asm_Arith (asm_Shift backend_common_word_shift r1'
+             r2' ri)),ssa',na'))
      | asm_Arith (asm_Div r1 r2 r3) ->
        let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
@@ -638,8 +639,9 @@ let apply_colour_inst_def = new_definition
      | asm_Const reg w -> asm_Const (f reg) w
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        asm_Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))
-     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
-       asm_Arith (asm_Shift shift' (f r1) (f r2) (apply_colour_imm f ri))
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+       asm_Arith (asm_Shift backend_common_word_shift (f r1) (f r2)
+         (apply_colour_imm f ri))
      | asm_Arith (asm_Div r1 r2 r3) ->
        asm_Arith (asm_Div (f r1) (f r2) (f r3))
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) ->
@@ -736,11 +738,12 @@ add_simp apply_colour_def;;
 
 (*Writes made by any inst as a sptree*)
 let get_writes_inst_def = new_definition
-  `get_writes_inst inst' =
-     match inst' with
+  `get_writes_inst inst =
+     match inst with
        asm_Const reg w -> sptree_insert reg one LN
      | asm_Arith (asm_Binop bop r1 r2 ri) -> sptree_insert r1 one LN
-     | asm_Arith (asm_Shift shift' r1 r2 ri) -> sptree_insert r1 one LN
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+       sptree_insert r1 one LN
      | asm_Arith (asm_Div r1 r2 r3) -> sptree_insert r1 one LN
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> sptree_insert r4 one
        (sptree_insert r1 one LN)
@@ -761,7 +764,7 @@ let get_writes_inst_def = new_definition
      | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
        if dimindex (:'a) = 64 then sptree_insert r1 one LN
          else sptree_insert r2 one (sptree_insert r1 one LN)
-     | inst' -> LN`;;
+     | inst -> LN`;;
 
 (*Liveness for instructions, follows liveness equations
   live-sets are num_sets a.k.a. unit-sptrees*)
@@ -774,7 +777,7 @@ let get_live_inst_def = new_definition
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
          (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
-     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
          (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
@@ -855,8 +858,8 @@ let get_live_def,get_live_ind = define_shaped_rec
      | word_Inst i -> get_live_inst i live
      // num is written, exp is read
      | word_Assign num' exp ->
-       let sub' = get_live_exp exp in
-         sptree_union sub' (sptree_delete num' live)
+       let sub = get_live_exp exp in
+         sptree_union sub (sptree_delete num' live)
      | word_Get num' store -> sptree_delete num' live
      // Everything is read
      | word_Store exp num' ->
@@ -902,10 +905,10 @@ let get_live_def,get_live_ind = define_shaped_rec
      | word_OpCurrHeap b n1 n2 -> sptree_insert n2 one (sptree_delete n1
        live)
      | word_ShareInst mop v exp ->
-       let sub' = get_live_exp exp in
+       let sub = get_live_exp exp in
          if mop = asm_Store \/ mop = asm_Store8 \/ mop = asm_Store16 \/ mop
-           = asm_Store32 then sptree_union sub' (sptree_insert v one live)
-         else sptree_union sub' (sptree_delete v live)
+           = asm_Store32 then sptree_union sub (sptree_insert v one live)
+         else sptree_union sub (sptree_delete v live)
      // Loop: entry-live is names (for cut_state). Body's entry-live must be
      // covered by cut state (domain names), handled via strong_locals_rel
      // extension at proof time.
@@ -938,8 +941,8 @@ let remove_dead_inst_def = new_definition
      | (asm_Const reg w,live) -> (sptree_lookup reg live = NONE)
      | (asm_Arith (asm_Binop bop r1 r2 ri),live) -> (sptree_lookup r1 live =
        NONE)
-     | (asm_Arith (asm_Shift shift' r1 r2 n),live) -> (sptree_lookup r1 live
-       = NONE)
+     | (asm_Arith (asm_Shift backend_common_word_shift r1 r2 n),live) ->
+       (sptree_lookup r1 live = NONE)
      | (asm_Arith (asm_Div r1 r2 r3),live) -> (sptree_lookup r1 live = NONE)
      | (asm_Arith (asm_AddCarry r1 r2 r3 r4),live) ->
        (sptree_lookup r1 live = NONE /\ sptree_lookup r4 live = NONE)
@@ -1110,9 +1113,9 @@ let get_writes_def = new_definition
      | prog -> LN`;;
 
 let get_writes_pmatch = prove
- (`!inst'.
-   get_writes inst' =
-     match inst' with word_Move pri ls -> word_alloc_numset_list_insert (MAP
+ (`!inst.
+   get_writes inst =
+     match inst with word_Move pri ls -> word_alloc_numset_list_insert (MAP
        FST ls) LN
      | word_Inst i -> get_writes_inst i
      | word_Assign num' exp -> sptree_insert num' one LN
@@ -1142,7 +1145,7 @@ let get_delta_inst_def = new_definition
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
-     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
      | asm_Arith (asm_Div r1 r2 r3) -> reg_alloc_Delta [r1] [r3; r2]
@@ -1392,7 +1395,7 @@ let get_heu_inst_def = new_definition
        | _ ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
-     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
+     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
        (match ri with
          Reg r3 ->
            (
@@ -1889,7 +1892,8 @@ let full_ssa_cc_trans_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["inst";
-   "mem"];;
+   "mem";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -2,7 +2,7 @@
 (*  displayLang: ported from HOL4's
     compiler/backend/displayLangScript.sml
     A definition theory, with 3 definitions, 1 datatype and 1
-    theorem.  Needed by presLang.ml.  *)
+    theorem.  Needed by pan_passes.ml and presLang.ml.  *)
 (* ======================================================== *)
 
 (*

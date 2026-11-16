@@ -2,7 +2,7 @@
 (*  wordSem: ported from HOL4's
     compiler/backend/semantics/wordSemScript.sml
     A definition theory, with 77 definitions, 4 datatypes and 16
-    theorems.  Needed by 28 files of the port.  *)
+    theorems.  Needed by 31 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 (* for word_add_carry *)
 needs "compiler/backend/stackLang.ml";;
@@ -309,17 +310,17 @@ add_simp get_word_def;;
 
 
 let wordSem_mem_store_def = new_definition
-  `wordSem_mem_store (addr':'a word) (w:'a word_loc)
+  `wordSem_mem_store (addr:'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)wordSem_state) =
-     if addr' IN wordSem_state_mdomain s then
-       SOME (wordSem_state_memory_fupd (K ((addr' =+ w)
-         (wordSem_state_memory s))) s)
+     if addr IN wordSem_state_mdomain s then
+       SOME (wordSem_state_memory_fupd (K ((addr =+ w) (wordSem_state_memory
+         s))) s)
      else NONE`;;
 
 let wordSem_mem_load_def = new_definition
-  `wordSem_mem_load (addr':'a word) (s:('a,'c,'ffi)wordSem_state) =
-     if addr' IN wordSem_state_mdomain s then
-       SOME (wordSem_state_memory s addr')
+  `wordSem_mem_load (addr:'a word) (s:('a,'c,'ffi)wordSem_state) =
+     if addr IN wordSem_state_mdomain s then
+       SOME (wordSem_state_memory s addr)
      else NONE`;;
 
 let the_words_def,the_words_ind = define_rec
@@ -376,8 +377,8 @@ let word_exp_def,word_exp_ind = define_shaped_rec
     wordSem_get_var v s) /\
    (wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (word_Lookup name) =
     wordSem_get_store name s) /\
-   (wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (word_Load addr') =
-         match wordSem_word_exp s addr' with SOME (word_Word w) ->
+   (wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (word_Load addr) =
+         match wordSem_word_exp s addr with SOME (word_Word w) ->
              wordSem_mem_load w s
          | _ -> NONE) /\
    (wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (word_Op op wexps) =
@@ -520,11 +521,11 @@ let share_inst_def = define_cases
         | _ -> (SOME wordSem_Error,s))`;;
 
 let wordSem_call_env_def = new_definition
-  `wordSem_call_env args size' (s:('a,'c,'ffi)wordSem_state) =
+  `wordSem_call_env args sptree__size (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX (wordSem_state_stack_max s)
-  (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s)) size')))
-  (wordSem_state_locals_size_fupd (K size') (wordSem_state_locals_fupd (K
-  (fromList2 args))
+  (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s)) sptree__size)))
+  (wordSem_state_locals_size_fupd (K sptree__size) (wordSem_state_locals_fupd
+  (K (fromList2 args))
      s))`;;
 
 let list_rearrange_def = new_definition
@@ -630,7 +631,8 @@ let wordSem_jump_exc_def = new_definition
 
 let cut_names_def = new_definition
   `cut_names name_set env =
-       if domain name_set SUBSET domain env then SOME (inter env name_set)
+       if sptree_domain name_set SUBSET sptree_domain env then SOME (inter
+         env name_set)
        else NONE`;;
 
 let cut_envs_def = new_definition
@@ -1101,17 +1103,17 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
          match wordSem_get_var n s with SOME (word_Word w) -> wordSem_alloc
              w names s
          | _ -> (SOME wordSem_Error,s)) /\
-    (wordSem_evaluate (word_StoreConsts t1 t2 addr' offset words,s) =
-         match (wordSem_get_var addr' s,wordSem_get_var offset s) with
-             (SOME (word_Word a),SOME (word_Word off)) ->
+    (wordSem_evaluate (word_StoreConsts t1 t2 addr offset words,s) =
+         match (wordSem_get_var addr s,wordSem_get_var offset s) with (SOME
+             (word_Word a),SOME (word_Word off)) ->
             (if ~(const_addresses a words (wordSem_state_mdomain s)) then
                (SOME wordSem_Error,s)
              else let s = wordSem_state_memory_fupd (K (const_writes a off
                  words (wordSem_state_memory s))) s in
                let s = wordSem_set_var offset (word_Word off)
                    (wordSem_unset_var t1 (wordSem_unset_var t2 s)) in
-                 (NONE,wordSem_set_var addr' (word_Word (a + bytes_in_word
-                     * n2w (LENGTH words))) s))
+                 (NONE,wordSem_set_var addr (word_Word (a + bytes_in_word *
+                     n2w (LENGTH words))) s))
          | _ -> (SOME wordSem_Error,s)) /\
     (wordSem_evaluate (word_Move pri moves,s) =
          if ALL_DISTINCT (MAP FST moves) then
@@ -1176,7 +1178,7 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
           | NONE -> (SOME wordSem_Error,s))
         | _ -> (SOME wordSem_Error,s))) /\
     (wordSem_evaluate (word_LocValue r l1,s) =
-         if l1 IN domain (wordSem_state_code s) then
+         if l1 IN sptree_domain (wordSem_state_code s) then
            (NONE,wordSem_set_var r (word_Loc l1 0) s)
          else (SOME wordSem_Error,s)) /\
     (wordSem_evaluate (word_Install ptr len dptr dlen names,s) =
@@ -1286,8 +1288,8 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                      else (SOME wordSem_Error,s)
                  | SOME (n,names,ret_handler,l1,l2) ->
                      // returning call, returns into var n
-                     (if domain (FST names) = {} \/ ~(ALL_DISTINCT n) then
-                         (SOME wordSem_Error,s)
+                     (if sptree_domain (FST names) = {} \/ ~(ALL_DISTINCT
+                         n) then (SOME wordSem_Error,s)
                      else (match cut_envs names (wordSem_state_locals s)
                          with NONE -> (SOME wordSem_Error,s)
                         | SOME envs' ->
@@ -1312,9 +1314,9 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                               else (match wordSem_pop_env s2 with NONE ->
                                   (SOME wordSem_Error,s2)
                               | SOME s1 ->
-                              (if domain (wordSem_state_locals s1) = domain
-                                  (FST envs') UNION domain (SND envs') then
-                                  wordSem_evaluate
+                              (if sptree_domain (wordSem_state_locals s1) =
+                                  sptree_domain (FST envs') UNION sptree_domain
+                                  (SND envs') then wordSem_evaluate
                                   (ret_handler,wordSem_set_vars n ys s1)
                               else (SOME wordSem_Error,s1))))
                               | (SOME (wordSem_Exception x y),s2) ->
@@ -1324,10 +1326,10 @@ let wordSem_evaluate_def,wordSem_evaluate_ind = assume_definition_rec_clauses
                               | SOME (n,h,l1,l2) ->
                               if ~(x = word_Loc l1 l2) then (SOME
                                   wordSem_Error,s2)
-                              else (if domain (wordSem_state_locals s2) =
-                                  domain (FST envs') UNION domain (SND envs')
-                                  then wordSem_evaluate (h,wordSem_set_var n y
-                                  s2)
+                              else (if sptree_domain (wordSem_state_locals
+                                  s2) = sptree_domain (FST envs') UNION
+                                  sptree_domain (SND envs') then
+                                  wordSem_evaluate (h,wordSem_set_var n y s2)
                               else (SOME wordSem_Error,s2)))
                               | (NONE,s) -> (SOME wordSem_Error,s)
                               | (SOME (wordSem_Break _),s) -> (SOME

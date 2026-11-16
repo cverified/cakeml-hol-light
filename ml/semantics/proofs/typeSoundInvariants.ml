@@ -2,7 +2,7 @@
 (*  typeSoundInvariants: ported from HOL4's
     semantics/proofs/typeSoundInvariantsScript.sml
     A proof theory, with 18 definitions, 1 datatype and no theorems.
-    Needed by 12 files of the port.  *)
+    Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -11,6 +11,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "candle/standard/syntax/holBoolSyntax.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
@@ -33,15 +34,15 @@ new_type_abbrev("tenv_store",`:(num,store_t)fmap`);;
 
 (* Check that the type names map to valid types *)
 let tenv_abbrev_ok_def = new_definition
-  `tenv_abbrev_ok tenvT <=> nsAll (\id' (tvs,t). check_freevars 0 tvs t)
+  `tenv_abbrev_ok tenvT <=> nsAll (\id (tvs,t). check_freevars 0 tvs t)
   tenvT`;;
 
 let tenv_ctor_ok_def = new_definition
-  `tenv_ctor_ok tenvC <=> nsAll (\id' (tvs,ts,tn). ALL (check_freevars 0
-  tvs) ts) tenvC`;;
+  `tenv_ctor_ok tenvC <=> nsAll (\id (tvs,ts,tn). ALL (check_freevars 0 tvs)
+  ts) tenvC`;;
 
 let tenv_val_ok_def = new_definition
-  `tenv_val_ok tenvV <=> nsAll (\id' (tvs,t). check_freevars tvs [] t) tenvV`;;
+  `tenv_val_ok tenvV <=> nsAll (\id (tvs,t). check_freevars tvs [] t) tenvV`;;
 
 let tenv_ok_def = new_definition
   `tenv_ok tenv <=>
@@ -116,8 +117,8 @@ let type_v = cake_inductive
      ALL (check_freevars tvs []) ts' /\
      LENGTH tvs' = LENGTH ts' /\
      ALL2 (type_v tvs ctMap tenvS)
-       vs (MAP (type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP tvs' ts'))))
-         ts) /\
+       vs (MAP (typeSystem_type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP
+         tvs' ts')))) ts) /\
      FLOOKUP ctMap stamp = SOME (tvs',ts,ti) ==>
      type_v tvs ctMap tenvS (semanticPrimitives_Conv (SOME stamp) vs) (Tapp
        ts' ti)) /\
@@ -227,10 +228,10 @@ let good_ctMap_def = new_definition
 let consistent_ctMap_def = new_definition
   `consistent_ctMap st type_ids ctMap <=>
      (DISJOINT type_ids (FRANGE ((SND o SND) o_f ctMap))) /\
-     (!cn id'.
-       (TypeStamp cn id' IN FDOM ctMap ==> id' <
+     (!cn id.
+       (TypeStamp cn id IN FDOM ctMap ==> id <
          semanticPrimitives_state_next_type_stamp st) /\
-       (ExnStamp id' IN FDOM ctMap ==> id' <
+       (ExnStamp id IN FDOM ctMap ==> id <
          semanticPrimitives_state_next_exn_stamp st))`;;
 
 (* HOL4 typeSoundInvariantsScript.sml:237-241: code that the source has in a

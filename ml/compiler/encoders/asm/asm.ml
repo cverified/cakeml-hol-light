@@ -2,7 +2,7 @@
 (*  asm: ported from HOL4's
     compiler/encoders/asm/asmScript.sml
     A definition theory, with 11 definitions, 11 datatypes and no
-    theorems.  Needed by 53 files of the port.  *)
+    theorems.  Needed by 71 files of the port.  *)
 (* ======================================================== *)
 
 (* -------------------------------------------------------------------------
@@ -88,8 +88,8 @@ let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
      Reg asm_reg
    | Imm ('a word)";;
 
-let binop_INDUCT,binop_RECURSION = define_datatype
-  "binop =
+let asm_binop_INDUCT,asm_binop_RECURSION = define_datatype
+  "asm_binop =
      asm_Add
    | asm_Sub
    | asm_And
@@ -109,7 +109,7 @@ let cmp_INDUCT,cmp_RECURSION = define_datatype
 
 let asm_arith_INDUCT,asm_arith_RECURSION = define_datatype
   "asm_arith =
-     asm_Binop binop asm_reg asm_reg ('a asm_reg_imm)
+     asm_Binop asm_binop asm_reg asm_reg ('a asm_reg_imm)
    | asm_Shift ast_shift asm_reg asm_reg ('a asm_reg_imm)
    | asm_Div asm_reg asm_reg asm_reg
    | asm_LongMul asm_reg asm_reg asm_reg asm_reg
@@ -198,7 +198,7 @@ let asm_config_FIELDS = define_record "asm_config"
    "fp_reg_count","num";
    (* set to 0 if float not available *)
    "two_reg_arith","bool";
-   "valid_imm","binop+cmp->'a word->bool";
+   "valid_imm","asm_binop+cmp->'a word->bool";
    "addr_offset","'a word#'a word";
    "hw_offset","'a word#'a word";
    "byte_offset","'a word#'a word";
@@ -379,7 +379,7 @@ let word_cmp_def = define_cases
    (asm_word_cmp asm_NotTest w1 w2 = (~((w1 && w2) = (n2w 0))))`;;
 
 let is_load_def = new_definition
-  `is_load x1 =
+  `asm_is_load x1 =
      match x1 with
        asm_Load -> T
      | asm_Load8 -> T

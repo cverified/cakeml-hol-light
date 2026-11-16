@@ -9,6 +9,7 @@
   Correctness proof for bvl_inline
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
@@ -23,6 +24,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "bvl_inlineProof"
   ["backendProps"; "bvlProps"; "bvlSem"; "bvl_handleProof"; "bvl_inline"];;
+
+let _ = do_list hide_constant ["prog"];;
 
 (* removal of ticks *)
 
@@ -169,7 +172,8 @@ let bvl_inlineProof_in_state_rel_def = new_definition
      subspt (FST (FST (bvlSem_state_compile_oracle s 0))) (bvlSem_state_code
        t) /\ bvlSem_state_compile
      s = bvl_inlineProof_in_cc limit' (bvlSem_state_compile t) /\
-     domain (bvlSem_state_code t) = domain (bvlSem_state_code s) /\
+     sptree_domain (bvlSem_state_code t) = sptree_domain (bvlSem_state_code
+       s) /\
      (!k arity exp.
         sptree_lookup k (bvlSem_state_code s) = SOME (arity,exp) ==>
         (?exp2. sptree_lookup k (bvlSem_state_code t) = SOME (arity,exp2) /\
@@ -210,14 +214,16 @@ let subspt_union_lemma = prove
 let tick_inline_all_domain = prove
  (`!limit' cs0 in1 cs1 xs.
          tick_inline_all limit' cs0 in1 [] = (cs1,xs) ==>
-         domain cs1 SUBSET domain cs0 UNION set_of_list (MAP FST xs)`,
+         sptree_domain cs1 SUBSET sptree_domain cs0 UNION set_of_list (MAP
+           FST xs)`,
   CHEAT_TAC);;
 
 let tick_compile_prog_res_range = prove
  (`!in1 limit' in2 c cs0 cs1.
       tick_compile_prog limit' cs0 in1 = (cs1,in2) /\
       ALL_DISTINCT (MAP FST in1) /\
-      subspt cs0 c /\ domain c INTER set_of_list (MAP FST in1) = EMPTY ==>
+      subspt cs0 c /\ sptree_domain c INTER set_of_list (MAP FST in1) =
+        EMPTY ==>
       subspt cs1 (sptree_union c (fromAList in2))`,
   CHEAT_TAC);;
 
@@ -261,8 +267,8 @@ let tick_compile_prog_IMP_exp_rel = prove
           sptree_lookup k cs0 = SOME (arity,v) ==>
           (?exp. sptree_lookup k src_code = SOME (arity,exp) /\
                 bvl_inlineProof_exp_rel src_code [exp] [v])) /\
-       DISJOINT (domain src_code) (set_of_list (MAP FST in1)) /\
-       DISJOINT (domain cs0) (set_of_list (MAP FST in1)) ==>
+       DISJOINT (sptree_domain src_code) (set_of_list (MAP FST in1)) /\
+       DISJOINT (sptree_domain cs0) (set_of_list (MAP FST in1)) ==>
        (?exp2.
          ALOOKUP in2 k = SOME (arity,exp2) /\
          bvl_inlineProof_exp_rel (sptree_union src_code (fromAList in1))
@@ -333,8 +339,8 @@ let lookup_tick_inline_all = prove
                    SOME (arity,exp) /\
                  bvl_inlineProof_exp_rel (sptree_union (fromAList prog)
                    acc) [exp] [v])) /\
-           DISJOINT (set_of_list (MAP FST prog)) (domain cs0) /\
-           DISJOINT (set_of_list (MAP FST prog)) (domain acc) /\
+           DISJOINT (set_of_list (MAP FST prog)) (sptree_domain cs0) /\
+           DISJOINT (set_of_list (MAP FST prog)) (sptree_domain acc) /\
            ALL_DISTINCT (MAP FST prog) ==>
            (!k arity exp.
              sptree_lookup k (fromAList prog) = SOME (arity,exp) ==>
@@ -351,7 +357,7 @@ let subspt_tick_inline = prove
  (cake_as_vars (fun () ->
     `!prog cs aux.
            subspt cs (fromAList (REVERSE aux)) /\
-           ALL (\x. ~(FST x IN domain cs)) prog /\
+           ALL (\x. ~(FST x IN sptree_domain cs)) prog /\
            ALL_DISTINCT (APPEND (MAP FST prog) (MAP FST aux)) ==>
            subspt (FST (tick_inline_all limit cs prog aux))
                   (fromAList (SND (tick_inline_all limit cs prog aux)))`),
@@ -705,6 +711,10 @@ let compile_prog_get_code_labels = prove
      SUBSET
    UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND) p))`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

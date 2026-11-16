@@ -2,7 +2,7 @@
 (*  inferProps: ported from HOL4's
     compiler/inference/inferPropsScript.sml
     A proof theory about infer.ml, with 13 definitions and 158
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -28,6 +28,12 @@ let _ = cake_theory "inferProps"
    "semanticPrimitives"; "typeSysProps"; "typeSystem"; "unify"];;
 
 let _ = do_list hide_constant ["C"; "id"; "inst"];;
+
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
 
 let ienv_unchanged = prove
  (`(inf_env_inf_v_fupd (K (inf_env_inf_v ienv)) ienv) = ienv /\
@@ -128,7 +134,8 @@ let infer_subst_submap = prove
       (MAP (infer_subst s1) ts = MAP (infer_subst s2) ts))`,
   CHEAT_TAC);;
 
-let generalise_list_length = prove
+(* generalise_list_length *)
+let inferProps_generalise_list_length = prove
  (`!a b c d e f g.
    generalise_list a b c d = (e,f,g) ==> LENGTH g = LENGTH d`,
   CHEAT_TAC);;
@@ -1016,7 +1023,7 @@ let set_tids_subset_type_subst = prove
  (`!s t tids.
    FEVERY (set_tids_subset tids o SND) s /\
    set_tids_subset tids t ==>
-   set_tids_subset tids (type_subst s t)`,
+   set_tids_subset tids (typeSystem_type_subst s t)`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
@@ -1286,16 +1293,16 @@ let infer_deBruijn_subst_uncheck = prove
   CHEAT_TAC);;
 
 let db_subst_inc_id = prove
- (`!inst' t.
-    infer_deBruijn_subst inst' (infer_deBruijn_inc (LENGTH inst') t) = t`,
+ (`!inst t.
+    infer_deBruijn_subst inst (infer_deBruijn_inc (LENGTH inst) t) = t`,
   CHEAT_TAC);;
 
 let t_walkstar_db_subst = prove
- (`!inst' t s.
+ (`!inst t s.
     t_wfs s ==>
-    t_walkstar s (infer_deBruijn_subst inst' t) =
-    infer_deBruijn_subst (MAP (t_walkstar s) inst')
-               (t_walkstar (infer_deBruijn_inc (LENGTH inst') o_f s) t)`,
+    t_walkstar s (infer_deBruijn_subst inst t) =
+    infer_deBruijn_subst (MAP (t_walkstar s) inst)
+               (t_walkstar (infer_deBruijn_inc (LENGTH inst) o_f s) t)`,
   CHEAT_TAC);;
 
 let generalise_subst_exist = prove
@@ -1499,8 +1506,8 @@ let build_ctor_tenv_FOLDR = prove
      build_ctor_tenv tenvT tds ids =
        ITLIST (hol4_C nsAppend)
        (MAP (alist_to_ns o REVERSE)
-          (MAP2 (\(tvs,tn,ctors) id'. (MAP (\(cn,ts). (cn,tvs,MAP
-            (type_name_subst tenvT) ts,id')) ctors))
+          (MAP2 (\(tvs,tn,ctors) id. (MAP (\(cn,ts). (cn,tvs,MAP
+            (type_name_subst tenvT) ts,id)) ctors))
               tds ids)) (alist_to_ns [])`,
   CHEAT_TAC);;
 
@@ -1511,8 +1518,8 @@ let build_ctor_tenv_FOLDL = prove
        FOLDL nsAppend (alist_to_ns [])
        (REVERSE
        (MAP (alist_to_ns o REVERSE)
-          (MAP2 (\(tvs,tn,ctors) id'. (MAP (\(cn,ts). (cn,tvs,MAP
-            (type_name_subst tenvT) ts,id')) ctors))
+          (MAP2 (\(tvs,tn,ctors) id. (MAP (\(cn,ts). (cn,tvs,MAP
+            (type_name_subst tenvT) ts,id)) ctors))
               tds ids)))`,
   CHEAT_TAC);;
 

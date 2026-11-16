@@ -344,8 +344,8 @@ let flatSem_do_app_def = new_definition
    | (flat_Src (ast_Arith a ty),vs) ->
      (let vs = MAP flat_to_v vs in
         if ALL (semanticPrimitives_check_type ty) vs then
-          (match do_arith a ty vs with SOME (INR res) -> SOME (s,Rval
-            (v_to_flat res))
+          (match semanticPrimitives_do_arith a ty vs with SOME (INR res) ->
+            SOME (s,Rval (v_to_flat res))
            | SOME (INL exn) -> SOME (s,Rerr (Rraise flatSem_div_exn_v))
            | NONE -> NONE)
         else NONE)

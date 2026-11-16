@@ -2,7 +2,7 @@
 (*  semanticPrimitives: ported from HOL4's
     semantics/semanticPrimitivesScript.sml
     A definition theory, with 101 definitions, 15 datatypes and no
-    theorems.  Needed by 73 files of the port.  *)
+    theorems.  Needed by 117 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -260,8 +260,8 @@ let build_conv_def = new_definition
   `build_conv (envC:(mlstring,mlstring,num#stamp)namespace) cn vs =
    match cn with
      NONE -> SOME (semanticPrimitives_Conv NONE vs)
-   | SOME id' ->
-       (match nsLookup envC id' with
+   | SOME id ->
+       (match nsLookup envC id with
          NONE -> NONE
        | SOME (len,stamp) -> SOME (semanticPrimitives_Conv (SOME stamp)
          vs))`;;
@@ -537,7 +537,7 @@ let v_to_id_def,v_to_id_ind = define_wf
    | semanticPrimitives_Conv (SOME stamp) [semanticPrimitives_Litv
      (ast_StrLit s); v] ->
       (if stamp = TypeStamp (implode "Long") id_type_num then
-         match v_to_id v with NONE -> NONE | SOME id' -> SOME (Long s id')
+         match v_to_id v with NONE -> NONE | SOME id -> SOME (Long s id)
        else NONE)
    | _ -> NONE`;;
 
@@ -643,14 +643,14 @@ let compiler_agrees_def = new_definition
 (* get the declarations to be evaluated in the various Eval semantics *)
 let do_eval_def = new_definition
   `semanticPrimitives_do_eval vs es =
-     match (es,vs) with (SOME (EvalDecs s),[semanticPrimitives_Env env id';
+     match (es,vs) with (SOME (EvalDecs s),[semanticPrimitives_Env env id;
        st_v; decs_v; st_v2; bs_v; ws_v]) ->
        (match eval_decs_state_decode_decs s decs_v with
           NONE -> NONE
         | SOME decs ->
           if
             st_v = eval_decs_state_compiler_state s /\ concrete_v decs_v /\
-            compiler_agrees (eval_decs_state_compiler s) (id',st_v,decs)
+            compiler_agrees (eval_decs_state_compiler s) (id,st_v,decs)
               (st_v2,bs_v,ws_v) then
             SOME
               (env,decs,
@@ -738,8 +738,8 @@ let shift64_lookup_def = new_definition
 
 let exp_or_val_INDUCT,exp_or_val_RECURSION = define_datatype
   "exp_or_val =
-     Exp ast_exp
-   | Val semanticPrimitives_v";;
+     semanticPrimitives_Exp ast_exp
+   | semanticPrimitives_Val semanticPrimitives_v";;
 
 (* HOL4 semanticPrimitivesScript.sml:761: the type abbreviation store_ffi,
    which the port expands *)
@@ -919,7 +919,7 @@ let do_test_def = define_cases
        | _ -> Eq_type_error))`;;
 
 let do_arith_def = new_definition
-  `do_arith a x2 vals =
+  `semanticPrimitives_do_arith a x2 vals =
      match x2 with
        ast_Float64T ->
         (match (a,MAP semanticPrimitives_the_Litv_Float64 vals) with
@@ -1337,17 +1337,16 @@ let do_app_def = new_definition
              | FFI_final outcome ->
                 SOME ((s,t),Rerr (Rabort (Rffi_error outcome))))
          | _ -> NONE)
-     | (ast_Env_id,[semanticPrimitives_Env env (gen,id')]) -> SOME ((s,t),
+     | (ast_Env_id,[semanticPrimitives_Env env (gen,id)]) -> SOME ((s,t),
              Rval (semanticPrimitives_Conv NONE [nat_to_v gen; nat_to_v
-               id']))
-     | (ast_Env_id,[semanticPrimitives_Conv NONE [gen; id']]) -> SOME
-       ((s,t),
-             Rval (semanticPrimitives_Conv NONE [gen; id']))
+               id]))
+     | (ast_Env_id,[semanticPrimitives_Conv NONE [gen; id]]) -> SOME ((s,t),
+             Rval (semanticPrimitives_Conv NONE [gen; id]))
      | (ast_ThunkOp th_op,vs) -> semanticPrimitives_thunk_op (s,t) th_op vs
      | (ast_Arith a ty,vs) ->
          (if ALL (semanticPrimitives_check_type ty) vs then
-            (match do_arith a ty vs with SOME (INR res) -> SOME ((s,t),Rval
-              res)
+            (match semanticPrimitives_do_arith a ty vs with SOME (INR res)
+              -> SOME ((s,t),Rval res)
              | SOME (INL exn) -> SOME ((s,t),Rerr (Rraise exn))
              | NONE -> NONE)
           else NONE)
@@ -1368,9 +1367,9 @@ let do_app_def = new_definition
 let do_log_def = new_definition
   `do_log l v e =
      if l = Andalso /\ v = semanticPrimitives_Boolv T \/ l = Orelse /\ v =
-       semanticPrimitives_Boolv F then SOME (Exp e)
+       semanticPrimitives_Boolv F then SOME (semanticPrimitives_Exp e)
      else if l = Andalso /\ v = semanticPrimitives_Boolv F \/ l = Orelse
-       /\ v = semanticPrimitives_Boolv T then SOME (Val v)
+       /\ v = semanticPrimitives_Boolv T then SOME (semanticPrimitives_Val v)
      else NONE`;;
 
 (* Do an if-then-else *)

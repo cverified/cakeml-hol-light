@@ -2,7 +2,7 @@
 (*  fromSexp: ported from HOL4's
     compiler/parsing/fromSexpScript.sml
     A definition theory, with 46 definitions and 129 theorems.
-    Needed by compiler.ml.  *)
+    Needed by compiler.ml and sexp_parserProg.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -29,13 +29,14 @@ needs "semantics/namespace.ml";;
 let _ = cake_theory "fromSexp"
   ["ast"; "fpSem"; "mlstring"];;
 
-let _ = do_list hide_constant ["assert"];;
+let _ = do_list hide_constant ["assert"; "fail"; "test"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["return","errorMonad_return"];;
+  ["return","errorLogMonad_return";
+   "return","errorMonad_return"];;
 (* HOL4 ancestors outside the port: quantHeuristics *)
 
 (* TODO: this is duplicated in parserProgTheory *)
@@ -1346,7 +1347,7 @@ let expsexp_def,expsexp_ind = define_shaped_rec
    (expsexp (ast_Con cn es) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]) /\
-   (expsexp (ast_Var id') = listsexp [SX_SYM "Var"; idsexp id']) /\
+   (expsexp (ast_Var id) = listsexp [SX_SYM "Var"; idsexp id]) /\
    (expsexp (ast_Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
     expsexp e]) /\
    (expsexp (ast_App op es) =
@@ -1690,7 +1691,9 @@ add_simp decsexp_valid;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["assert"];;
+  ["assert";
+   "fail";
+   "test"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

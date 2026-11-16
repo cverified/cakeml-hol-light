@@ -2,7 +2,7 @@
 (*  byte: ported from HOL4's
     src/n-bit/byteScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 20 files of the port.  *)
+    that CakeML needs.  Needed by 27 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
@@ -35,6 +35,20 @@ let word_of_bytes_def,word_of_bytes_ind = define_rec
   `(word_of_bytes be' a [] = (n2w 0)) /\
    (word_of_bytes be' a (CONS b bs) =
          set_byte a b (word_of_bytes be' (a + (n2w 1)) bs) be')`;;
+
+(* the termination relation that HOL4 gives is
+     MEASURE (LENGTH o SND)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
+(* HOL4 byteScript.sml:282-284: the tactic that proves the termination *)
+let words_of_bytes_def,words_of_bytes_ind = define_guess
+  `words_of_bytes be' bytes =
+     match bytes with
+       [] -> ([]:('a word) list)
+     | bytes ->
+        let xs = TAKE (MAX 1 (w2n (bytes_in_word:'a word))) bytes in
+        let ys = DROP (MAX 1 (w2n (bytes_in_word:'a word))) bytes in
+          CONS (word_of_bytes be' (n2w 0) xs) (words_of_bytes be' ys)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

@@ -26,7 +26,7 @@ needs "semantics/proofs/gramProps.ml";;
 let _ = cake_theory "pegComplete"
   ["cmlNTProps"; "cmlPEG"; "gram"; "gramProps"; "pegSound"];;
 
-let _ = do_list hide_constant ["C"; "sub"];;
+let _ = do_list hide_constant ["C"; "cf"; "sub"];;
 
 (* Set up ML bindings *)
 (* HOL4 pegCompleteScript.sml:13-14: ML code, not ported *)
@@ -58,12 +58,12 @@ let MAP_EQ_CONS = prove
 (* HOL4 pegCompleteScript.sml:62-90: ML code, not ported *)
 
 let seql_cons = prove
- (`!x. peg_eval G (i0,seql (CONS h t) f) x <=>
+ (`!x. peg_eval G (i0,cmlPEG_seql (CONS h t) f) x <=>
          (?r. peg_eval G (i0,h) r /\
              ((?fl fe. r = peg_Failure fl fe /\ x = r) \/
               (?i1 rh eo1 r2.
                  r = peg_Success i1 rh eo1 /\
-                 peg_eval G (i1,seql t I) r2 /\
+                 peg_eval G (i1,cmlPEG_seql t I) r2 /\
                  ((?fl fe. r2 = peg_Failure fl fe /\ x = r2) \/
                   (?i rt eopt2.
                     r2 = peg_Success i rt eopt2 /\
@@ -71,10 +71,10 @@ let seql_cons = prove
   CHEAT_TAC);;
 
 let seql_cons_SOME = prove
- (`peg_eval G (i0,seql (CONS h t) f) (peg_Success i r eo) <=>
+ (`peg_eval G (i0,cmlPEG_seql (CONS h t) f) (peg_Success i r eo) <=>
    (?i1 rh rt eo1.
      peg_eval G (i0,h) (peg_Success i1 rh eo1) /\
-     peg_eval G (i1,seql t I) (peg_Success i rt eo) /\
+     peg_eval G (i1,cmlPEG_seql t I) (peg_Success i rt eo) /\
      r = f (APPEND rh rt))`,
   CHEAT_TAC);;
 
@@ -124,7 +124,7 @@ add_simp peg_eval_tok_NIL;;
    below antiquote *)
 
 let peg_eval_tokSymP_NONE = prove
- (`peg_eval G (i,tokSymP P) (peg_Failure fl fe) <=>
+ (`peg_eval G (i,cmlPEG_tokSymP P) (peg_Failure fl fe) <=>
      (!l tk t. i = CONS (tk,l) t ==>
                (!s. tk = tokens_SymbolT s ==> ~(P s) /\ fl = l /\ fe =
                  peg_tokFALSE G) /\
@@ -189,8 +189,8 @@ let not_nullable_input_CONS = prove
 
 let not_nullable_seql_input_CONS = prove
  (`~((\G n. nullable G [grammar_NT n]) cmlG N) ==>
-   peg_eval cmlPEG (i0,seql (CONS (peg_nt N I) rest) f) (peg_Success i r eo)
-     ==>
+   peg_eval cmlPEG (i0,cmlPEG_seql (CONS (peg_nt N I) rest) f) (peg_Success
+     i r eo) ==>
    (?ht l t. i0 = CONS (ht,l) t /\ LENGTH i <= LENGTH t)`,
   CHEAT_TAC);;
 
@@ -220,20 +220,20 @@ let left_insert1_def,left_insert1_ind = define_wf
    (left_insert1 pt (Nd (n,l0) subs) =
          match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
-           | [x] -> mkNd n [mkNd n [pt]; x]
-           | CONS x xs -> mkNd n (CONS (left_insert1 pt x) xs))`;;
+           | [x] -> cmlPEG_mkNd n [cmlPEG_mkNd n [pt]; x]
+           | CONS x xs -> cmlPEG_mkNd n (CONS (left_insert1 pt x) xs))`;;
 
 let left_insert1_FOLDL = prove
- (`left_insert1 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
-  acc arg) =
-    FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b]) (left_insert1
-      pt acc) arg`,
+ (`left_insert1 pt (FOLDL (\a b. cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) P) [a;
+  b]) acc arg) =
+    FOLDL (\a b. cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
+      (left_insert1 pt acc) arg`,
   CHEAT_TAC);;
 
 (* HOL4 pegCompleteScript.sml:341: ML code, not ported *)
 
 let ptree_loc_mkNd = prove
- (`ptree_loc (mkNd n subs) = ptree_list_loc subs`,
+ (`ptree_loc (cmlPEG_mkNd n subs) = ptree_list_loc subs`,
   CHEAT_TAC);;
 add_simp ptree_loc_mkNd;;
 
@@ -295,13 +295,13 @@ add_simp rightLoc_merge_locs;;
 
 let eapp_reassociated = prove
  (`!pt bpt pf bf.
-      valid_lptree cmlG pt /\ ptree_head pt = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nEapp /\
+      valid_lptree cmlG pt /\ ptree_head pt = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEapp /\
       real_fringe pt = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         pf /\
-      valid_lptree cmlG bpt /\ ptree_head bpt = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\
+      valid_lptree cmlG bpt /\ ptree_head bpt = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase /\
       real_fringe bpt = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         bf ==>
@@ -309,14 +309,14 @@ let eapp_reassociated = prove
         valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
         leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
         rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
-        ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-          nEapp /\ ptree_head bpt' = (\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\ APPEND (real_fringe bpt')
-          (real_fringe pt') = MAP
+        ptree_head pt' = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nEapp /\ ptree_head bpt' = (\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase /\ APPEND
+          (real_fringe bpt') (real_fringe pt') = MAP
           ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ##
           I) (APPEND pf bf) /\
-        mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [pt; bpt] = left_insert1
-          bpt' pt')`,
+        cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nEapp) [pt; bpt] =
+          left_insert1 bpt' pt')`,
   CHEAT_TAC);;
 
 make_size "MMLnonT";;
@@ -326,7 +326,8 @@ let leftmost_def,leftmost_ind = define_wf
   `MEASURE (\x0. parsetree_size (\x. 0) MMLnonT_size (\x. 0) x0)`
   `(leftmost (Lf s) = Lf s) /\
    (leftmost (Nd (n,l) args) =
-      if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then HD args
+      if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) gram_nTbase then HD
+          args
       else match args with
             [] -> Nd (n,l) args
           | CONS h _ -> leftmost h)`;;
@@ -342,8 +343,8 @@ let left_insert2_def,left_insert2_ind = define_wf
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt]
            | [Nd _ [
                   // nTbase
-                  tyop]] -> mkNd n [mkNd n [pt]; tyop]
-           | CONS x ys -> mkNd n (CONS (left_insert2 pt x) ys))`;;
+                  tyop]] -> cmlPEG_mkNd n [cmlPEG_mkNd n [pt]; tyop]
+           | CONS x ys -> cmlPEG_mkNd n (CONS (left_insert2 pt x) ys))`;;
 add_simp left_insert2_def;;
 
 let ptree_loc_left_insert2 = prove
@@ -354,10 +355,10 @@ let ptree_loc_left_insert2 = prove
   CHEAT_TAC);;
 
 let left_insert2_FOLDL = prove
- (`left_insert2 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
-  acc arg) =
-    FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b]) (left_insert2
-      pt acc) arg`,
+ (`left_insert2 pt (FOLDL (\a b. cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) P) [a;
+  b]) acc arg) =
+    FOLDL (\a b. cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
+      (left_insert2 pt acc) arg`,
   CHEAT_TAC);;
 
 (* the situation with DType is similar to that with Eapp and Ebase.
@@ -391,31 +392,31 @@ let left_insert2_FOLDL = prove
 
 let dtype_reassociated = prove
  (`!pt bpt pf bf.
-      valid_lptree cmlG pt /\ ptree_head pt = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nDType /\
+      valid_lptree cmlG pt /\ ptree_head pt = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nDType /\
       real_fringe pt = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         pf /\
-      valid_lptree cmlG bpt /\ ptree_head bpt = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp /\
+      valid_lptree cmlG bpt /\ ptree_head bpt = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp /\
       real_fringe bpt = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         bf ==>
       (?pt' bpt'.
         valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
         valid_lptree cmlG (leftmost pt') /\
-        ptree_head (leftmost pt') = (\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp /\
-        ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-          nDType /\ ptree_head bpt' = (\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nTbase /\ APPEND (real_fringe bpt')
-          (real_fringe pt') = MAP
+        ptree_head (leftmost pt') = (\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp /\
+        ptree_head pt' = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nDType /\ ptree_head bpt' = (\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTbase /\ APPEND
+          (real_fringe bpt') (real_fringe pt') = MAP
           ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ##
           I) (APPEND pf bf) /\
         leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
         rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
-        mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [pt; bpt] = left_insert2
-          bpt' pt')`,
+        cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nDType) [pt; bpt] =
+          left_insert2 bpt' pt')`,
   CHEAT_TAC);;
 
 (*
@@ -438,15 +439,17 @@ let left_insert_def,left_insert_ind = define_wf
    (left_insert (Nd (n,l) subs) p sep c =
          if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
          else match subs with
-               [c0] -> mkNd p [mkNd p [c]; sep; c0]
-             | [p'; s'; c'] -> mkNd p [left_insert p' p sep c; s'; c']
+               [c0] -> cmlPEG_mkNd p [cmlPEG_mkNd p [c]; sep; c0]
+             | [p'; s'; c'] -> cmlPEG_mkNd p [left_insert p' p sep c; s';
+                 c']
              | _ -> Nd (n,merge_locs (ptree_loc c) l) subs)`;;
 
 
 let left_insert_mkNd = prove
- (`(left_insert (mkNd n [c0]) n sep c = mkNd n [mkNd n [c]; sep; c0]) /\
-   (left_insert (mkNd n [p'; s'; c']) n sep c =
-      mkNd n [left_insert p' n sep c; s'; c'])`,
+ (`(left_insert (cmlPEG_mkNd n [c0]) n sep c = cmlPEG_mkNd n [cmlPEG_mkNd n
+  [c]; sep; c0]) /\
+   (left_insert (cmlPEG_mkNd n [p'; s'; c']) n sep c =
+      cmlPEG_mkNd n [left_insert p' n sep c; s'; c'])`,
   CHEAT_TAC);;
 add_simp left_insert_mkNd;;
 
@@ -474,12 +477,12 @@ let lassoc_reassociated = prove
           MAP (grammar_TOK ## I) (APPEND (APPEND pf sf) cf) /\
         leftLoc (ptree_loc cpt') = leftLoc (ptree_loc ppt) /\
         rightLoc (ptree_loc ppt') = rightLoc (ptree_loc cpt) /\
-        mkNd P [ppt; spt; cpt] = left_insert ppt' P spt' cpt')`,
+        cmlPEG_mkNd P [ppt; spt; cpt] = left_insert ppt' P spt' cpt')`,
   CHEAT_TAC);;
 
 let left_insert_mk_linfix = prove
- (`left_insert (mk_linfix N acc arg) N s c =
-    mk_linfix N (left_insert acc N s c) arg`,
+ (`left_insert (cmlPEG_mk_linfix N acc arg) N s c =
+    cmlPEG_mk_linfix N (left_insert acc N s c) arg`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -493,8 +496,9 @@ let elim_det = prove
   CHEAT_TAC);;
 
 let peg_seql_NONE_det = prove
- (`peg_eval G (i0,seql syms f) (peg_Failure fl fe) ==>
-    (!f' r. peg_eval G (i0,seql syms f') r <=> r = (peg_Failure fl fe))`,
+ (`peg_eval G (i0,cmlPEG_seql syms f) (peg_Failure fl fe) ==>
+    (!f' r. peg_eval G (i0,cmlPEG_seql syms f') r <=> r = (peg_Failure fl
+      fe))`,
   CHEAT_TAC);;
 
 (* HOL4 pegCompleteScript.sml:697: ML code, not ported *)
@@ -507,13 +511,13 @@ let firstSet_respect_peg_eval_not_success = prove
 
 let eOR_wrongtok = prove
  (`~(peg_eval cmlPEG (CONS (tokens_RaiseT,loc) i0,peg_nt
-  ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo)) /\
+  ((INL:MMLnonT->MMLnonT+num) gram_nElogicOR) I) (peg_Success i r eo)) /\
    ~(peg_eval cmlPEG (CONS (tokens_FnT,loc) i0,peg_nt
-     ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo)) /\
+     ((INL:MMLnonT->MMLnonT+num) gram_nElogicOR) I) (peg_Success i r eo)) /\
    ~(peg_eval cmlPEG (CONS (tokens_CaseT,loc) i0,peg_nt
-     ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo)) /\
+     ((INL:MMLnonT->MMLnonT+num) gram_nElogicOR) I) (peg_Success i r eo)) /\
    ~(peg_eval cmlPEG (CONS (tokens_IfT,loc) i0,peg_nt
-     ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo))`,
+     ((INL:MMLnonT->MMLnonT+num) gram_nElogicOR) I) (peg_Success i r eo))`,
   CHEAT_TAC);;
 
 let peg_eval_seqempty = prove
@@ -538,225 +542,230 @@ let nestoppers_def = new_definition
         ({tokens_AndalsoT,tokens_ArrowT,tokens_BarT,tokens_ColonT
         ,tokens_HandleT,tokens_OrelseT,
                   tokens_AlphaT (implode "before")} UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                 firstSet cmlG [(\nt'. grammar_NT
-                   ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION firstSet
-                   cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                   nTyOp])`;;
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                 firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                   ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])`;;
 
 let stoppers_def = new_definition
   `pegComplete_stoppers x1 =
      match x1 with
-       nAndFDecls -> nestoppers DELETE tokens_AndT
-     | nDconstructor ->
+       gram_nAndFDecls -> nestoppers DELETE tokens_AndT
+     | gram_nDconstructor ->
         UNIV DIFF ({tokens_StarT,tokens_OfT,tokens_ArrowT,tokens_LparT}
-          UNION firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-          nt')) nTyOp] UNION
+          UNION firstSet cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nTyOp] UNION
                    {tokens_TyvarT s | T})
-     | nDecl ->
+     | gram_nDecl ->
         nestoppers DIFF ({tokens_BarT,tokens_StarT,tokens_AndT,tokens_OfT}
           UNION {tokens_TyvarT s | T})
-     | nDecls ->
+     | gram_nDecls ->
         nestoppers DIFF
         ({tokens_BarT,tokens_StarT,tokens_AndT,tokens_SemicolonT,tokens_FunT
           ,tokens_ValT,tokens_DatatypeT,tokens_OfT,tokens_ExceptionT,
           tokens_TypeT,tokens_LocalT,tokens_StructureT} UNION {tokens_TyvarT
             s | T})
-     | nDType -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp]
-     | nDtypeCons ->
+     | gram_nDType -> UNIV DIFF firstSet cmlG [(\peg_nt. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp]
+     | gram_nDtypeCons ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_BarT,tokens_StarT,tokens_OfT,tokens_LparT}
-          UNION firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-          nt')) nTyOp] UNION
+          UNION firstSet cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nTyOp] UNION
                    {tokens_TyvarT s | T})
-     | nDtypeDecl ->
+     | gram_nDtypeDecl ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_BarT,tokens_StarT,tokens_OfT,tokens_LparT}
-          UNION firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-          nt')) nTyOp] UNION
+          UNION firstSet cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nTyOp] UNION
                    {tokens_TyvarT s | T})
-     | nDtypeDecls ->
+     | gram_nDtypeDecls ->
         UNIV DIFF
           ({tokens_AndT,tokens_ArrowT,tokens_BarT,tokens_StarT,tokens_OfT
           ,tokens_LparT} UNION {tokens_TyvarT s | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nE -> nestoppers
-     | nEadd ->
-        UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-     | nEapp -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]
-     | nEbefore ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nE -> nestoppers
+     | gram_nEadd ->
+        UNIV DIFF (firstSet cmlG [(\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase])
+     | gram_nEapp -> UNIV DIFF firstSet cmlG [(\peg_nt. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase]
+     | gram_nEbefore ->
         UNIV DIFF ({tokens_AlphaT (implode "before")} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-     | nEcomp ->
-        UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-     | nEhandle -> nestoppers
-     | nElist1 -> nestoppers DELETE tokens_CommaT
-     | nElist2 -> nestoppers DELETE tokens_CommaT
-     | nElistop -> UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                              firstSet cmlG [(\nt'. grammar_NT
-                                ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps]
-                                UNION
-                              firstSet cmlG [(\nt'. grammar_NT
-                                ((INL:MMLnonT->MMLnonT+num) nt')) nListOps]
-                                UNION
-                              firstSet cmlG [(\nt'. grammar_NT
-                                ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-     | nElogicAND ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase])
+     | gram_nEcomp ->
+        UNIV DIFF (firstSet cmlG [(\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase])
+     | gram_nEhandle -> nestoppers
+     | gram_nElist1 -> nestoppers DELETE tokens_CommaT
+     | gram_nElist2 -> nestoppers DELETE tokens_CommaT
+     | gram_nElistop -> UNIV DIFF (firstSet cmlG [(\peg_nt. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                              firstSet cmlG [(\peg_nt. grammar_NT
+                                ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                                gram_nAddOps] UNION
+                              firstSet cmlG [(\peg_nt. grammar_NT
+                                ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                                gram_nListOps] UNION
+                              firstSet cmlG [(\peg_nt. grammar_NT
+                                ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                                gram_nEbase])
+     | gram_nElogicAND ->
         UNIV DIFF
           ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,tokens_AlphaT (implode
           "before")} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION firstSet
-                     cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nTyOp])
-     | nElogicOR ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nElogicOR ->
         UNIV DIFF
           ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,tokens_OrelseT
           ,tokens_AlphaT (implode "before")} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION firstSet
-                     cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nTyOp])
-     | nEmult ->
-        UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps])
-     | nErel ->
-        UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-     | nEseq -> nestoppers DELETE tokens_SemicolonT
-     | nEtyped ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nEmult ->
+        UNIV DIFF (firstSet cmlG [(\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps])
+     | gram_nErel ->
+        UNIV DIFF (firstSet cmlG [(\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase])
+     | gram_nEseq -> nestoppers DELETE tokens_SemicolonT
+     | gram_nEtyped ->
         UNIV DIFF ({tokens_ColonT,tokens_ArrowT,tokens_AlphaT (implode
           "before")} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nListOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION firstSet
-                     cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nTyOp])
-     | nFDecl -> nestoppers
-     | nLetDec -> nestoppers DELETE tokens_AndT
-     | nLetDecs -> nestoppers DIFF
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nCompOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nListOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nRelOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nMultOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nAddOps] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nFDecl -> nestoppers
+     | gram_nLetDec -> nestoppers DELETE tokens_AndT
+     | gram_nLetDecs -> nestoppers DIFF
        {tokens_AndT,tokens_FunT,tokens_ValT,tokens_SemicolonT}
-     | nNonETopLevelDecs -> {}
-     | nOptTypEqn ->
+     | gram_nNonETopLevelDecs -> {}
+     | gram_nOptTypEqn ->
         UNIV DIFF ({tokens_ArrowT,tokens_StarT,tokens_EqualsT} UNION
-          firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-          nTyOp])
-     | nPcons ->
+          firstSet cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          peg_nt)) gram_nTyOp])
+     | gram_nPcons ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_SymbolT
           (implode "::"),tokens_OpT} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T} UNION
                      {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPas ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPas ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_SymbolT
           (implode "::"),tokens_AsT,tokens_OpT} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T} UNION
                      {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPConApp ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPConApp ->
         UNIV DIFF ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
           UNION {tokens_IntT i | T} UNION
                    {tokens_StringT s | T} UNION {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPapp ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPapp ->
         UNIV DIFF ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
           UNION {tokens_IntT i | T} UNION
                    {tokens_StringT s | T} UNION {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPattern ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPattern ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_ColonT
           ,tokens_ArrowT,tokens_StarT,tokens_AsT,tokens_OpT} UNION
@@ -764,11 +773,12 @@ let stoppers_def = new_definition
                      {tokens_LongidT s1 s2 | T} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T} UNION
                      {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPatternList ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPatternList ->
         UNIV DIFF
           ({tokens_CommaT,tokens_LparT,tokens_UnderbarT,tokens_LbrackT
           ,tokens_ColonT,tokens_ArrowT,tokens_StarT,tokens_AsT,
@@ -777,73 +787,80 @@ let stoppers_def = new_definition
                      {tokens_LongidT s1 s2 | T} UNION
                    {tokens_IntT i | T} UNION {tokens_StringT s | T} UNION
                      {tokens_CharT c | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION firstSet cmlG
-                     [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-                     nConstructorName])
-     | nPbaseList1 -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]
-     | nPE -> nestoppers
-     | nPEs -> nestoppers
-     | nPEsfx -> nestoppers
-     | nPType -> UNIV DIFF ({tokens_StarT} UNION firstSet cmlG [(\nt'.
-       grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nSpecLine ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nV] UNION
+                     firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt))
+                     gram_nConstructorName])
+     | gram_nPbaseList1 -> UNIV DIFF firstSet cmlG [(\peg_nt. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPbase]
+     | gram_nPE -> nestoppers
+     | gram_nPEs -> nestoppers
+     | gram_nPEsfx -> nestoppers
+     | gram_nPType -> UNIV DIFF ({tokens_StarT} UNION firstSet cmlG
+       [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nSpecLine ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_AndT,tokens_BarT,tokens_StarT,tokens_OfT
           ,tokens_EqualsT,tokens_LparT} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp] UNION
                      {tokens_TyvarT s | T})
-     | nSpecLineList ->
+     | gram_nSpecLineList ->
         UNIV DIFF
           ({tokens_ValT,tokens_DatatypeT,tokens_TypeT,tokens_ExceptionT
           ,tokens_SemicolonT,
                     tokens_ArrowT,tokens_AndT,tokens_BarT,tokens_StarT
                       ,tokens_OfT,tokens_EqualsT,tokens_LparT} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp] UNION
                      {tokens_TyvarT s | T})
-     | nTbaseList ->
-        UNIV DIFF ({tokens_LparT} UNION firstSet cmlG [(\nt'. grammar_NT
-          ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION {tokens_TyvarT s | T})
-     | nTopLevelDecs -> {}
-     | nType -> UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet cmlG
-       [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nTypeAbbrevDec ->
-        UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet cmlG [(\nt'.
-          grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nTypeDec ->
+     | gram_nTbaseList ->
+        UNIV DIFF ({tokens_LparT} UNION firstSet cmlG [(\peg_nt. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp] UNION {tokens_TyvarT
+          s | T})
+     | gram_nTopLevelDecs -> {}
+     | gram_nType -> UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet
+       cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt))
+       gram_nTyOp])
+     | gram_nTypeAbbrevDec ->
+        UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet cmlG
+          [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt))
+          gram_nTyOp])
+     | gram_nTypeDec ->
         UNIV DIFF
           ({tokens_AndT,tokens_ArrowT,tokens_StarT,tokens_BarT,tokens_OfT
           ,tokens_LparT} UNION {tokens_TyvarT s | T} UNION
-                   firstSet cmlG [(\nt'. grammar_NT
-                     ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nTypeList1 ->
+                   firstSet cmlG [(\peg_nt. grammar_NT
+                     ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTyOp])
+     | gram_nTypeList1 ->
         UNIV DIFF ({tokens_CommaT,tokens_ArrowT,tokens_StarT} UNION firstSet
-          cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nTypeList2 ->
+          cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt))
+          gram_nTyOp])
+     | gram_nTypeList2 ->
         UNIV DIFF ({tokens_CommaT,tokens_ArrowT,tokens_StarT} UNION firstSet
-          cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-     | nTyVarList -> {tokens_RparT}
-     | nOptionalSignatureAscription -> UNIV DELETE tokens_SealT
+          cmlG [(\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt))
+          gram_nTyOp])
+     | gram_nTyVarList -> {tokens_RparT}
+     | gram_nOptionalSignatureAscription -> UNIV DELETE tokens_SealT
      | _ -> UNIV`;;
 
 (* HOL4 pegCompleteScript.sml:897: ML code, not ported *)
 
 
 let left_insert1_mkNd = prove
- (`left_insert1 pt1 (mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [pt2]) =
-   mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [mkNd
-     ((INL:MMLnonT->MMLnonT+num) nEapp) [pt1]; pt2]`,
+ (`left_insert1 pt1 (cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nEapp) [pt2])
+  =
+   cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nEapp) [cmlPEG_mkNd
+     ((INL:MMLnonT->MMLnonT+num) gram_nEapp) [pt1]; pt2]`,
   CHEAT_TAC);;
 
 let eapp_complete = prove
  (`(!pt' pfx' sfx' N.
        LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
        (INL:MMLnonT->MMLnonT+num) N IN FDOM (peg_rules cmlPEG) /\
-       ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-         N /\ real_fringe pt' = MAP
+       ptree_head pt' = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+         peg_nt)) N /\ real_fringe pt' = MAP
          ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ##
          I) pfx' /\
        (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers N) ==>
@@ -851,26 +868,28 @@ let eapp_complete = prove
          peg_eval cmlPEG (APPEND pfx' sfx',peg_nt
            ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success sfx' [pt'] eo))) /\
     (!pt' sfx'.
-       valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'. grammar_NT
-         ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\
+       valid_lptree cmlG pt' /\ ptree_head pt' = (\peg_nt. grammar_NT
+         ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nEbase /\
        real_fringe pt' = MAP
          ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ##
          I) master /\
-       (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers nEbase) ==>
+       (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers gram_nEbase)
+         ==>
        (?eo.
        peg_eval cmlPEG (APPEND master sfx',peg_nt
-         ((INL:MMLnonT->MMLnonT+num) nEbase) I)
+         ((INL:MMLnonT->MMLnonT+num) gram_nEbase) I)
                 (peg_Success sfx' [pt'] eo))) ==>
      (!pfx apt sfx.
        IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-       ptree_head apt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-         nEapp /\ real_fringe apt = MAP
+       ptree_head apt = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+         peg_nt)) gram_nEapp /\ real_fringe apt = MAP
          ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ##
          I) pfx /\
-       (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers nEapp) ==>
+       (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers gram_nEapp) ==>
        (?eo.
          peg_eval cmlPEG (APPEND pfx sfx,peg_nt
-           ((INL:MMLnonT->MMLnonT+num) nEapp) I) (peg_Success sfx [apt] eo)))`,
+           ((INL:MMLnonT->MMLnonT+num) gram_nEapp) I) (peg_Success sfx [apt]
+           eo)))`,
   CHEAT_TAC);;
 
 let peg_respects_firstSets' = prove
@@ -880,18 +899,18 @@ let peg_respects_firstSets' = prove
   CHEAT_TAC);;
 
 let nUQConstructorName_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nUQConstructorName)
-  I) (peg_Success i r eo) ==>
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  gram_nUQConstructorName) I) (peg_Success i r eo) ==>
    peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-     nUQConstructorName) I)
+     gram_nUQConstructorName) I)
      (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
 let nConstructorName_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nConstructorName) I)
-  (peg_Success i r eo) ==>
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  gram_nConstructorName) I) (peg_Success i r eo) ==>
    peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-     nConstructorName) I)
+     gram_nConstructorName) I)
      (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
@@ -900,49 +919,49 @@ let nConstructorName_input_monotone = prove
 
 let nConstructorName_NONE_input_monotone = prove
  (`peg_eval cmlPEG (CONS (tk,l) i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-  nConstructorName) I) (peg_Failure fl fe) ==>
+  gram_nConstructorName) I) (peg_Failure fl fe) ==>
    peg_eval cmlPEG
             (CONS (tk,l) (APPEND i sfx),peg_nt ((INL:MMLnonT->MMLnonT+num)
-              nConstructorName) I)
+              gram_nConstructorName) I)
             (peg_Failure fl fe)`,
   CHEAT_TAC);;
 
 let nV_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nV) I) (peg_Success i
-  r eo) ==>
-   peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num) nV)
-     I) (peg_Success (APPEND i sfx) r eo)`,
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nV) I)
+  (peg_Success i r eo) ==>
+   peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+     gram_nV) I) (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
 let nV_NONE_input_monotone = prove
- (`peg_eval cmlPEG (CONS (tk,l) i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nV) I)
-  (peg_Failure fl fe) ==>
+ (`peg_eval cmlPEG (CONS (tk,l) i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nV)
+  I) (peg_Failure fl fe) ==>
    peg_eval cmlPEG (CONS (tk,l) (APPEND i0 sfx),peg_nt
-     ((INL:MMLnonT->MMLnonT+num) nV) I) (peg_Failure fl fe)`,
+     ((INL:MMLnonT->MMLnonT+num) gram_nV) I) (peg_Failure fl fe)`,
   CHEAT_TAC);;
 
 let nOpID_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nOpID) I)
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nOpID) I)
   (peg_Success i r eo) ==>
    peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-     nOpID) I) (peg_Success (APPEND i sfx) r eo)`,
+     gram_nOpID) I) (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
 let nUQTyOp_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nUQTyOp) I)
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nUQTyOp) I)
   (peg_Success i r eo) ==>
    peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-     nUQTyOp) I) (peg_Success (APPEND i sfx) r eo)`,
+     gram_nUQTyOp) I) (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
 (* HOL4 pegCompleteScript.sml:1085-1086: a theorem that HOL4 states as the
    value of an ML expression: nUQTyOp_input_monotone' *)
 
 let nTyOp_input_monotone = prove
- (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nTyOp) I)
+ (`peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nTyOp) I)
   (peg_Success i r eo) ==>
    peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-     nTyOp) I) (peg_Success (APPEND i sfx) r eo)`,
+     gram_nTyOp) I) (peg_Success (APPEND i sfx) r eo)`,
   CHEAT_TAC);;
 
 (* HOL4 pegCompleteScript.sml:1102-1103: a theorem that HOL4 states as the
@@ -950,19 +969,19 @@ let nTyOp_input_monotone = prove
 
 let nTyOplist_input_monotone = prove
  (`!pts res i0 i sfx.
-     peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nTyOp) I)
-       (i,pts,res) /\
-     (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers nDType)
-       ==>
+     peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nTyOp)
+       I) (i,pts,res) /\
+     (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers
+       gram_nDType) ==>
      (?res'.
        peg_eval_list cmlPEG (APPEND i0 sfx,peg_nt
-         ((INL:MMLnonT->MMLnonT+num) nTyOp) I) (APPEND i sfx,pts,res'))`,
+         ((INL:MMLnonT->MMLnonT+num) gram_nTyOp) I) (APPEND i sfx,pts,res'))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let peg_eval_TyOp_LparT = prove
  (`peg_eval cmlPEG (CONS (tokens_LparT,loc) i0,peg_nt
-  ((INL:MMLnonT->MMLnonT+num) nTyOp) I) (peg_Success i r eo) <=> F`,
+  ((INL:MMLnonT->MMLnonT+num) gram_nTyOp) I) (peg_Success i r eo) <=> F`,
   CHEAT_TAC);;
 add_simp peg_eval_TyOp_LparT;;
 
@@ -972,7 +991,9 @@ add_simp peg_eval_TyOp_LparT;;
 (* Type_input_monotone *)
 let type_input_monotone = prove
  (`!N i0 i r sfx eo.
-     N IN {nTypeList2,nTypeList1,nType,nPType,nDType,nTbase} /\
+     N IN
+       {gram_nTypeList2,gram_nTypeList1,gram_nType,gram_nPType,gram_nDType
+       ,gram_nTbase} /\
      (~(i = []) ==> FST (HD i) IN pegComplete_stoppers N) /\
      (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers N) /\
      peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) N) I)
@@ -983,30 +1004,31 @@ let type_input_monotone = prove
 
 (* [local] *)
 let Pattern_nV_nCons = prove
- (`peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) nV) I) (peg_Success j
-  r eo) /\
-   (~(j = []) ==> FST (HD j) IN pegComplete_stoppers nPcons) ==>
+ (`peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nV) I)
+  (peg_Success j r eo) /\
+   (~(j = []) ==> FST (HD j) IN pegComplete_stoppers gram_nPcons) ==>
    (?r1 eo1.
-     peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) nPcons) I)
+     peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nPcons) I)
        (peg_Success j r1 eo1))`,
   CHEAT_TAC);;
 
 (* Pattern_input_monotone0[local] *)
 let pattern_input_monotone0 = prove
  (`!N i0 rlist b i r l sfx eo res.
-     (N IN {nPbase,nPtuple,nPattern,nPapp,nPatternList,nPas,nPcons,nV} /\ ~b
-       /\
+     (N IN
+       {gram_nPbase,gram_nPtuple,gram_nPattern,gram_nPapp,gram_nPatternList
+       ,gram_nPas,gram_nPcons,gram_nV} /\ ~b /\
       (~(i = []) ==> FST (HD i) IN pegComplete_stoppers N) /\
       (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers N) /\
       peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) N) I)
         (peg_Success i r eo) ==>
       peg_eval cmlPEG (APPEND i0 sfx,peg_nt ((INL:MMLnonT->MMLnonT+num) N)
         I) (peg_Success (APPEND i sfx) r eo)) /\
-     (N = nPbase /\ b /\
-      (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [(\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nPbase])) /\
-      (i = [] /\ ~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG [(\nt'.
-        grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase])) /\
+     (N = gram_nPbase /\ b /\
+      (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [(\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPbase])) /\
+      (i = [] /\ ~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG [(\peg_nt.
+        grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPbase])) /\
       peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) N) I)
         (i,rlist,l,res) ==>
       (?res'.
@@ -1019,14 +1041,14 @@ let pattern_input_monotone =
 
 let extend_Pbase_list = prove
  (`!results pfx sfx sfx' result e eo.
-     peg_eval_list cmlPEG (pfx,peg_nt ((INL:MMLnonT->MMLnonT+num) nPbase) I)
-       ([],results,e) /\
-     peg_eval cmlPEG (sfx,peg_nt ((INL:MMLnonT->MMLnonT+num) nPbase) I)
+     peg_eval_list cmlPEG (pfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+       gram_nPbase) I) ([],results,e) /\
+     peg_eval cmlPEG (sfx,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nPbase) I)
        (peg_Success sfx' result eo) /\
-     (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [(\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPbase])) ==>
+     (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [(\peg_nt.
+       grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPbase])) ==>
      (?e'. peg_eval_list cmlPEG (APPEND pfx sfx,peg_nt
-       ((INL:MMLnonT->MMLnonT+num) nPbase) I)
+       ((INL:MMLnonT->MMLnonT+num) gram_nPbase) I)
                         (sfx',APPEND results [result],e'))`,
   CHEAT_TAC);;
 
@@ -1034,7 +1056,7 @@ let papp_complete = prove
  (`(!pt' pfx' N sfx'.
       LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
       (INL:MMLnonT->MMLnonT+num) N IN FDOM (peg_rules cmlPEG) /\ ptree_head
-        pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) N /\
+        pt' = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt)) N /\
       real_fringe pt' = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         pfx' /\
@@ -1043,57 +1065,60 @@ let papp_complete = prove
         peg_eval cmlPEG (APPEND pfx' sfx',peg_nt ((INL:MMLnonT->MMLnonT+num)
           N) I) (peg_Success sfx' [pt'] eo))) /\
    (!pt' sfx'.
-      valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName /\
+      valid_lptree cmlG pt' /\ ptree_head pt' = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nConstructorName /\
       real_fringe pt' = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         master ==>
       (?eo.
         peg_eval cmlPEG (APPEND master sfx',peg_nt
-          ((INL:MMLnonT->MMLnonT+num) nConstructorName) I)
+          ((INL:MMLnonT->MMLnonT+num) gram_nConstructorName) I)
                  (peg_Success sfx' [pt'] eo))) ==>
    (!pfx accpt sfx.
      pfx <<= master /\
-     valid_lptree cmlG accpt /\ ptree_head accpt = (\nt'. grammar_NT
-       ((INL:MMLnonT->MMLnonT+num) nt')) nPConApp /\
+     valid_lptree cmlG accpt /\ ptree_head accpt = (\peg_nt. grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPConApp /\
      real_fringe accpt = MAP
        ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
        pfx /\
-     (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers nPConApp) ==>
+     (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers gram_nPConApp)
+       ==>
      (?cpt i bpts eo e.
         peg_eval cmlPEG
                  (APPEND pfx sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-                   nConstructorName) I)
+                   gram_nConstructorName) I)
                  (peg_Success i [cpt] eo) /\
-        peg_eval_list cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) nPbase)
-          I) (sfx,bpts,e) /\
+        peg_eval_list cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+          gram_nPbase) I) (sfx,bpts,e) /\
         accpt =
-        FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt; bpt])
-              (mkNd ((INL:MMLnonT->MMLnonT+num) nPConApp) [cpt]) (FLAT
-                bpts)))`,
+        FOLDL (\pcpt bpt. cmlPEG_bindNT0 gram_nPConApp [pcpt; bpt])
+              (cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nPConApp)
+                [cpt]) (FLAT bpts)))`,
   CHEAT_TAC);;
 
 let leftmost_mkNd_DType = prove
- (`leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) (CONS c cs)) = leftmost
-  c`,
+ (`leftmost (cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nDType) (CONS c
+  cs)) = leftmost c`,
   CHEAT_TAC);;
 add_simp leftmost_mkNd_DType;;
 
 let leftmost_mkNd_Tbase = prove
- (`leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nTbase) (CONS x xs)) = x`,
+ (`leftmost (cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nTbase) (CONS x
+  xs)) = x`,
   CHEAT_TAC);;
 add_simp leftmost_mkNd_Tbase;;
 
 let leftmost_FOLDL = prove
- (`leftmost (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [a; b]) acc
-  args) =
+ (`leftmost (FOLDL (\a b. cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nDType)
+  [a; b]) acc args) =
     leftmost acc`,
   CHEAT_TAC);;
 
 let left_insert2_mkNd = prove
- (`left_insert2 bpt (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd n [sub]]) =
-   mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd
-     ((INL:MMLnonT->MMLnonT+num) nDType) [bpt]; sub]`,
+ (`left_insert2 bpt (cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nDType)
+  [cmlPEG_mkNd n [sub]]) =
+   cmlPEG_mkNd ((INL:MMLnonT->MMLnonT+num) gram_nDType) [cmlPEG_mkNd
+     ((INL:MMLnonT->MMLnonT+num) gram_nDType) [bpt]; sub]`,
   CHEAT_TAC);;
 add_simp left_insert2_mkNd;;
 
@@ -1101,8 +1126,8 @@ let dtype_complete = prove
  (`(!pt' pfx' sfx' N.
       LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
       (INL:MMLnonT->MMLnonT+num) N IN FDOM (peg_rules cmlPEG) /\
-      ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) N
-        /\ real_fringe pt' = MAP
+      ptree_head pt' = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+        peg_nt)) N /\ real_fringe pt' = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         pfx' /\
       (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers N) ==>
@@ -1110,26 +1135,27 @@ let dtype_complete = prove
         peg_eval cmlPEG (APPEND pfx' sfx',peg_nt ((INL:MMLnonT->MMLnonT+num)
           N) I) (peg_Success sfx' [pt'] eo))) /\
    (!pt' sfx'.
-      valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'. grammar_NT
-        ((INL:MMLnonT->MMLnonT+num) nt')) nTbase /\
+      valid_lptree cmlG pt' /\ ptree_head pt' = (\peg_nt. grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nTbase /\
       real_fringe pt' = MAP
         ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
         master /\
-      (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers nEbase) ==>
+      (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers gram_nEbase)
+        ==>
       (?eo.
         peg_eval cmlPEG (APPEND master sfx',peg_nt
-          ((INL:MMLnonT->MMLnonT+num) nTbase) I)
+          ((INL:MMLnonT->MMLnonT+num) gram_nTbase) I)
                  (peg_Success sfx' [pt'] eo))) ==>
    (!pfx apt sfx.
      IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
-     ptree_head apt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-       nDType /\ real_fringe apt = MAP
+     ptree_head apt = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+       peg_nt)) gram_nDType /\ real_fringe apt = MAP
        ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I)
        pfx /\
-     (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers nDType) ==>
+     (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers gram_nDType) ==>
      (?eo.
        peg_eval cmlPEG (APPEND pfx sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
-         nDType) I) (peg_Success sfx [apt] eo)))`,
+         gram_nDType) I) (peg_Success sfx [apt] eo)))`,
   CHEAT_TAC);;
 
 (* could generalise this slightly: allowing for nullable seps, but this would
@@ -1180,8 +1206,8 @@ let peg_linfix_complete = prove
     real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
    (?eo.
      peg_eval cmlPEG (APPEND pfx sfx,
-                      peg_linfix ((INL:MMLnonT->MMLnonT+num) P) (sym2peg C)
-                        (sym2peg SEP))
+                      cmlPEG_peg_linfix ((INL:MMLnonT->MMLnonT+num) P)
+                        (sym2peg C) (sym2peg SEP))
               (peg_Success sfx [pt] eo)))`,
   CHEAT_TAC);;
 
@@ -1203,7 +1229,8 @@ add_simp pmap_EQ;;
 let ptPapply0_FOLDL = prove
  (`!l a pt.
      ptPapply0 a (APPEND l [pt]) =
-     [bindNT0 nPapp [FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt; bpt]) a l;
+     [cmlPEG_bindNT0 gram_nPapp [FOLDL (\pcpt bpt. cmlPEG_bindNT0
+       gram_nPConApp [pcpt; bpt]) a l;
                      pt]]`,
   CHEAT_TAC);;
 
@@ -1260,6 +1287,7 @@ let cmlG_unambiguous = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
+   "cf";
    "sub"];;
 
 (* and the interface *)

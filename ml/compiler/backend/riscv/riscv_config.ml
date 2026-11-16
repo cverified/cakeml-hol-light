@@ -54,7 +54,7 @@ let riscv_names_def = new_definition
 
 (* [compute,allow_rebind] *)
 let riscv_config_riscv_names_def =
-  CONV_RULE (RAND_CONV (CAKE_EVAL [the_def])) riscv_names_def;;
+  CONV_RULE (RAND_CONV (CAKE_EVAL [return_def; the_def])) riscv_names_def;;
 
 (* HOL4 riscv_configScript.sml:48-54: the ML values that the definitions
    below antiquote *)

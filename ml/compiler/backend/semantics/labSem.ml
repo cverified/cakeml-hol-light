@@ -9,6 +9,7 @@
   The formal semantics of labLang
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;

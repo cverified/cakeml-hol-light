@@ -10,6 +10,7 @@
   Properties about flatLang and its semantics
 *)
 
+needs "candle/standard/monadic/holKernel.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
@@ -25,7 +26,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "flatProps"
   ["ast"; "evaluateProps"; "flatLang"; "flatSem"; "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["C"];;
+let _ = do_list hide_constant ["C"; "prog"];;
 
 let ctor_same_type_OPTREL = prove
  (`!c1 c2. flatSem_ctor_same_type c1 c2 <=> OPTREL (inv_image (=) SND) c1 c2`,
@@ -392,7 +393,8 @@ let evaluate_vars = prove
 
 (* HOL4 flatPropsScript.sml:546-605: code that the source has in a comment *)
 
-let pmatch_list_MAP_Pvar = prove
+(* pmatch_list_MAP_Pvar *)
+let flatProps_pmatch_list_MAP_Pvar = prove
  (`!xs vs. LENGTH xs = LENGTH vs ==>
    flatSem_pmatch_list s (MAP flat_Pvar xs) vs [] = Match (REVERSE (ZIP xs
      vs))`,
@@ -468,7 +470,7 @@ let flatProps_set_globals_def,flatProps_set_globals_ind =
   [`flatProps_set_globals (flat_Raise t e) = flatProps_set_globals e`;
    `flatProps_set_globals (flat_Handle t e pes) = (BAG_UNION)
     (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
-   `flatProps_set_globals (flat_Con t id' es) = flatProps_elist_globals es`;
+   `flatProps_set_globals (flat_Con t id es) = flatProps_elist_globals es`;
    `flatProps_set_globals (flat_Fun t v e) = flatProps_set_globals e`;
    `flatProps_set_globals (flat_App t op es) = (BAG_UNION)
     (flatProps_elist_globals es) (flatProps_op_gbag op)`;
@@ -499,7 +501,7 @@ let flatProps_esgc_free_def,flatProps_esgc_free_ind = define_wf
        flat_Raise t e -> flatProps_esgc_free e
      | flat_Handle t e pes ->
        flatProps_esgc_free e /\ ALL flatProps_esgc_free (MAP SND pes)
-     | flat_Con t id' es -> ALL flatProps_esgc_free es
+     | flat_Con t id es -> ALL flatProps_esgc_free es
      | flat_Fun t v e -> flatProps_set_globals e = EMPTY_BAG
      | flat_App t op es -> ALL flatProps_esgc_free es
      | flat_If t e1 e2 e3 ->
@@ -828,7 +830,8 @@ let mk_flat_install_conf_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["C"];;
+  ["C";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -9,6 +9,8 @@
   Correctness proof for stack_alloc
 *)
 
+needs "characteristic/cfFFIType.ml";;
+needs "characteristic/cfHeapsBase.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 (* for memcpy *)
@@ -30,7 +32,8 @@ let _ = cake_theory "stack_allocProof"
   ["stackLang"; "stackProps"; "stackSem"; "stack_alloc"; "wordSem";
    "word_gcFunctions"];;
 
-let _ = do_list hide_constant ["not"; "shift"; "stack_alloc"];;
+let _ = do_list hide_constant ["concl"; "not"; "prog"; "shift";
+  "stack_alloc"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2646,7 +2649,9 @@ add_simp compile_has_fp_ops;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["not";
+  ["concl";
+   "not";
+   "prog";
    "shift";
    "stack_alloc"];;
 

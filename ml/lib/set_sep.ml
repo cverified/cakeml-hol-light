@@ -2,7 +2,7 @@
 (*  set_sep: ported from HOL4's
     examples/machine-code/hoare-triple/set_sepScript.sml
     A HOL4 library theory, of which the port has the definitions and
-    18 theorems that CakeML needs.  Needed by 12 files of the port.  *)
+    18 theorems that CakeML needs.  Needed by 37 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)
@@ -17,6 +17,8 @@ let emp_def = new_definition
   `emp = (\s. (s = {}))`;;
 let cond_def = new_definition
   `cond c = (\s. (s = {}) /\ c)`;;
+let SEP_F_def = new_definition
+  `SEP_F s = F`;;
 let SEP_T_def = new_definition
   `SEP_T s = T`;;
 let SPLIT_def = new_definition
@@ -26,9 +28,14 @@ let STAR_def = new_definition
 
 overload_interface("*",
   `STAR:((A->bool)->bool)->((A->bool)->bool)->(A->bool)->bool`);;
+let SEP_EQ_def = new_definition
+  `SEP_EQ x = (\s. s = x)`;;
 
 let SEP_EXISTS = new_definition
   `(SEP_EXISTS) = (\f (s:'a->bool). (?) (\y. f y s))`;;
+
+let SEP_IMP_def = new_definition
+  `SEP_IMP p q = (!s. p s ==> q s)`;;
 
 let fun2set_def = new_definition
   `fun2set ((f:'b->'a),d) = {(a,f a) | a IN d}`;;

@@ -9,6 +9,7 @@
   Properties about closLang and its semantics
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
@@ -43,11 +44,17 @@ let _ = hide_overloads
    "compile","clos_mti_compile";
    "compile","clos_to_bvl_compile";
    "compile","compiler_compile";
+   "compile","crep_to_loop_compile";
    "compile","data_live_compile";
    "compile","data_space_compile";
    "compile","data_to_word_compile";
    "compile","flat_to_clos_compile";
    "compile","lab_to_target_compile";
+   "compile","loop_to_word_compile";
+   "compile","pan_globals_compile";
+   "compile","pan_simp_compile";
+   "compile","pan_structs_compile";
+   "compile","pan_to_crep_compile";
    "compile","source_to_flat_compile";
    "compile","source_to_source_compile";
    "compile","stack_alloc_compile";
@@ -125,14 +132,14 @@ let evaluate_better_ind = prove
    (!(args:closSem_v list) (s1:('c,'ffi)closSem_state). P2 args s1)`,
   CHEAT_TAC);;
 
-let ref_rel_def = new_definition
+let closProps_ref_rel_def = new_definition
   `closProps_ref_rel R x2 x3 =
      match (x2,x3) with
        (closSem_ValueArray vs,closSem_ValueArray ws) -> ALL2 R vs ws
      | (closSem_ByteArray as,closSem_ByteArray bs) -> as = bs
      | (closSem_Thunk ma a,closSem_Thunk mb b) -> ma = mb /\ R a b
      | (_,_) -> F`;;
-add_simp ref_rel_def;;
+add_simp closProps_ref_rel_def;;
 
 let ref_rel_simp = prove
  (`(closProps_ref_rel R (closSem_ValueArray vs) y <=> (?ws. y =
@@ -1516,8 +1523,8 @@ let v_to_list_NONE = prove
          closSem_v_to_list x = NONE)`,
   CHEAT_TAC);;
 
-(* [local] *)
-let v_rel_do_eq = prove
+(* v_rel_do_eq[local] *)
+let closProps_v_rel_do_eq = prove
  (`closProps_simple_val_rel vr ==>
    (!y1 y2 x1 x2.
      vr x1 y1 /\ vr x2 y2 ==>
@@ -1646,16 +1653,16 @@ let simple_val_rel_do_app = prove
 
 (* generic do_install compile proof *)
 let simple_compile_state_rel_def = new_definition
-  `simple_compile_state_rel vr sr comp' cr <=>
+  `simple_compile_state_rel vr sr comp cr <=>
      closProps_simple_state_rel vr sr /\
      (!(s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state).
          sr s t ==> closSem_state_clock
-         t = closSem_state_clock s /\ closSem_state_compile s = pure_cc
-           comp' (closSem_state_compile t) /\ closSem_state_compile_oracle
-         t = pure_co comp' o closSem_state_compile_oracle s /\
+         t = closSem_state_clock s /\ closSem_state_compile s = pure_cc comp
+           (closSem_state_compile t) /\ closSem_state_compile_oracle
+         t = pure_co comp o closSem_state_compile_oracle s /\
          (!n exps res p aux. SND (closSem_state_compile_oracle s n) =
            (p,aux) ==>
-             comp' (p,aux) = (exps,res) ==>
+             comp (p,aux) = (exps,res) ==>
              res = [] /\ LENGTH exps = LENGTH p /\ cr p exps) /\
          (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
          (!n. sr (closSem_state_code_fupd (K (closSem_state_code s))
@@ -1695,8 +1702,8 @@ let simple_val_rel_v_to_words = prove
 (* HOL4 closPropsScript.sml:2731-2736: a proof *)
 
 let simple_val_rel_do_install = prove
- (`!comp'. closProps_simple_val_rel vr /\ simple_compile_state_rel vr sr comp'
-  cr ==>
+ (`!comp. closProps_simple_val_rel vr /\ simple_compile_state_rel vr sr comp cr
+  ==>
      sr s (t:('c,'ffi)closSem_state) /\ ALL2 vr xs ys ==>
      (match closSem_do_install xs s with (Rerr err1,s1) -> (?err2 t1.
        closSem_do_install ys t = (Rerr err2,t1) /\

@@ -155,7 +155,7 @@ let gen_gc_def = new_definition
      let state =
          gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit conf))
            (gc_state_n_fupd (K (gen_gc_conf_limit conf)) (gc_state_heap_fupd (K
-           heap) empty_state)) in
+           heap) gc_shared_empty_state)) in
      let (roots,state) = gen_gc_gc_move_list conf state roots in
      let state = gen_gc_gc_move_loop conf state (gen_gc_conf_limit conf) in
        (roots,state)`;;
@@ -555,7 +555,7 @@ let gen_gc_gc_inv_init = prove
  (`heap_ok heap (gen_gc_conf_limit conf) ==>
     gen_gc_gc_inv conf (gc_state_ok_fupd (K (heap_length heap =
       gen_gc_conf_limit conf)) (gc_state_n_fupd (K (gen_gc_conf_limit conf))
-      (gc_state_heap_fupd (K heap) empty_state))) heap roots`,
+      (gc_state_heap_fupd (K heap) gc_shared_empty_state))) heap roots`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for

@@ -2,7 +2,7 @@
 (*  ffi: ported from HOL4's
     semantics/ffi/ffiScript.sml
     A definition theory, with 3 definitions, 10 datatypes and no
-    theorems.  Needed by 48 files of the port.  *)
+    theorems.  Needed by 62 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -67,8 +67,8 @@ let initial_ffi_state_def = new_definition
   `initial_ffi_state oc' (ffi:'ffi) =
      mk_ffi_state oc' ffi []`;;
 
-let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
-  "ffi_result =
+let ffi_ffi_result_INDUCT,ffi_ffi_result_RECURSION = define_datatype
+  "ffi_ffi_result =
      FFI_return ('ffi ffi_state) (word8 list)
    | FFI_final final_event";;
 

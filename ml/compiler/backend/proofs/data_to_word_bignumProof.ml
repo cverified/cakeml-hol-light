@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
@@ -572,13 +573,13 @@ let MAP_FST_EQ_IMP_IS_SOME_ALOOKUP = prove
   CHEAT_TAC);;
 
 let domain_adjust_sets = prove
- (`~(domain (FST (adjust_sets kept_names)) = {})`,
+ (`~(sptree_domain (FST (adjust_sets kept_names)) = {})`,
   CHEAT_TAC);;
 
 let env_to_list_domain_eq = prove
  (`env_to_list y2 (wordSem_state_permute t) = (l',permute) /\
    MAP FST l' = MAP FST ms ==>
-   domain (fromAList ms) = domain y2`,
+   sptree_domain (fromAList ms) = sptree_domain y2`,
   CHEAT_TAC);;
 
 let size_of_LE_append = prove

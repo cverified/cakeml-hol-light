@@ -9,6 +9,8 @@
   Correctness proof for bvl_const
 *)
 
+needs "candle/standard/semantics/holAxioms.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;

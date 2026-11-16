@@ -2,8 +2,7 @@
 (*  linear_scan: ported from HOL4's
     compiler/backend/reg_alloc/linear_scanScript.sml
     A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by linear_scanProof.ml, word_alloc.ml and
-    word_allocProof.ml.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -256,7 +255,7 @@ let point_inside_interval_def = new_definition
 
 let check_intervals_def = new_definition
   `check_intervals f int_beg int_end = (!r1 r2.
-     r1 IN domain int_beg /\ r2 IN domain int_beg /\
+     r1 IN sptree_domain int_beg /\ r2 IN sptree_domain int_beg /\
      interval_intersect (THE (sptree_lookup r1 int_beg),THE (sptree_lookup
        r1 int_end)) (THE (sptree_lookup r2 int_beg),THE (sptree_lookup r2
        int_end)) /\

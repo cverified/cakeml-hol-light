@@ -9,6 +9,7 @@
   Correctness proof for word_to_word
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/proofs/wordConvsProof.ml";;
 needs "compiler/backend/proofs/word_allocProof.ml";;
 needs "compiler/backend/proofs/word_copyProof.ml";;
@@ -37,6 +38,8 @@ let _ = cake_theory "word_to_wordProof"
    "word_instProof"; "word_removeProof"; "word_simpProof"; "word_to_word";
    "word_unreach"; "word_unreachProof"];;
 
+let _ = do_list hide_constant ["first_name"; "prog"];;
+
 (* HOL4 word_to_wordProofScript.sml:17: an overload that the source brings
    to the front: Call, written out as word_Call *)
 
@@ -50,7 +53,7 @@ add_simp FST_compile_single;;
 (*Chains up compile_single theorems*)
 let compile_single_lem = prove
  (`!prog n st.
-   domain (wordSem_state_locals st) = set_of_list (even_list n) /\
+   sptree_domain (wordSem_state_locals st) = set_of_list (even_list n) /\
    gc_fun_const_ok (wordSem_state_gc_fun st) ==>
    (?perm'.
    let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
@@ -116,7 +119,7 @@ let compile_single_eta = prove
 let code_rel_union_fromAList = prove
  (`!s l ls.
    word_to_wordProof_code_rel s l /\
-   domain s = domain l ==>
+   sptree_domain s = sptree_domain l ==>
    word_to_wordProof_code_rel (sptree_union s (fromAList ls))
      (sptree_union l (fromAList (MAP (\p. word_to_word_compile_single t k a c
      (p,NONE)) ls)))`,
@@ -126,7 +129,7 @@ let code_rel_union_fromAList = prove
 let compile_single_correct = prove
  (`!prog (st:('a,'c,'ffi)wordSem_state) l coracle cc.
    word_to_wordProof_code_rel (wordSem_state_code st) l /\
-   (domain (wordSem_state_code st) = domain l) /\
+   (sptree_domain (wordSem_state_code st) = sptree_domain l) /\
    (wordSem_state_compile st = (\conf progs.
      cc conf (MAP (\p. word_to_word_compile_single tt kk aa co (p,NONE))
        progs))) /\
@@ -145,8 +148,8 @@ let compile_single_correct = prove
            res1 = res /\
            word_to_wordProof_code_rel (wordSem_state_code rst)
              (wordSem_state_code rst1) /\
-           domain (wordSem_state_code rst) = domain (wordSem_state_code
-             rst1) /\
+           sptree_domain (wordSem_state_code rst) = sptree_domain
+             (wordSem_state_code rst1) /\
            rst1 = wordSem_state_compile_fupd (K cc)
              (wordSem_state_compile_oracle_fupd (K ((I ## MAP (\p.
              word_to_word_compile_single tt kk aa co (p,NONE))) o
@@ -232,7 +235,7 @@ let compile_word_to_word_thm = prove
  (cake_as_vars (fun () ->
     `word_to_wordProof_code_rel (wordSem_state_code
   (st:('a,'c,'ffi)wordSem_state)) l /\
-     (domain (wordSem_state_code st) = domain l) /\
+     (sptree_domain (wordSem_state_code st) = sptree_domain l) /\
      (wordSem_state_compile st = (\conf progs.
      cc conf (MAP (\p. full_compile_single tt kk aa co (p,NONE)) progs)))
        /\
@@ -335,7 +338,7 @@ let no_install_no_alloc_compile_single_correct = prove
      wordConvs_no_install prog /\ no_alloc prog /\
      no_install_code (wordSem_state_code st) /\ no_alloc_code
        (wordSem_state_code st) /\
-     (domain (wordSem_state_code st) = domain l) /\
+     (sptree_domain (wordSem_state_code st) = sptree_domain l) /\
      gc_fun_const_ok (wordSem_state_gc_fun st) ==>
      (?perm'.
        let (res,rst) = wordSem_evaluate (prog,wordSem_state_permute_fupd (K
@@ -346,8 +349,8 @@ let no_install_no_alloc_compile_single_correct = prove
              res1 = res /\
              word_to_wordProof_code_rel (wordSem_state_code rst)
                (wordSem_state_code rst1) /\
-             domain (wordSem_state_code rst) = domain (wordSem_state_code
-               rst1) /\
+             sptree_domain (wordSem_state_code rst) = sptree_domain
+               (wordSem_state_code rst1) /\
              rst1 = wordSem_state_code_fupd (K (wordSem_state_code rst1))
                rst)`,
   CHEAT_TAC);;
@@ -475,7 +478,7 @@ let panLang_compile_word_to_word_thm = prove
   (st:('a,'c,'ffi)wordSem_state)) l /\
    no_install_code (wordSem_state_code st) /\ no_alloc_code
      (wordSem_state_code st) /\ no_mt_code (wordSem_state_code st) /\
-   (domain (wordSem_state_code st) = domain l) /\
+   (sptree_domain (wordSem_state_code st) = sptree_domain l) /\
    gc_fun_const_ok (wordSem_state_gc_fun st) ==>
    (?perm' clk.
      let prog = word_Call NONE (SOME start) [0] NONE in
@@ -513,6 +516,11 @@ let word_to_word_compile_semantics = prove
      wordSem_semantics s start =
      wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`),
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["first_name";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

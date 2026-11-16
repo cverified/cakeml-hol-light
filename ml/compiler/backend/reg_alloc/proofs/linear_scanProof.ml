@@ -23,18 +23,22 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 let _ = cake_theory "linear_scanProof"
   ["linear_scan"; "ml_monadBase"; "mllist"; "reg_alloc"; "reg_allocProof"];;
 
+let _ = do_list hide_constant ["pair"; "unit"];;
+
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["return","errorMonad_return"];;
+  ["return","camlPtreeConversion_return";
+   "return","errorLogMonad_return";
+   "return","errorMonad_return"];;
 
 (* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
 
 (* TODO: clean up this file: e.g., move things upstream *)
 
 let set_MAP_FST_toAList_eq_domain = prove
- (`!s. set_of_list (MAP FST (toAList s)) = domain s`,
+ (`!s. set_of_list (MAP FST (toAList s)) = sptree_domain s`,
   CHEAT_TAC);;
 
 let numset_list_insert_FOLDL = prove
@@ -54,8 +58,8 @@ let both_numset_list_insert_equal = prove
   CHEAT_TAC);;
 
 let domain_numset_list_insert = prove
- (`!l s. domain (linear_scan_numset_list_insert l s) = set_of_list l UNION
-  domain s`,
+ (`!l s. sptree_domain (linear_scan_numset_list_insert l s) = set_of_list l
+  UNION sptree_domain s`,
   CHEAT_TAC);;
 
 (* why breaking encapsulation like this? To get rid of the assumption `wf s` *)
@@ -72,32 +76,33 @@ let numset_list_insert_FILTER = prove
 
 (* domain_numset_list_delete *)
 let linear_scanProof_domain_numset_list_delete = prove
- (`!l s. domain (numset_list_delete l s) = (domain s) DIFF (set_of_list l)`,
+ (`!l s. sptree_domain (numset_list_delete l s) = (sptree_domain s) DIFF
+  (set_of_list l)`,
   CHEAT_TAC);;
 
 let check_partial_col_success_INJ_lemma = prove
  (`!l live flive f.
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_partial_col f l live flive = SOME (live',flive') ==>
-   INJ f (set_of_list l UNION domain live) UNIV`,
+   INJ f (set_of_list l UNION sptree_domain live) UNIV`,
   CHEAT_TAC);;
 
 let check_partial_col_success_INJ = prove
  (`!l live flive f.
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_partial_col f l live flive = SOME (live',flive') ==>
-   INJ f (set_of_list l UNION domain live) UNIV /\
-   INJ f (domain live') UNIV`,
+   INJ f (set_of_list l UNION sptree_domain live) UNIV /\
+   INJ f (sptree_domain live') UNIV`,
   CHEAT_TAC);;
 
 let check_partial_col_input_monotone = prove
  (`!f live1 flive1 live2 flive2 l v.
-   IMAGE f (domain live1) = domain flive1 /\ IMAGE f (domain live2) = domain
-     flive2 ==>
-   domain live1 SUBSET domain live2 ==>
-   INJ f (domain live2) UNIV ==>
+   IMAGE f (sptree_domain live1) = sptree_domain flive1 /\ IMAGE f
+     (sptree_domain live2) = sptree_domain flive2 ==>
+   sptree_domain live1 SUBSET sptree_domain live2 ==>
+   INJ f (sptree_domain live2) UNIV ==>
    check_partial_col f l live2 flive2 = SOME v ==>
    (?livein1 flivein1. check_partial_col f l live1 flive1 = SOME
      (livein1,flivein1))`,
@@ -105,39 +110,39 @@ let check_partial_col_input_monotone = prove
 
 let numset_list_delete_IMAGE = prove
  (`!f l live flive v.
-   domain flive = IMAGE f (domain live) ==>
-   INJ f (domain live) UNIV ==>
+   sptree_domain flive = IMAGE f (sptree_domain live) ==>
+   INJ f (sptree_domain live) UNIV ==>
    check_partial_col f l live flive = SOME v ==>
-   domain (numset_list_delete (MAP f l) flive) = IMAGE f (domain
-     (numset_list_delete l live))`,
+   sptree_domain (numset_list_delete (MAP f l) flive) = IMAGE f
+     (sptree_domain (numset_list_delete l live))`,
   CHEAT_TAC);;
 
 let check_partial_col_IMAGE = prove
  (`!f l live flive live' flive'.
-   (domain flive) = IMAGE f (domain live) ==>
+   (sptree_domain flive) = IMAGE f (sptree_domain live) ==>
    check_partial_col f l live flive = SOME (live',flive') ==>
-   (domain flive') = IMAGE f (domain live')`,
+   (sptree_domain flive') = IMAGE f (sptree_domain live')`,
   CHEAT_TAC);;
 
 let branch_domain = prove
  (`!(live1:1 spt) (live2:1 spt).
-   set_of_list (MAP FST (toAList (difference live2 live1))) UNION domain
-     live1 = domain live1 UNION domain live2`,
+   set_of_list (MAP FST (toAList (difference live2 live1))) UNION
+     sptree_domain live1 = sptree_domain live1 UNION sptree_domain live2`,
   CHEAT_TAC);;
 
 let check_partial_col_branch_domain = prove
  (`!(live1:1 spt) (live2:1 spt) flive1 liveout fliveout.
    check_partial_col f (MAP FST (toAList (difference live2 live1))) live1
      flive1 = SOME (liveout,fliveout) ==>
-   domain liveout = domain live1 UNION domain live2`,
+   sptree_domain liveout = sptree_domain live1 UNION sptree_domain live2`,
   CHEAT_TAC);;
 
 
 let check_partial_col_branch_comm = prove
  (`!f live1 flive1 live2 flive2 a b.
-   INJ f (domain live1) UNIV ==>
-   domain flive1 = IMAGE f (domain live1) /\ domain flive2 = IMAGE f (domain
-     live2) ==>
+   INJ f (sptree_domain live1) UNIV ==>
+   sptree_domain flive1 = IMAGE f (sptree_domain live1) /\ sptree_domain
+     flive2 = IMAGE f (sptree_domain live2) ==>
    check_partial_col f (MAP FST (toAList (difference live2 live1))) live1
      flive1 = SOME (a,b) ==>
    (?c d. check_partial_col f (MAP FST (toAList (difference live1 live2)))
@@ -146,9 +151,9 @@ let check_partial_col_branch_comm = prove
 
 let check_partial_col_list_monotone = prove
  (`!f live flive (s1:1 spt) (s2:1 spt) a b.
-   domain flive = IMAGE f (domain live) ==>
-   INJ f (domain live) UNIV ==>
-   domain s1 SUBSET domain s2 ==>
+   sptree_domain flive = IMAGE f (sptree_domain live) ==>
+   INJ f (sptree_domain live) UNIV ==>
+   sptree_domain s1 SUBSET sptree_domain s2 ==>
    check_partial_col f (MAP FST (toAList s2)) live flive = SOME (a,b) ==>
    (?c d. check_partial_col f (MAP FST (toAList s1)) live flive = SOME
      (c,d))`,
@@ -156,11 +161,11 @@ let check_partial_col_list_monotone = prove
 
 let check_live_tree_success = prove
  (`!lt live flive live' flive' f.
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_live_tree f lt live flive = SOME (live',flive') ==>
-   domain flive' = IMAGE f (domain live') /\
-   INJ f (domain live') UNIV`,
+   sptree_domain flive' = IMAGE f (sptree_domain live') /\
+   INJ f (sptree_domain live') UNIV`,
   CHEAT_TAC);;
 
 let ALL_DISTINCT_INJ_MAP = prove
@@ -170,42 +175,42 @@ let ALL_DISTINCT_INJ_MAP = prove
 let check_col_output = prove
  (`!f live live' flive'.
    check_col f live = SOME (live',flive') ==>
-   domain flive' = IMAGE f (domain live') /\
-   INJ f (domain live') UNIV`,
+   sptree_domain flive' = IMAGE f (sptree_domain live') /\
+   INJ f (sptree_domain live') UNIV`,
   CHEAT_TAC);;
 
 let check_col_success = prove
  (`!f live.
-   INJ f (domain live) UNIV ==>
+   INJ f (sptree_domain live) UNIV ==>
    (?flive. check_col f live = SOME (live,flive))`,
   CHEAT_TAC);;
 
 let check_clash_tree_output = prove
  (`!f ct live flive livein flivein.
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_clash_tree f ct live flive = SOME (livein,flivein) ==>
-   domain flivein = IMAGE f (domain livein) /\
-   INJ f (domain livein) UNIV`,
+   sptree_domain flivein = IMAGE f (sptree_domain livein) /\
+   INJ f (sptree_domain livein) UNIV`,
   CHEAT_TAC);;
 
 let get_live_tree_correct_lemma = prove
  (`!f live flive live' flive' ct livein' flivein'.
-   IMAGE f (domain live) = domain flive /\ IMAGE f (domain live') = domain
-     flive' ==>
-   INJ f (domain live') UNIV ==>
-   domain live SUBSET domain live' ==>
+   IMAGE f (sptree_domain live) = sptree_domain flive /\ IMAGE f
+     (sptree_domain live') = sptree_domain flive' ==>
+   INJ f (sptree_domain live') UNIV ==>
+   sptree_domain live SUBSET sptree_domain live' ==>
    check_live_tree f (get_live_tree ct) live' flive' = SOME
      (livein',flivein') ==>
    (?livein flivein. check_clash_tree f ct live flive = SOME
      (livein,flivein) /\
-   domain livein SUBSET domain livein')`,
+   sptree_domain livein SUBSET sptree_domain livein')`,
   CHEAT_TAC);;
 
 let get_live_tree_correct = prove
  (`!f live flive ct livein flivein.
-   IMAGE f (domain live) = domain flive ==>
-   INJ f (domain live) UNIV ==>
+   IMAGE f (sptree_domain live) = sptree_domain flive ==>
+   INJ f (sptree_domain live) UNIV ==>
    check_live_tree f (get_live_tree ct) live flive = SOME (livein,flivein)
      ==>
    (?livein' flivein'. check_clash_tree f ct live flive = SOME
@@ -232,7 +237,7 @@ let check_live_tree_eq_get_live_backward = prove
   CHEAT_TAC);;
 
 let fix_domination_fixes_domination = prove
- (`!lt. domain (get_live_backward (fix_domination lt) LN) = EMPTY`,
+ (`!lt. sptree_domain (get_live_backward (fix_domination lt) LN) = EMPTY`,
   CHEAT_TAC);;
 
 let fix_domination_check_live_tree = prove
@@ -314,18 +319,18 @@ let lookup_numset_list_add_if_gt = prove
   CHEAT_TAC);;
 
 let domain_numset_list_add_if = prove
- (`!l v s P. domain (numset_list_add_if l v s P) = set_of_list l UNION domain
-  s`,
+ (`!l v s P. sptree_domain (numset_list_add_if l v s P) = set_of_list l UNION
+  sptree_domain s`,
   CHEAT_TAC);;
 
 let domain_numset_list_add_if_lt = prove
- (`!l v s. domain (numset_list_add_if_lt l v s) = set_of_list l UNION domain
-  s`,
+ (`!l v s. sptree_domain (numset_list_add_if_lt l v s) = set_of_list l UNION
+  sptree_domain s`,
   CHEAT_TAC);;
 
 let domain_numset_list_add_if_gt = prove
- (`!l v s. domain (numset_list_add_if_gt l v s) = set_of_list l UNION domain
-  s`,
+ (`!l v s. sptree_domain (numset_list_add_if_gt l v s) = set_of_list l UNION
+  sptree_domain s`,
   CHEAT_TAC);;
 
 let lookup_numset_list_delete = prove
@@ -356,19 +361,20 @@ let get_intervals_intend_augment = prove
 
 let check_number_property_intend = prove
  (`!end_out lt n_in live_in.
-   check_number_property (\n (live:1 spt). !r. r IN domain live ==> (?v.
-     sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live_in ==>
-   (!r. r IN domain (get_live_backward lt live_in) ==> (?v. sptree_lookup
-     r end_out = SOME v /\ n_in - (size_of_live_tree lt) <= v))`,
+   check_number_property (\n (live:1 spt). !r. r IN sptree_domain live ==>
+     (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live_in
+     ==>
+   (!r. r IN sptree_domain (get_live_backward lt live_in) ==> (?v.
+     sptree_lookup r end_out = SOME v /\ n_in - (size_of_live_tree lt) <= v))`,
   CHEAT_TAC);;
 
 let get_intervals_live_less_end = prove
  (`!lt n_in beg_in end_in live_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in /\
-   (!r. r IN domain live_in ==> (?v. sptree_lookup r end_in = SOME v /\ n_in
-     <= v)) ==>
-   check_number_property (\n (live:1 spt). !r. r IN domain live ==> (?v.
-     sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live_in`,
+   (!r. r IN sptree_domain live_in ==> (?v. sptree_lookup r end_in = SOME v
+     /\ n_in <= v)) ==>
+   check_number_property (\n (live:1 spt). !r. r IN sptree_domain live ==>
+     (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live_in`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_intbeg_reduce = prove
@@ -401,9 +407,9 @@ let get_intervals_withlive_live_intbeg = prove
  (`!lt n_in beg_in end_in live n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals_withlive lt n_in beg_in end_in
      live /\
-   (!r. r IN domain live ==> ~(r IN domain beg_in)) ==>
-   (!r. r IN domain (get_live_backward lt live) ==> ~(r IN domain
-     beg_out))`,
+   (!r. r IN sptree_domain live ==> ~(r IN sptree_domain beg_in)) ==>
+   (!r. r IN sptree_domain (get_live_backward lt live) ==> ~(r IN
+     sptree_domain beg_out))`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_beg_less_live = prove
@@ -411,10 +417,10 @@ let get_intervals_withlive_beg_less_live = prove
    (n_out,beg_out,end_out) = get_intervals_withlive lt n_in beg_in end_in
      live_in /\
    (!r v. sptree_lookup r beg_in = SOME v ==> n_in <= v) /\
-   (!r. r IN domain live_in ==> ~(r IN domain beg_in)) ==>
-   check_number_property_strong (\n (live:1 spt). !r. r IN domain live ==>
-     option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n) lt n_in
-     live_in`,
+   (!r. r IN sptree_domain live_in ==> ~(r IN sptree_domain beg_in)) ==>
+   check_number_property_strong (\n (live:1 spt). !r. r IN sptree_domain
+     live ==> option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n) lt
+     n_in live_in`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_n_eq_get_intervals_n = prove
@@ -447,14 +453,15 @@ let get_intervals_withlive_beg_subset_get_intervals_beg = prove
  (`!lt n beg_in1 beg_in2 end n1 beg_out1 end1 n2 beg_out2 end2 live.
    (n1,beg_out1,end1) = get_intervals_withlive lt n beg_in1 end live /\
    (n2,beg_out2,end2) = get_intervals lt n beg_in2 end /\
-   domain beg_in1 SUBSET domain beg_in2 ==>
-   domain beg_out1 SUBSET domain beg_out2`,
+   sptree_domain beg_in1 SUBSET sptree_domain beg_in2 ==>
+   sptree_domain beg_out1 SUBSET sptree_domain beg_out2`,
   CHEAT_TAC);;
 
 let get_intervals_beg_subset_registers = prove
  (`!lt n_in beg_in end_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in ==>
-   domain beg_out SUBSET (domain beg_in UNION (live_tree_registers lt))`,
+   sptree_domain beg_out SUBSET (sptree_domain beg_in UNION
+     (live_tree_registers lt))`,
   CHEAT_TAC);;
 
 (* This theorem looks like lipschitz continuity: it says something like f(x+y) <= f(x)+y *)
@@ -463,39 +470,42 @@ let get_intervals_withlive_beg_lipschitz = prove
   begout2 endout2.
    (nout1,begout1,endout1) = get_intervals_withlive lt n1 beg1 end1 live /\
    (nout2,begout2,endout2) = get_intervals_withlive lt n2 beg2 end2 live /\
-   domain beg2 SUBSET domain beg1 UNION domain s ==>
-   domain begout2 SUBSET domain begout1 UNION domain s`,
+   sptree_domain beg2 SUBSET sptree_domain beg1 UNION sptree_domain s ==>
+   sptree_domain begout2 SUBSET sptree_domain begout1 UNION sptree_domain
+     s`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_registers_subset_beg = prove
  (`!lt n_in beg_in end_in n_out beg_out end_out live_in.
-   domain end_in SUBSET domain beg_in UNION domain live_in /\
+   sptree_domain end_in SUBSET sptree_domain beg_in UNION sptree_domain
+     live_in /\
    (n_out,beg_out,end_out) = get_intervals_withlive lt n_in beg_in end_in
      live_in ==>
-   domain end_out SUBSET domain beg_out UNION domain (get_live_backward lt
-     live_in)`,
+   sptree_domain end_out SUBSET sptree_domain beg_out UNION sptree_domain
+     (get_live_backward lt live_in)`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_live_tree_registers_subset_endout = prove
  (`!lt n_in beg_in end_in live_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals_withlive lt n_in beg_in end_in
      live_in ==>
-   domain end_in UNION live_tree_registers lt SUBSET domain end_out`,
+   sptree_domain end_in UNION live_tree_registers lt SUBSET sptree_domain
+     end_out`,
   CHEAT_TAC);;
 
 let get_intervals_domain_eq_live_tree_registers = prove
  (`!lt n beg end.
    (n,beg,end) = get_intervals (fix_domination lt) (&0) LN LN ==>
-   domain beg = live_tree_registers (fix_domination lt) /\
-   domain end = live_tree_registers (fix_domination lt)`,
+   sptree_domain beg = live_tree_registers (fix_domination lt) /\
+   sptree_domain end = live_tree_registers (fix_domination lt)`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_domain_eq_live_tree_registers = prove
  (`!lt n beg end.
    (n,beg,end) = get_intervals_withlive (fix_domination lt) (&0) LN LN LN
      ==>
-   domain beg = live_tree_registers (fix_domination lt) /\
-   domain end = live_tree_registers (fix_domination lt)`,
+   sptree_domain beg = live_tree_registers (fix_domination lt) /\
+   sptree_domain end = live_tree_registers (fix_domination lt)`,
   CHEAT_TAC);;
 
 let get_intervals_withlive_beg_eq_get_intervals_beg = prove
@@ -508,23 +518,23 @@ let get_intervals_withlive_beg_eq_get_intervals_beg = prove
 let get_intervals_end_increase = prove
  (`!lt n_in beg_in end_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in ==>
-   domain end_in SUBSET domain end_out`,
+   sptree_domain end_in SUBSET sptree_domain end_out`,
   CHEAT_TAC);;
 
 let check_number_property_subset_endout = prove
  (`!lt n_in beg_in end_in live_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in /\
-   domain live_in SUBSET domain end_in ==>
-   check_number_property_strong (\n (live:1 spt). domain live SUBSET
-     domain end_out) lt n_in live_in`,
+   sptree_domain live_in SUBSET sptree_domain end_in ==>
+   check_number_property_strong (\n (live:1 spt). sptree_domain live
+     SUBSET sptree_domain end_out) lt n_in live_in`,
   CHEAT_TAC);;
 
 let get_intervals_beg_less_live = prove
  (`!lt live_in n_out beg_out end_out.
    (n_out,beg_out,end_out) = get_intervals (fix_domination lt) (&0) LN LN
      ==>
-   check_number_property_strong (\n (live:1 spt). !r. r IN domain live ==>
-     option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n)
+   check_number_property_strong (\n (live:1 spt). !r. r IN sptree_domain
+     live ==> option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n)
      (fix_domination lt) (&0) LN`,
   CHEAT_TAC);;
 
@@ -572,17 +582,18 @@ let check_intervals_check_live_tree_lemma = prove
  (`!lt n_in beg_out end_out f live flive.
    check_startlive_prop lt n_in beg_out end_out (n_in - size_of_live_tree
      lt) /\
-   check_number_property_strong (\n (live':1 spt). !r. r IN domain live' ==>
-     option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n) lt n_in live /\
-   check_number_property (\n (live':1 spt). !r. r IN domain live' ==> (?v.
-     sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live /\
-   check_number_property_strong (\n (live':1 spt). domain live' SUBSET
-     domain end_out) lt n_in live /\
-   domain beg_out = domain end_out /\
-   live_tree_registers lt SUBSET domain end_out /\
+   check_number_property_strong (\n (live':1 spt). !r. r IN sptree_domain
+     live' ==> option_CASE (sptree_lookup r beg_out) n_out (\x. x) <= n) lt
+     n_in live /\
+   check_number_property (\n (live':1 spt). !r. r IN sptree_domain live' ==>
+     (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt n_in live /\
+   check_number_property_strong (\n (live':1 spt). sptree_domain live'
+     SUBSET sptree_domain end_out) lt n_in live /\
+   sptree_domain beg_out = sptree_domain end_out /\
+   live_tree_registers lt SUBSET sptree_domain end_out /\
    check_intervals f beg_out end_out /\
-   domain flive = IMAGE f (domain live) /\
-   INJ f (domain live) UNIV ==>
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV ==>
    (?liveout fliveout. check_live_tree f lt live flive = SOME
      (liveout,fliveout))`,
   CHEAT_TAC);;
@@ -597,11 +608,11 @@ let check_intervals_check_live_tree = prove
 
 let get_intervals_ct_aux_live = prove
  (`!ct n_in beg_in end_in live_in live_in' n_out beg_out end_out live_out.
-   domain live_in = domain live_in' /\
+   sptree_domain live_in = sptree_domain live_in' /\
    (n_out,beg_out,end_out,live_out) = get_intervals_ct_aux ct n_in beg_in
      end_in live_in ==>
-   domain live_out = domain (get_live_backward (get_live_tree ct)
-     live_in')`,
+   sptree_domain live_out = sptree_domain (get_live_backward
+     (get_live_tree ct) live_in')`,
   CHEAT_TAC);;
 
 let get_intervals_ct_aux_int = prove
@@ -866,7 +877,7 @@ let good_linear_scan_state_def = new_definition
        ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l /\
        ALL (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_stacknum st) l /\
-       domain (linear_scan_state_phyregs st) = {EL r
+       sptree_domain (linear_scan_state_phyregs st) = {EL r
          (linear_scan_hidden_state_colors sth) | r | MEM r l /\ is_phy_var r
          /\ EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st} /\
@@ -932,21 +943,22 @@ let add_active_interval_output = prove
 let find_color_in_list_output = prove
  (`!forbidden col l rest.
    find_color_in_list l forbidden = SOME (col,rest) ==>
-   MEM col l /\ ~(col IN domain forbidden) /\
+   MEM col l /\ ~(col IN sptree_domain forbidden) /\
    (?l1 l2. rest = APPEND l1 l2 /\ l = APPEND l1 (CONS col l2))`,
   CHEAT_TAC);;
 
 let find_color_in_colornum_invariants = prove
  (`!st forbidden sth l pos forced mincol.
    good_linear_scan_state st sth l pos forced mincol /\
-   domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors sth) | r |
-     MEM r l} /\
+   sptree_domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors
+     sth) | r | MEM r l} /\
    find_color_in_colornum st forbidden = (stout,SOME col) ==>
    good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. CONS col l)
      stout) sth l pos forced mincol /\ linear_scan_state_colornum
    st <= col /\ col < linear_scan_state_colornum stout
      /\ linear_scan_state_colornum
-   st <= linear_scan_state_colornum stout /\ ~(col IN domain forbidden) /\
+   st <= linear_scan_state_colornum stout /\ ~(col IN sptree_domain
+     forbidden) /\
    st = linear_scan_state_colornum_fupd (K (linear_scan_state_colornum
      st)) (linear_scan_state_colorpool_fupd (K (linear_scan_state_colorpool
      st)) stout)`,
@@ -955,12 +967,13 @@ let find_color_in_colornum_invariants = prove
 let find_color_invariants = prove
  (`!st forbidden stout col sth l pos forced mincol.
    good_linear_scan_state st sth l pos forced mincol /\
-   domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors sth) | r |
-     MEM r l} /\
+   sptree_domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors
+     sth) | r | MEM r l} /\
    find_color st forbidden = (stout,SOME col) ==>
    good_linear_scan_state (linear_scan_state_colorpool_fupd (\l. CONS col l)
      stout) sth l pos forced mincol /\
-   col < linear_scan_state_colornum stout /\ ~(col IN domain forbidden) /\
+   col < linear_scan_state_colornum stout /\ ~(col IN sptree_domain
+     forbidden) /\
    st = linear_scan_state_colornum_fupd (K (linear_scan_state_colornum
      st)) (linear_scan_state_colorpool_fupd (K (linear_scan_state_colorpool
      st)) stout)`,
@@ -1108,7 +1121,7 @@ let forbidden_is_from_map_color_forced_def = new_definition
   `forbidden_is_from_map_color_forced forced l colors reg (forbidden:1 spt) =
        (!reg2. MEM reg2 l /\
               (MEM (reg2,reg) forced \/ MEM (reg,reg2) forced) ==>
-              EL reg2 colors IN domain forbidden)`;;
+              EL reg2 colors IN sptree_domain forbidden)`;;
 
 let edges_to_adjlist_FOLDR_output = prove
  (`!forced sth.
@@ -1172,10 +1185,10 @@ let color_register_invariants = prove
  (`!st sth l pos forced reg col forbidden mincol.
    good_linear_scan_state st sth l pos forced mincol /\
    forbidden_is_from_map_color_forced forced l
-     (linear_scan_hidden_state_colors sth) reg forbidden /\ ~(col IN domain
-     forbidden) /\
-   (is_phy_var reg ==> domain (linear_scan_state_phyregs st) SUBSET domain
-     forbidden) /\
+     (linear_scan_hidden_state_colors sth) reg forbidden /\ ~(col IN
+     sptree_domain forbidden) /\
+   (is_phy_var reg ==> sptree_domain (linear_scan_state_phyregs st) SUBSET
+     sptree_domain forbidden) /\
    ~(MEM col (APPEND (linear_scan_state_colorpool st) (MAP (\(e,r). EL r
      (linear_scan_hidden_state_colors sth)) (linear_scan_state_active st)))) /\
    EL reg (linear_scan_hidden_state_int_beg sth) = pos /\
@@ -1206,8 +1219,8 @@ let find_spill_invariants = prove
    reg < LENGTH (linear_scan_hidden_state_colors sth) /\
    forbidden_is_from_map_color_forced forced l
      (linear_scan_hidden_state_colors sth) reg forbidden /\
-   (is_phy_var reg ==> domain (linear_scan_state_phyregs st) SUBSET domain
-     forbidden) /\
+   (is_phy_var reg ==> sptree_domain (linear_scan_state_phyregs st) SUBSET
+     sptree_domain forbidden) /\
    EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
      (linear_scan_hidden_state_int_end sth) ==>
    (?stout sthout. (M_success stout,sthout) = find_spill st forbidden reg
@@ -1235,10 +1248,10 @@ let linear_reg_alloc_step_aux_invariants = prove
    reg < LENGTH (linear_scan_hidden_state_colors sth) /\
    forbidden_is_from_map_color_forced forced l
      (linear_scan_hidden_state_colors sth) reg forbidden /\
-   (is_phy_var reg ==> domain (linear_scan_state_phyregs st) SUBSET domain
-     forbidden) /\
-   domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors sth) | r |
-     MEM r l} /\
+   (is_phy_var reg ==> sptree_domain (linear_scan_state_phyregs st) SUBSET
+     sptree_domain forbidden) /\
+   sptree_domain forbidden SUBSET {EL r (linear_scan_hidden_state_colors
+     sth) | r | MEM r l} /\
    EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
      (linear_scan_hidden_state_int_end sth) ==>
    (?stout sthout. (M_success stout,sthout) = linear_reg_alloc_step_aux st
@@ -1765,7 +1778,7 @@ let linear_reg_alloc_intervals_correct = prove
 
 let good_bijection_state_def = new_definition
   `good_bijection_state st regset = (
-       regset = domain (bijection_state_bij st) /\
+       regset = sptree_domain (bijection_state_bij st) /\
        (
          sp_inverts (bijection_state_bij st) (bijection_state_invbij st) /\
          sp_inverts (bijection_state_invbij st) (bijection_state_bij st))
@@ -1776,10 +1789,10 @@ let good_bijection_state_def = new_definition
            (sptree_lookup r (bijection_state_bij st))))) /\
          (!r. r IN regset /\ is_phy_var r ==> r = (the 0 (sptree_lookup r
            (bijection_state_bij st))))) /\
-       (!r. r IN domain (bijection_state_invbij st) /\ is_stack_var r ==> r
-         < bijection_state_nstack st) /\
-       (!r. r IN domain (bijection_state_invbij st) /\ is_alloc_var r ==> r
-         < bijection_state_nalloc st) /\
+       (!r. r IN sptree_domain (bijection_state_invbij st) /\ is_stack_var r
+         ==> r < bijection_state_nstack st) /\
+       (!r. r IN sptree_domain (bijection_state_invbij st) /\ is_alloc_var r
+         ==> r < bijection_state_nalloc st) /\
        (
          is_stack_var (bijection_state_nstack st) /\
          is_alloc_var (bijection_state_nalloc st)) /\
@@ -1809,17 +1822,17 @@ let foldi_find_bijection_invariants = prove
  (`!st s regset.
    good_bijection_state st regset ==>
    good_bijection_state (foldi (\r v acc. find_bijection_step acc r) 0 st
-     s) (domain s UNION regset)`,
+     s) (sptree_domain s UNION regset)`,
   CHEAT_TAC);;
 
 let in_clash_tree_set_eq = prove
  (`(!w r. in_clash_tree (reg_alloc_Delta w r) = set_of_list w UNION set_of_list
   r) /\
-   (!names. in_clash_tree (reg_alloc_Set names) = domain names) /\
+   (!names. in_clash_tree (reg_alloc_Set names) = sptree_domain names) /\
    (!name_opt t1 t2.
     in_clash_tree (reg_alloc_Branch name_opt t1 t2) =
-    (match name_opt with SOME names -> domain names UNION in_clash_tree t1
-      UNION in_clash_tree t2
+    (match name_opt with SOME names -> sptree_domain names UNION
+      in_clash_tree t1 UNION in_clash_tree t2
         | NONE -> in_clash_tree t1 UNION in_clash_tree t2)) /\
    (!t1 t2. in_clash_tree (reg_alloc_Seq t1 t2) = in_clash_tree t1 UNION
      in_clash_tree t2)`,
@@ -1881,8 +1894,8 @@ let get_intervals_ct_monad_aux_correct = prove
      (linear_scan_hidden_state_int_beg sth) /\
    (!r. in_clash_tree ct r ==> r < LENGTH (linear_scan_hidden_state_int_beg
      sth)) /\
-   (!r. r IN domain live ==> r < LENGTH (linear_scan_hidden_state_int_beg
-     sth)) ==>
+   (!r. r IN sptree_domain live ==> r < LENGTH
+     (linear_scan_hidden_state_int_beg sth)) ==>
    (?sthout. get_intervals_ct_monad_aux ct n live sth = (M_success
      (nout,liveout),sthout) /\
    sptree_eq_list int_begout (linear_scan_hidden_state_int_beg sthout) /\
@@ -1891,8 +1904,8 @@ let get_intervals_ct_monad_aux_correct = prove
      (linear_scan_hidden_state_int_beg sth) /\
    LENGTH (linear_scan_hidden_state_int_end sthout) = LENGTH
      (linear_scan_hidden_state_int_end sth) /\
-   (!r. r IN domain liveout ==> r < LENGTH (linear_scan_hidden_state_int_beg
-     sth)) /\
+   (!r. r IN sptree_domain liveout ==> r < LENGTH
+     (linear_scan_hidden_state_int_beg sth)) /\
    sthout = linear_scan_hidden_state_int_end_fupd (K
      (linear_scan_hidden_state_int_end sthout))
      (linear_scan_hidden_state_int_beg_fupd (K
@@ -1930,8 +1943,8 @@ let in_clash_tree_eq_live_tree_registers = prove
   CHEAT_TAC);;
 
 let get_live_backward_in_live_tree_registers = prove
- (`!lt live. domain (get_live_backward lt live) SUBSET domain live UNION
-  live_tree_registers lt`,
+ (`!lt live. sptree_domain (get_live_backward lt live) SUBSET sptree_domain
+  live UNION live_tree_registers lt`,
   CHEAT_TAC);;
 
 let fix_domination_live_tree_registers = prove
@@ -1940,13 +1953,13 @@ let fix_domination_live_tree_registers = prove
 
 let get_intervals_beg_less_end = prove
  (`!lt n_in beg_in end_in n_out beg_out end_out.
-   (!r. r IN domain beg_in ==> the (&0) (sptree_lookup r beg_in) <= the (&0)
-     (sptree_lookup r end_in)) /\
-   domain beg_in SUBSET domain end_in /\
+   (!r. r IN sptree_domain beg_in ==> the (&0) (sptree_lookup r beg_in) <=
+     the (&0) (sptree_lookup r end_in)) /\
+   sptree_domain beg_in SUBSET sptree_domain end_in /\
    (n_out,beg_out,end_out) = get_intervals lt n_in beg_in end_in ==>
-   (!r. r IN domain beg_out ==> the (&0) (sptree_lookup r beg_out) <= the
-     (&0) (sptree_lookup r end_out)) /\
-   domain beg_out SUBSET domain end_out`,
+   (!r. r IN sptree_domain beg_out ==> the (&0) (sptree_lookup r beg_out) <=
+     the (&0) (sptree_lookup r end_out)) /\
+   sptree_domain beg_out SUBSET sptree_domain end_out`,
   CHEAT_TAC);;
 
 let linear_reg_alloc_without_renaming_correct = prove
@@ -1995,12 +2008,12 @@ let check_col_apply_bijection = prove
      /\
    (!r. r IN bijcodom ==> (appinvbij r) IN bijdom /\ appbij (appinvbij r) =
      r) /\
-   domain cutset SUBSET bijdom /\
+   sptree_domain cutset SUBSET bijdom /\
    check_col f (foldi (\r _ acc. sptree_insert (appbij r) one acc) 0 LN
      cutset) = SOME (livein,flivein) ==>
    (?livein' flivein'. check_col (\r. f (appbij r)) cutset = SOME
      (livein',flivein') /\
-   domain livein' = IMAGE appinvbij (domain livein))`,
+   sptree_domain livein' = IMAGE appinvbij (sptree_domain livein))`,
   CHEAT_TAC);;
 
 
@@ -2011,31 +2024,32 @@ let check_partial_col_apply_bijection = prove
    (!r. r IN bijcodom ==> (appinvbij r) IN bijdom /\ appbij (appinvbij r) =
      r) /\
    (set_of_list l) SUBSET bijdom /\
-   (domain live) SUBSET bijcodom /\
-   domain flive = IMAGE f (domain live) /\
-   domain flive' = IMAGE (f o appbij) (domain live') /\
-   domain live' = IMAGE appinvbij (domain live) /\
-   INJ f (domain live) UNIV /\
+   (sptree_domain live) SUBSET bijcodom /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   sptree_domain flive' = IMAGE (f o appbij) (sptree_domain live') /\
+   sptree_domain live' = IMAGE appinvbij (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_partial_col f (MAP appbij l) live flive = SOME (livein,flivein) ==>
    (?livein' flivein'. check_partial_col (\r. f (appbij r)) l live' flive' =
      SOME (livein',flivein') /\
-   domain livein' = IMAGE appinvbij (domain livein))`,
+   sptree_domain livein' = IMAGE appinvbij (sptree_domain livein))`,
   CHEAT_TAC);;
 
 let check_clash_tree_output_subset = prove
  (`!ct live flive livein flivein.
    check_clash_tree f ct live flive = SOME (livein,flivein) ==>
-   domain livein SUBSET domain live UNION in_clash_tree ct`,
+   sptree_domain livein SUBSET sptree_domain live UNION in_clash_tree ct`,
   CHEAT_TAC);;
 
 let domain_apply_bij_set = prove
- (`!s bij. domain (foldi (\r _ acc. sptree_insert (the 0 (sptree_lookup r
-  bij)) one acc) 0 LN s) = IMAGE (\r. the 0 (sptree_lookup r bij)) (domain s)`,
+ (`!s bij. sptree_domain (foldi (\r _ acc. sptree_insert (the 0
+  (sptree_lookup r bij)) one acc) 0 LN s) = IMAGE (\r. the 0 (sptree_lookup r
+  bij)) (sptree_domain s)`,
   CHEAT_TAC);;
 
 let in_clash_tree_apply_bij = prove
  (`!bij ct.
-   in_clash_tree ct SUBSET domain bij ==>
+   in_clash_tree ct SUBSET sptree_domain bij ==>
    in_clash_tree (apply_bij_on_clash_tree ct bij) = IMAGE (\r. the 0
      (sptree_lookup r bij)) (in_clash_tree ct)`,
   CHEAT_TAC);;
@@ -2044,35 +2058,35 @@ let check_clash_tree_apply_bijection = prove
  (`!bij invbij f ct live flive live' flive' livein flivein.
    sp_inverts bij invbij /\
    sp_inverts invbij bij /\
-   in_clash_tree ct SUBSET domain bij /\
-   domain live SUBSET domain invbij /\
-   domain flive = IMAGE f (domain live) /\
-   domain flive' = IMAGE (\r. f (the 0 (sptree_lookup r bij))) (domain
-     live') /\
-   domain live' = IMAGE (\r. the 0 (sptree_lookup r invbij)) (domain live)
-     /\
-   INJ f (domain live) UNIV /\
+   in_clash_tree ct SUBSET sptree_domain bij /\
+   sptree_domain live SUBSET sptree_domain invbij /\
+   sptree_domain flive = IMAGE f (sptree_domain live) /\
+   sptree_domain flive' = IMAGE (\r. f (the 0 (sptree_lookup r bij)))
+     (sptree_domain live') /\
+   sptree_domain live' = IMAGE (\r. the 0 (sptree_lookup r invbij))
+     (sptree_domain live) /\
+   INJ f (sptree_domain live) UNIV /\
    check_clash_tree f (apply_bij_on_clash_tree ct bij) live flive = SOME
      (livein,flivein) ==>
    (?livein' flivein'. check_clash_tree (\r. f (the 0 (sptree_lookup r
      bij))) ct live' flive' = SOME (livein',flivein') /\
-   domain livein' = IMAGE (\r. the 0 (sptree_lookup r invbij)) (domain
-     livein))`,
+   sptree_domain livein' = IMAGE (\r. the 0 (sptree_lookup r invbij))
+     (sptree_domain livein))`,
   CHEAT_TAC);;
 
 let extract_coloration_output = prove
  (`!bij invbij sth l acc.
    sp_inverts bij invbij /\
    sp_inverts invbij bij /\
-   ALL (\r. r IN domain invbij) l /\
+   ALL (\r. r IN sptree_domain invbij) l /\
    ALL (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l ==>
    (?col. extract_coloration invbij l acc sth = (M_success col,sth) /\
-   (!r. r IN domain bij ==>
+   (!r. r IN sptree_domain bij ==>
     (if MEM (the 0 (sptree_lookup r bij)) l then
       sptree_lookup r col = SOME (EL (the 0 (sptree_lookup r bij))
         (linear_scan_hidden_state_colors sth))
     else sptree_lookup r col = sptree_lookup r acc)) /\
-   domain col SUBSET domain bij UNION domain acc)`,
+   sptree_domain col SUBSET sptree_domain bij UNION sptree_domain acc)`,
   CHEAT_TAC);;
 
 (* TODO: move *)
@@ -2082,7 +2096,7 @@ let LENGTH_toAList = prove
 
 let check_col_equal_col = prove
  (`!s f1 f2.
-     (!r. r IN domain s ==> f1 r = f2 r) ==>
+     (!r. r IN sptree_domain s ==> f1 r = f2 r) ==>
      check_col f1 s = check_col f2 s`,
   CHEAT_TAC);;
 
@@ -2095,7 +2109,7 @@ let check_partial_col_equal_col = prove
 let check_clash_tree_equal_col = prove
  (`!f1 f2 ct live flive.
    (!r. r IN in_clash_tree ct ==> f1 r = f2 r) /\
-   (!r. r IN domain live ==> f1 r = f2 r) ==>
+   (!r. r IN sptree_domain live ==> f1 r = f2 r) ==>
    check_clash_tree f1 ct live flive = check_clash_tree f2 ct live flive`,
   CHEAT_TAC);;
 
@@ -2106,16 +2120,21 @@ let linear_scan_reg_alloc_correct = prove
      linear_scan_reg_alloc k moves ct forced = M_success col /\
      check_clash_tree (sp_default col) ct LN LN = SOME (livein,flivein) /\
      (!r. in_clash_tree ct r ==>
-       r IN domain col /\
+       r IN sptree_domain col /\
        (if is_phy_var r then
          sp_default col r = r DIV 2
        else if is_stack_var r then
          k <= (sp_default col r)
        else T)) /\
-     (!r. r IN domain col ==> in_clash_tree ct r) /\
+     (!r. r IN sptree_domain col ==> in_clash_tree ct r) /\
      ALL (\(r1,r2). (sp_default col) r1 = (sp_default col) r2 ==> r1 = r2)
        forced)`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["pair";
+   "unit"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

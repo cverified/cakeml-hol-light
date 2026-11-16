@@ -28,6 +28,12 @@ let _ = cake_theory "infer_eSound"
    "namespaceProps"; "semanticPrimitives"; "typeSoundInvariants";
    "typeSysProps"; "typeSystem"; "unify"];;
 
+(* this file reads the name of a record field as a variable and
+   needs the accessors of that field as well, so only these
+   pairs come out of the interface *)
+let _ = hide_overloads
+  ["subst","compute_eval_subst"];;
+
 (* ---------- sub_completion ---------- *)
 
 (* [local] *)

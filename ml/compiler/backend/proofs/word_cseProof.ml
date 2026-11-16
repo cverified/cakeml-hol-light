@@ -9,6 +9,7 @@
   Correctness proof for word_cse
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
@@ -18,7 +19,6 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_cse.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
@@ -30,7 +30,7 @@ let _ = cake_theory "word_cseProof"
   ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_cse";
    "word_simp"];;
 
-let _ = do_list hide_constant ["Greater"];;
+let _ = do_list hide_constant ["Greater"; "prog"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* The reads of a stored arith fact, tracked as self-mappings in
@@ -54,8 +54,8 @@ let wf_data_def = new_definition
           /\ ODD v) /\
      (!r v.
         sptree_lookup r (knowledge_to_latest data) = SOME v ==>
-        r IN domain (knowledge_to_canonical data) /\
-        v IN domain (knowledge_to_canonical data)) /\
+        r IN sptree_domain (knowledge_to_canonical data) /\
+        v IN sptree_domain (knowledge_to_canonical data)) /\
      (!k v.
         balanced_map_lookup listCmp k (knowledge_instrs_mem data) = SOME v
           ==>
@@ -422,12 +422,13 @@ let bm_inter_eq_acc_thm = prove
      balanced_map_invariant listCmp m2 /\ balanced_map_invariant listCmp m1
        /\ balanced_map_invariant listCmp acc ==>
      balanced_map_invariant listCmp (bm_inter_eq_acc m2 m1 acc) /\
-     (!ks. FLOOKUP (to_fmap listCmp (bm_inter_eq_acc m2 m1 acc)) ks =
-          (match FLOOKUP (to_fmap listCmp m1) ks with NONE -> FLOOKUP
-            (to_fmap listCmp acc) ks
-          | SOME v -> if FLOOKUP (to_fmap listCmp m2) ks = SOME v then SOME
-            v
-                      else FLOOKUP (to_fmap listCmp acc) ks))`,
+     (!ks. FLOOKUP (balanced_map_to_fmap listCmp (bm_inter_eq_acc m2 m1
+       acc)) ks =
+          (match FLOOKUP (balanced_map_to_fmap listCmp m1) ks with NONE ->
+            FLOOKUP (balanced_map_to_fmap listCmp acc) ks
+          | SOME v -> if FLOOKUP (balanced_map_to_fmap listCmp m2) ks = SOME
+            v then SOME v
+                      else FLOOKUP (balanced_map_to_fmap listCmp acc) ks))`,
   CHEAT_TAC);;
 
 let invariant_bm_inter_eq = prove
@@ -537,7 +538,7 @@ let data_inv_insert_to_canonical = prove
 let data_inv_insert_to_latest = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) x y.
      data_inv data s /\
-     x IN domain (knowledge_to_canonical data) /\ y IN domain
+     x IN sptree_domain (knowledge_to_canonical data) /\ y IN sptree_domain
        (knowledge_to_canonical data) /\
      wordSem_get_var x s = wordSem_get_var y s ==>
      data_inv (knowledge_to_latest_fupd (K (sptree_insert x y
@@ -837,7 +838,7 @@ let add_to_data_LocValue_correct = prove
  (`!data (s:('a,'c,'ffi)wordSem_state) r l data' p'.
      data_inv data s /\
      sptree_lookup r (knowledge_to_canonical data) = NONE /\
-     l IN domain (wordSem_state_code s) /\
+     l IN sptree_domain (wordSem_state_code s) /\
      add_to_data_aux data r [48; l] (word_LocValue r l) = (data',p') ==>
      wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (word_Loc l 0) s) /\
      data_inv data' (wordSem_set_var r (word_Loc l 0) s)`,
@@ -1160,7 +1161,7 @@ let wf_data_insert_to_canonical = prove
 let wf_data_insert_to_latest = prove
  (`!data x y.
      wf_data (:'a) data /\
-     x IN domain (knowledge_to_canonical data) /\ y IN domain
+     x IN sptree_domain (knowledge_to_canonical data) /\ y IN sptree_domain
        (knowledge_to_canonical data) ==>
      wf_data (:'a) (knowledge_to_latest_fupd (K (sptree_insert x y
        (knowledge_to_latest data))) data)`,
@@ -1568,7 +1569,8 @@ let full_inst_ok_less_word_common_subexp_elim = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["Greater"];;
+  ["Greater";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

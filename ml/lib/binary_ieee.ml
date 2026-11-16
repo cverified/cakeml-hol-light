@@ -2,7 +2,7 @@
 (*  binary_ieee: ported from HOL4's
     src/floating-point/binary_ieeeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 9 files of the port.  *)
+    that CakeML needs.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/integer_word.ml";;
@@ -153,6 +153,14 @@ let threshold_def = new_definition
   `threshold (:'t#'w) =
       ((&2:real) pow (UINT_MAX (:'w) - 1) / (&2:real) pow (INT_MAX (:'w))) *
       ((&2:real) - inv ((&2:real) pow SUC (dimindex (:'t))))`;;
+
+let ULP_def = new_definition
+  `ULP ((e:'w word),(:'t)) =
+   2 pow (if e = (n2w 0) then 1 else w2n e) / 2 pow (INT_MAX (:'w) +
+     dimindex (:'t))`;;
+
+let ulp_def = new_definition
+  `ulp (:'t#'w) = ULP (((n2w 0):'w word),(:'t))`;;
 
 let round_def = new_definition
   `round mode (x:real) =
@@ -395,49 +403,64 @@ let float_mul_add_def = new_definition
 
 let float_compare_INDUCT,float_compare_RECURSION = define_datatype
   "float_compare =
-     LT
-   | EQ
-   | GT
-   | UN";;
+     binary_ieee_LT
+   | binary_ieee_EQ
+   | binary_ieee_GT
+   | binary_ieee_UN";;
 
 let float_compare_def = new_definition
   `float_compare (x:('t,'w)float) (y:('t,'w)float) =
       match float_value x,float_value y with
-         NaN,_ -> UN
-       | _,NaN -> UN
+         NaN,_ -> binary_ieee_UN
+       | _,NaN -> binary_ieee_UN
        | Infinity,Infinity ->
-            if float_Sign x = float_Sign y then EQ
-            else if float_Sign x = (n2w 1) then LT
-            else GT
-       | Infinity,_ -> if float_Sign x = (n2w 1) then LT else GT
-       | _,Infinity -> if float_Sign y = (n2w 1) then GT else LT
+            if float_Sign x = float_Sign y then binary_ieee_EQ
+            else if float_Sign x = (n2w 1) then binary_ieee_LT
+            else binary_ieee_GT
+       | Infinity,_ -> if float_Sign x = (n2w 1) then binary_ieee_LT else
+         binary_ieee_GT
+       | _,Infinity -> if float_Sign y = (n2w 1) then binary_ieee_GT else
+         binary_ieee_LT
        | Float r1,Float r2 ->
-            if r1 < r2 then LT
-            else if r1 = r2 then EQ
-            else GT`;;
+            if r1 < r2 then binary_ieee_LT
+            else if r1 = r2 then binary_ieee_EQ
+            else binary_ieee_GT`;;
 
 let float_less_than_def = new_definition
   `float_less_than (x:('t,'w)float) y =
-      (float_compare x y = LT)`;;
+      (float_compare x y = binary_ieee_LT)`;;
 
 let float_less_equal_def = new_definition
   `float_less_equal (x:('t,'w)float) y =
       match float_compare x y with
-         LT -> T
-       | EQ -> T
+         binary_ieee_LT -> T
+       | binary_ieee_EQ -> T
        | _ -> F`;;
 
 let float_greater_than_def = new_definition
   `float_greater_than (x:('t,'w)float) y =
-      (float_compare x y = GT)`;;
+      (float_compare x y = binary_ieee_GT)`;;
 
 let float_greater_equal_def = new_definition
   `float_greater_equal (x:('t,'w)float) y =
       match float_compare x y with
-         GT -> T
-       | EQ -> T
+         binary_ieee_GT -> T
+       | binary_ieee_EQ -> T
        | _ -> F`;;
 
 let float_equal_def = new_definition
   `float_equal (x:('t,'w)float) y =
-      (float_compare x y = EQ)`;;
+      (float_compare x y = binary_ieee_EQ)`;;
+(* HOL4 binary_ieeeScript.sml:4395: the overload f2r, which the port expands *)
+
+let next_hi_def = new_definition
+  `next_hi (x:(tau,'w)float) =
+     if float_Significand x <+ word_T then float_Significand_fupd (K
+       (float_Significand x + (n2w 1))) x
+     else mk_float (float_Sign x) (float_Exponent x + (n2w 1)) (n2w 0)`;;
+
+let next_lo_def = new_definition
+  `next_lo (x:(tau,'w)float) =
+     if (n2w 0) <+ float_Significand x then float_Significand_fupd (K
+       (float_Significand x - (n2w 1))) x
+     else mk_float (float_Sign x) (float_Exponent x - (n2w 1)) word_T`;;

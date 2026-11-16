@@ -3,7 +3,7 @@
     semantics/primTypesScript.sml
     A definition theory, with 5 definitions and no theorems.  Needed
     by backend.ml, backendProof.ml, compilerProof.ml, infer.ml,
-    primSemEnv.ml and semantics.ml.  *)
+    ml_prog.ml, primSemEnv.ml, repl_types.ml and semantics.ml.  *)
 (* ======================================================== *)
 
 (*

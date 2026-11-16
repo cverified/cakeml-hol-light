@@ -2,7 +2,7 @@
 (*  db_vars: ported from HOL4's
     compiler/backend/db_varsScript.sml
     A definition theory, with 8 definitions, 1 datatype and 14
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -14,6 +14,8 @@ needs "lib/sptree.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "db_vars" [];;
+
+let _ = do_list hide_constant ["db"; "frees"];;
 
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
   "db_var_set =
@@ -37,7 +39,7 @@ let list_mk_Union_def,list_mk_Union_ind = define_rec
    (list_mk_Union (CONS x xs) = mk_Union x (list_mk_Union xs))`;;
 
 let FOLDR_mk_Union_UNZIP = prove
- (`ITLIST (\(x,l) (ts,frees). (CONS x ts,mk_Union l frees)) l ([],A) =
+ (`ITLIST (\(x,l) (ts,frees'). (CONS x ts,mk_Union l frees')) l ([],A) =
    let (ts,fvs) = UNZIP l in
      (ts,list_mk_Union (APPEND fvs [A]))`,
   CHEAT_TAC);;
@@ -126,6 +128,11 @@ add_simp has_var_vars_flatten;;
 let ALL_DISTINCT_vars_to_list = prove
  (`ALL_DISTINCT (vars_to_list d)`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["db";
+   "frees"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

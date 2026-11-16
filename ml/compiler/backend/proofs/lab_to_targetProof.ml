@@ -2,7 +2,7 @@
 (*  lab_to_targetProof: ported from HOL4's
     compiler/backend/proofs/lab_to_targetProofScript.sml
     A proof theory about lab_to_target.ml, with 63 definitions and
-    383 theorems.  Needed by backendProof.ml and compilerProof.ml.  *)
+    383 theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -25,7 +25,6 @@ needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/pegexec.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -38,13 +37,17 @@ let _ = cake_theory "lab_to_targetProof"
    "lab_filterProof"; "lab_to_target"; "stack_removeProof"; "targetProps";
    "targetSem"; "wordSem"];;
 
-let _ = do_list hide_constant ["contain"; "invariant"; "not"];;
+let _ = do_list hide_constant ["contain"; "invariant"; "lab_to_target"; "not";
+       "prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
 let _ = hide_overloads
-  ["failed","pegexec_failed"];;
+  ["encode","clFFI_encode";
+   "encode","fsFFI_encode";
+   "encode","runtimeFFI_encode";
+   "failed","pegexec_failed"];;
 
 (* HOL4 lab_to_targetProofScript.sml:16: ML code, not ported *)
 
@@ -240,9 +243,9 @@ let labs_domain_LN = prove
 add_simp labs_domain_LN;;
 
 let labs_domain_insert = prove
- (`~(k IN domain labs) ==>
-      labs_domain (sptree_insert k s labs) = IMAGE (\n2. (k,n2)) (domain
-        s) UNION labs_domain labs`,
+ (`~(k IN sptree_domain labs) ==>
+      labs_domain (sptree_insert k s labs) = IMAGE (\n2. (k,n2))
+        (sptree_domain s) UNION labs_domain labs`,
   CHEAT_TAC);;
 
 
@@ -499,7 +502,7 @@ let lab_to_targetProof_good_code_def = new_definition
     ALL sec_labels_ok code /\
     ALL_DISTINCT (MAP Section_num code) /\
     ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code /\
-    DISJOINT (domain labs) (set_of_list (MAP Section_num code)) /\
+    DISJOINT (sptree_domain labs) (set_of_list (MAP Section_num code)) /\
     restrict_nonzero (labProps_get_labels code) SUBSET
       labProps_get_code_labels code UNION labs_domain labs /\
     (\c ls. ALL (sec_ok_pre c) ls) c code`;;
@@ -519,9 +522,9 @@ let share_mem_domain_code_rel_def = new_definition
      (
       // whenever the pc is accessing share mem, the pc is in ffi_entry_pcs
       // * after mmio_pcs_min_index and the mmio_info for it is correct
-      !pc' op re a inst' len i.
-         (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst'
-           len) /\
+      !pc' op re a wordSem_inst len i.
+         (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a)
+           wordSem_inst len) /\
          mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i) ==>
          (?index.
            i <= index /\
@@ -539,8 +542,8 @@ let share_mem_domain_code_rel_def = new_definition
       // * it must be fetching ShareMem instruction
       !pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
-         ==>
+       (!op re a wordSem_inst len. ~(line = lab_Asm (ShareMem op re a)
+         wordSem_inst len)) ==>
        DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc_conf))
          {p + n2w a + n2w (pos_val pc' 0 code2) |
            a < LENGTH (line_bytes line)}) /\
@@ -867,7 +870,8 @@ let lab_to_targetProof_state_rel_def = new_definition
                              else target_get_reg (machine_config_target
                                mc_conf) ms' a)) t1)))
             ms')) /\ labSem_state_compile
-     s1 = compile_lab (target_config (machine_config_target mc_conf)) /\
+     s1 = lab_to_target_compile_lab (target_config (machine_config_target
+       mc_conf)) /\
      (no_share_mem_inst code2 ==> (!k. let (cfg,code) =
        labSem_state_compile_oracle s1 k in
              lab_to_targetProof_good_code (target_config
@@ -934,9 +938,9 @@ let lab_to_targetProof_state_rel_def = new_definition
       // Remaining space for code buffer exists
       !n.
        n < buffer_space_left (labSem_state_code_buffer s1) ==>
-       (let addr' = buffer_position (labSem_state_code_buffer s1) + n2w
-         (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n) in
-       addr' IN asm_state_mem_domain t1 /\ ~(addr' IN
+       (let labSem_addr = buffer_position (labSem_state_code_buffer s1) +
+         n2w (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n) in
+       labSem_addr IN asm_state_mem_domain t1 /\ ~(labSem_addr IN
          labSem_state_mem_domain s1))) /\
      // Position of code memory
      bytes_in_mem p (prog_to_bytes code2) (asm_state_mem
@@ -1707,15 +1711,16 @@ let inst_lemma = prove
       ((mc_conf:('a,'state,'b)machine_config),code2,labs,p) s1 t1 ms1 /\
     (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val (labSem_state_pc s1)
       0 code2 + LENGTH bytes') ==>
-    ~(failed (asmSem_inst i t1)) /\
-     (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (asmSem_inst i t1) a =
+    ~(asm_state_failed (asmSem_inst i t1)) /\
+     (!a. ~(a IN labSem_state_mem_domain s1) ==> asm_state_mem (asmSem_inst i
+       t1) a =
        asm_state_mem t1 a) /\
     (target_state_rel (machine_config_target mc_conf)
-       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (asmSem_inst i
+       (asmSem_upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (asmSem_inst i
          t1)) ms2 ==>
      lab_to_targetProof_state_rel (mc_conf,code2,labs,p)
        (inc_pc (labSem_dec_clock (asm_inst i s1)))
-       (labSem_upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8 list)))
+       (asmSem_upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8 list)))
          (asmSem_inst i t1)) ms2)`,
   CHEAT_TAC);;
 
@@ -1863,8 +1868,8 @@ let enc_lines_again_simp_def,enc_lines_again_simp_ind = define_wf
 let enc_lines_again_simp_EQ = prove
  (`!labs ffis pos enc ls acc b.
    let (ls',flag) = enc_lines_again_simp labs ffis pos enc ls in
-   enc_lines_again labs ffis pos enc ls (acc,b) = (APPEND (REVERSE acc)
-     ls',sec_length ls' pos,(b /\ flag))`,
+   lab_to_target_enc_lines_again labs ffis pos enc ls (acc,b) = (APPEND
+     (REVERSE acc) ls',sec_length ls' pos,(b /\ flag))`,
   CHEAT_TAC);;
 
 let enc_lines_again_simp_len = prove
@@ -1970,12 +1975,12 @@ let code_similar_pad_code = prove
 let LIST_REL_enc_line = prove
  (`!ls ls'.
    ALL2 line_similar ls ls' <=>
-   ALL2 line_similar (MAP (enc_line enc len) ls) ls'`,
+   ALL2 line_similar (MAP (lab_to_target_enc_line enc len) ls) ls'`,
   CHEAT_TAC);;
 
 let code_similar_enc_sec_list = prove
  (`!code1 code2 n.
-     code_similar (enc_sec_list n code1) code2 <=>
+     code_similar (lab_to_target_enc_sec_list n code1) code2 <=>
      code_similar code1 code2`,
   CHEAT_TAC);;
 add_simp code_similar_enc_sec_list;;
@@ -1983,15 +1988,16 @@ add_simp code_similar_enc_sec_list;;
 (* [local] *)
 let enc_lines_again_IMP_similar = prove
  (`!labs ffis pos enc lines acc ok lines' ok' curr.
-   enc_lines_again labs ffis pos enc lines (acc,ok) = (lines',ok') ==>
+   lab_to_target_enc_lines_again labs ffis pos enc lines (acc,ok) =
+     (lines',ok') ==>
    ALL2 line_similar curr (REVERSE acc) ==>
    ALL2 line_similar (APPEND curr lines) lines'`,
   CHEAT_TAC);;
 
 let enc_secs_again_IMP_similar = prove
  (`!pos labs ffis enc code code1 ok.
-   enc_secs_again pos labs ffis enc code = (code1,ok) ==> code_similar
-     code code1`,
+   lab_to_target_enc_secs_again pos labs ffis enc code = (code1,ok) ==>
+     code_similar code code1`,
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:3402-3408: a theorem that HOL4 states
@@ -2038,13 +2044,15 @@ let code_similar_loc_to_pc = prove
 
 let enc_sec_list_sec_labels_ok = prove
  (`!enc code.
-   ALL sec_labels_ok code ==> ALL sec_labels_ok (enc_sec_list enc code)`,
+   ALL sec_labels_ok code ==> ALL sec_labels_ok
+     (lab_to_target_enc_sec_list enc code)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let enc_lines_again_sec_labels_ok = prove
  (`!labs ffis pos enc lines acc ok res ok' k.
-     enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
+     lab_to_target_enc_lines_again labs ffis pos enc lines (acc,ok) =
+       (res,ok') /\
      ALL (sec_label_ok k) acc /\
      ALL (sec_label_ok k) lines ==>
      ALL (sec_label_ok k) res`,
@@ -2052,8 +2060,8 @@ let enc_lines_again_sec_labels_ok = prove
 
 let enc_secs_again_sec_labels_ok = prove
  (`!pos ffis labs enc ls res ok k.
-    enc_secs_again pos ffis labs enc ls = (res,ok) /\ ALL sec_labels_ok ls
-      ==>
+    lab_to_target_enc_secs_again pos ffis labs enc ls = (res,ok) /\ ALL
+      sec_labels_ok ls ==>
     ALL sec_labels_ok res`,
   CHEAT_TAC);;
 
@@ -2117,14 +2125,16 @@ add_simp sec_encd0_def;;
 (* establishing encd0 *)
 
 let enc_sec_list_encd0 = prove
- (`!ls. (\enc l. ALL (sec_encd0 enc) l) enc (enc_sec_list enc ls)`,
+ (`!ls. (\enc l. ALL (sec_encd0 enc) l) enc (lab_to_target_enc_sec_list enc
+  ls)`,
   CHEAT_TAC);;
 
 (* encd0 preservation *)
 
 let enc_lines_again_encd0 = prove
  (`!labs ffis pos enc lines acc ok res ok'.
-    enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
+    lab_to_target_enc_lines_again labs ffis pos enc lines (acc,ok) =
+      (res,ok') /\
     ALL (line_encd0 enc) lines /\
     ALL (line_encd0 enc) acc ==>
     ALL (line_encd0 enc) res`,
@@ -2132,7 +2142,7 @@ let enc_lines_again_encd0 = prove
 
 let enc_secs_again_encd0 = prove
  (`!pos labs ffis enc ls res ok.
-    enc_secs_again pos labs ffis enc ls = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc ls = (res,ok) /\
     (\enc l. ALL (sec_encd0 enc) l) enc ls ==>
     (\enc l. ALL (sec_encd0 enc) l) enc res`,
   CHEAT_TAC);;
@@ -2205,7 +2215,7 @@ let enc_lines_again_simp_label_one = prove
 
 let enc_secs_again_label_one = prove
  (`!pos labs ffis enc lines res ok.
-    enc_secs_again pos labs ffis enc lines = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc lines = (res,ok) /\
     ALL sec_label_one lines ==>
     ALL sec_label_one res`,
   CHEAT_TAC);;
@@ -2309,7 +2319,7 @@ let enc_lines_again_simp_encd = prove
 
 let enc_secs_again_encd = prove
  (`!pos labs ffis enc ls res.
-    enc_secs_again pos labs ffis enc ls = (res,T) /\
+    lab_to_target_enc_secs_again pos labs ffis enc ls = (res,T) /\
     ALL sec_label_one ls /\
     ALL (sec_encd0 enc) ls ==>
     all_encd enc labs ffis pos res`,
@@ -2371,7 +2381,7 @@ let enc_lines_again_simp_label_zero = prove
 
 let enc_secs_again_label_zero = prove
  (`!pos labs ffis enc lines res ok.
-    enc_secs_again pos labs ffis enc lines = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc lines = (res,ok) /\
     ALL sec_label_zero lines ==>
     ALL sec_label_zero res`,
   CHEAT_TAC);;
@@ -2463,7 +2473,7 @@ let enc_lines_again_simp_aligned = prove
 let enc_secs_again_aligned = prove
  (`!pos labs ffis enc lines res ok.
     (!a. LENGTH (enc a) MOD len = 0) /\
-    enc_secs_again pos labs ffis enc lines = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc lines = (res,ok) /\
     ALL (sec_aligned len) lines ==>
     ALL (sec_aligned len) res`,
   CHEAT_TAC);;
@@ -2523,7 +2533,7 @@ let enc_lines_again_simp_label_prefix_zero = prove
 
 let enc_secs_again_label_prefix_zero = prove
  (`!pos labs ffis enc lines res ok.
-    enc_secs_again pos labs ffis enc lines = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc lines = (res,ok) /\
     ALL sec_label_prefix_zero lines ==>
     ALL sec_label_prefix_zero res`,
   CHEAT_TAC);;
@@ -2791,7 +2801,7 @@ let enc_lines_again_simp_pos_ok = prove
 
 let enc_secs_again_pos_ok = prove
  (`!pos labs ffis enc code res.
-    enc_secs_again pos labs ffis enc code = (res,T) /\
+    lab_to_target_enc_secs_again pos labs ffis enc code = (res,T) /\
     all_lab_len_pos_ok pos code ==>
     all_lab_len_pos_ok pos res`,
   CHEAT_TAC);;
@@ -2875,7 +2885,7 @@ let enc_lines_again_simp_offset_ok = prove
 
 let enc_secs_again_offset_ok = prove
  (`!pos labs ffis enc ls res ok.
-    enc_secs_again pos labs ffis enc ls = (res,ok) ==>
+    lab_to_target_enc_secs_again pos labs ffis enc ls = (res,ok) ==>
     lab_to_targetProof_offset_ok labs ffis pos res`,
   CHEAT_TAC);;
 
@@ -2923,26 +2933,27 @@ add_simp sec_labs_exist_def;;
 (* Remove tail recursion from zero_labs_acc_exist *)
 (* [local] *)
 let zero_labs_acc_of_eq_zero_labs_of = prove
- (`domain (zero_labs_acc_of l acc) =
-   IMAGE FST (restrict_zero (labs_of l)) UNION domain acc`,
+ (`sptree_domain (zero_labs_acc_of l acc) =
+   IMAGE FST (restrict_zero (labs_of l)) UNION sptree_domain acc`,
   CHEAT_TAC);;
 
 (* [local] *)
 let line_get_zero_labs_acc_eq_line_get_zero_labels = prove
- (`domain (line_get_zero_labs_acc l acc) =
-   IMAGE FST (restrict_zero (line_get_labels l)) UNION domain acc`,
+ (`sptree_domain (line_get_zero_labs_acc l acc) =
+   IMAGE FST (restrict_zero (line_get_labels l)) UNION sptree_domain acc`,
   CHEAT_TAC);;
 
 (* [local] *)
 let sec_get_zero_labs_acc_eq_sec_get_zero_labels = prove
- (`domain (sec_get_zero_labs_acc sec acc) =
-   IMAGE FST (restrict_zero (sec_get_labels sec)) UNION domain acc`,
+ (`sptree_domain (sec_get_zero_labs_acc sec acc) =
+   IMAGE FST (restrict_zero (sec_get_labels sec)) UNION sptree_domain acc`,
   CHEAT_TAC);;
 
 (* [local] *)
 let get_zero_labs_acc_eq_get_zero_labels = prove
- (`domain (ITLIST sec_get_zero_labs_acc code acc) =
-   IMAGE FST (restrict_zero (labProps_get_labels code)) UNION domain acc`,
+ (`sptree_domain (ITLIST sec_get_zero_labs_acc code acc) =
+   IMAGE FST (restrict_zero (labProps_get_labels code)) UNION
+     sptree_domain acc`,
   CHEAT_TAC);;
 
 let zero_labs_acc_exist_eq = prove
@@ -2969,7 +2980,8 @@ add_simp all_labs_exist_pad_code;;
 
 let enc_lines_again_line_labs_exist = prove
  (`!labs ffis pos enc lines acc ok res ok' k.
-   enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
+   lab_to_target_enc_lines_again labs ffis pos enc lines (acc,ok) =
+     (res,ok') /\
    ALL (line_labs_exist labs') acc /\
    ALL (line_labs_exist labs') lines ==>
    ALL (line_labs_exist labs') res`,
@@ -2977,8 +2989,8 @@ let enc_lines_again_line_labs_exist = prove
 
 let enc_secs_again_all_labs_exist = prove
  (`!pos ffis labs enc ls res ok k.
-    enc_secs_again pos ffis labs enc ls = (res,ok) /\ (\labs code. ALL
-      (sec_labs_exist labs) code) labs' ls ==>
+    lab_to_target_enc_secs_again pos ffis labs enc ls = (res,ok) /\ (\labs
+      code. ALL (sec_labs_exist labs) code) labs' ls ==>
     (\labs code. ALL (sec_labs_exist labs) code) labs' res`,
   CHEAT_TAC);;
 
@@ -3038,7 +3050,7 @@ let section_labels_line_get_code_labels = prove
 let labs_domain_compute_labels_alt = prove
  (`!pos code labs.
      ALL_DISTINCT (MAP Section_num code) /\
-     DISJOINT (domain labs) (set_of_list (MAP Section_num code)) ==>
+     DISJOINT (sptree_domain labs) (set_of_list (MAP Section_num code)) ==>
      labs_domain (compute_labels_alt pos code labs) =
      labProps_get_code_labels code UNION labs_domain labs`,
   CHEAT_TAC);;
@@ -3202,7 +3214,7 @@ let enc_lines_again_simp_ends_with_label = prove
 
 let enc_secs_again_ends_with_label = prove
  (`!pos labs ffis enc lines res ok.
-    enc_secs_again pos labs ffis enc lines = (res,ok) /\
+    lab_to_target_enc_secs_again pos labs ffis enc lines = (res,ok) /\
     ALL sec_ends_with_label lines ==>
     ALL sec_ends_with_label res`,
   CHEAT_TAC);;
@@ -3210,7 +3222,7 @@ let enc_secs_again_ends_with_label = prove
 let enc_sec_list_ends_with_label = prove
  (`!enc code.
    ALL sec_ends_with_label code ==>
-   ALL sec_ends_with_label (enc_sec_list enc code)`,
+   ALL sec_ends_with_label (lab_to_target_enc_sec_list enc code)`,
   CHEAT_TAC);;
 
 let lines_even_labels_append = prove
@@ -3270,7 +3282,7 @@ let enc_lines_again_section_labels = prove
 
 let enc_secs_again_compute_labels = prove
  (`!pos labs ffis enc secs res acc.
-   enc_secs_again pos labs ffis enc secs = (res,T) ==>
+   lab_to_target_enc_secs_again pos labs ffis enc secs = (res,T) ==>
    compute_labels_alt pos res acc =
    compute_labels_alt pos secs acc`,
   CHEAT_TAC);;
@@ -3320,7 +3332,8 @@ let pad_code_compute_labels = prove
 (* [local] *)
 let enc_lines_again_all_enc_ok_pre = prove
  (`!labs ffis pos enc lines acc ok res ok' c.
-   enc_lines_again labs ffis pos enc lines (acc,ok) = (res,ok') /\
+   lab_to_target_enc_lines_again labs ffis pos enc lines (acc,ok) =
+     (res,ok') /\
    ALL (line_ok_pre c) lines /\ ALL (line_ok_pre c) acc ==>
    ALL (line_ok_pre c) res`,
   CHEAT_TAC);;
@@ -3328,8 +3341,8 @@ let enc_lines_again_all_enc_ok_pre = prove
 (* [local] *)
 let enc_secs_again_all_enc_ok_pre = prove
  (`!pos labs ffis enc ls res ok c.
-   enc_secs_again pos labs ffis enc ls = (res,ok) /\ (\c ls. ALL (sec_ok_pre
-     c) ls) c ls ==>
+   lab_to_target_enc_secs_again pos labs ffis enc ls = (res,ok) /\ (\c ls.
+     ALL (sec_ok_pre c) ls) c ls ==>
    (\c ls. ALL (sec_ok_pre c) ls) c res`,
   CHEAT_TAC);;
 
@@ -3396,7 +3409,8 @@ let remove_labels_loop_thm = prove
      ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
      ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code /\
-     DISJOINT (domain init_labs) (set_of_list (MAP Section_num code)) /\
+     DISJOINT (sptree_domain init_labs) (set_of_list (MAP Section_num code))
+       /\
      // TODO this is stronger:
      // get_labels code ⊆ get_code_labels code ∪ labs_domain init_labs ∧
      restrict_nonzero (labProps_get_labels code) SUBSET
@@ -3422,7 +3436,8 @@ let remove_labels_loop_thm = prove
 
 let loc_to_pc_enc_sec_list = prove
  (`!l1 l2 code.
-     loc_to_pc l1 l2 (enc_sec_list e code) = loc_to_pc l1 l2 code`,
+     loc_to_pc l1 l2 (lab_to_target_enc_sec_list e code) = loc_to_pc l1 l2
+       code`,
   CHEAT_TAC);;
 add_simp loc_to_pc_enc_sec_list;;
 
@@ -3430,7 +3445,7 @@ add_simp loc_to_pc_enc_sec_list;;
 let all_enc_ok_pre_enc_sec_list = prove
  (`!code enc c.
    (\c ls. ALL (sec_ok_pre c) ls) c code ==>
-   (\c ls. ALL (sec_ok_pre c) ls) c (enc_sec_list enc code)`,
+   (\c ls. ALL (sec_ok_pre c) ls) c (lab_to_target_enc_sec_list enc code)`,
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -3444,7 +3459,8 @@ let remove_labels_thm = prove
      ALL sec_labels_ok code /\
      ALL_DISTINCT (MAP Section_num code) /\
      ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code /\
-     DISJOINT (domain init_labs) (set_of_list (MAP Section_num code)) /\
+     DISJOINT (sptree_domain init_labs) (set_of_list (MAP Section_num
+       code)) /\
      restrict_nonzero (labProps_get_labels code) SUBSET
        labProps_get_code_labels code UNION labs_domain init_labs /\
      (\c ls. ALL (sec_ok_pre c) ls) conf code /\
@@ -3463,19 +3479,20 @@ let remove_labels_thm = prove
 
 let compute_labels_alt_domain_labs = prove
  (`!pos code labs.
-     domain (compute_labels_alt pos code labs) =
-     IMAGE FST (labProps_get_code_labels code) UNION domain labs`,
+     sptree_domain (compute_labels_alt pos code labs) =
+     IMAGE FST (labProps_get_code_labels code) UNION sptree_domain labs`,
   CHEAT_TAC);;
 
 let remove_labels_loop_domain_labs = prove
  (`!a b c d e f g h. remove_labels_loop a b c d e f = SOME (g,h) ==>
-   domain h = IMAGE FST (labProps_get_code_labels f) UNION domain d`,
+   sptree_domain h = IMAGE FST (labProps_get_code_labels f) UNION
+     sptree_domain d`,
   CHEAT_TAC);;
 
 let remove_labels_domain_labs = prove
  (`remove_labels c t k init_labs f p = SOME (q,labs) ==>
-   domain labs = IMAGE FST (labProps_get_code_labels p) UNION domain
-     init_labs`,
+   sptree_domain labs = IMAGE FST (labProps_get_code_labels p) UNION
+     sptree_domain init_labs`,
   CHEAT_TAC);;
 
 (** End syntactic stuff **)
@@ -4083,7 +4100,8 @@ let machine_sem_EQ_sem = prove
  (`!mc_conf p (ms:'state) (s1:('a,lab_to_target_config,'ffi)labSem_state).
      encoder_correct (machine_config_target mc_conf) /\
      init_ok (mc_conf,p) s1 ms /\ ~(labSem_semantics s1 = ffi_Fail) ==>
-     machine_sem mc_conf (labSem_state_ffi s1) ms = {labSem_semantics s1}`,
+     targetSem_machine_sem mc_conf (labSem_state_ffi s1) ms =
+       {labSem_semantics s1}`,
   CHEAT_TAC);;
 
 (* HOL4 lab_to_targetProofScript.sml:9528-9531: code that the source has in
@@ -4109,16 +4127,17 @@ let make_word_def = new_definition
 let make_init_def = new_definition
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
-     comp' cbpos cbspace coracle =
+     stack_remove_comp cbpos cbspace coracle =
      mk_labSem_state (\k. word_Word ((asm_state_regs t k):'a word))
        (asm_state_fp_regs t) m dm sdm 0 (asm_config_big_endian (target_config
        (machine_config_target mc_conf))) ffi (target_io_regs mc_conf ffi ms)
        (target_cc_regs mc_conf ffi ms) (target_io_fp_regs mc_conf ffi ms)
-       (target_cc_fp_regs mc_conf ffi ms) code comp' coracle (mk_buffer cbpos
-       [] cbspace) 0 F (machine_config_ptr_reg mc_conf) (machine_config_len_reg
-       mc_conf) (machine_config_ptr2_reg mc_conf) (machine_config_len2_reg
-       mc_conf) (match asm_config_link_reg (target_config
-       (machine_config_target mc_conf)) with SOME n -> n | _ -> 0)
+       (target_cc_fp_regs mc_conf ffi ms) code stack_remove_comp coracle
+       (mk_buffer cbpos [] cbspace) 0 F (machine_config_ptr_reg mc_conf)
+       (machine_config_len_reg mc_conf) (machine_config_ptr2_reg mc_conf)
+       (machine_config_len2_reg mc_conf) (match asm_config_link_reg
+       (target_config (machine_config_target mc_conf)) with SOME n -> n | _ ->
+       0)
    // Initialize with code buffer empty`;;
 
 let oracle_tie_make_init = prove
@@ -4306,9 +4325,9 @@ let get_shmem_info_ok_lemma = prove
    LENGTH (prog_to_bytes code2) < dimword (:'a) /\
    ALL (\x. ?s. x = ffi_ExtCall s) ffis /\
    get_shmem_info code2 p ffis [] = (new_ffi_names,new_shmem_info) ==>
-   (!pc' op re a inst' len i.
-     (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst' len)
-       /\
+   (!pc' op re a wordSem_inst len i.
+     (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a)
+       wordSem_inst len) /\
      mmio_pcs_min_index new_ffi_names = SOME i) ==>
      (?index.
        find_index (p + (pos_val pc' 0 code2)) (MAP (\rec.
@@ -4322,8 +4341,8 @@ let get_shmem_info_ok_lemma = prove
              Addr r off -> w2n off) re (p + (pos_val pc' 0 code2 + len))))) /\
    (!pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
-         ==>
+       (!op re a wordSem_inst len. ~(line = lab_Asm (ShareMem op re a)
+         wordSem_inst len)) ==>
        DISJOINT (set_of_list (MAP (\rec. shmem_info_num_entry_pc rec)
          new_shmem_info))
          {p + a + (pos_val pc' 0 code2) |
@@ -4442,7 +4461,8 @@ let IMP_state_rel_make_init = prove
         mc_conf) ms)
       (lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
         ms code
-       (compile_lab (target_config (machine_config_target mc_conf)))
+       (lab_to_target_compile_lab (target_config (machine_config_target
+         mc_conf)))
        (target_get_pc (machine_config_target mc_conf) ms + n2w (LENGTH
          (prog_to_bytes code2))) cbspace coracle) t ms`,
   CHEAT_TAC);;
@@ -4515,12 +4535,13 @@ add_simp make_init_simp;;
 let make_init_filter_skip = prove
  (`labSem_semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
   (filter_skip code)
-       (compile_lab (target_config (machine_config_target mc_conf))) cbpos
-         cbspace ((\(a,b). (a,filter_skip b)) o coracle)) =
+       (lab_to_target_compile_lab (target_config (machine_config_target
+         mc_conf))) cbpos cbspace ((\(a,b). (a,filter_skip b)) o coracle)) =
    labSem_semantics
     (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
-      (\c p. (compile_lab (target_config (machine_config_target mc_conf)))
-        c (filter_skip p)) cbpos cbspace coracle)`,
+      (\c p. (lab_to_target_compile_lab (target_config
+        (machine_config_target mc_conf))) c (filter_skip p)) cbpos cbspace
+        coracle)`,
   CHEAT_TAC);;
 
 (* TODO: move *)
@@ -4662,7 +4683,7 @@ let semantics_compile_lemma' = prove
      (lab_to_target_compile asm_conf) (target_get_pc (machine_config_target
        mc_conf) ms + n2w (LENGTH bytes)) cbspace
      coracle) = ffi_Fail) ==>
-   machine_sem mc_conf ffi ms =
+   targetSem_machine_sem mc_conf ffi ms =
    {labSem_semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms
      code
      (lab_to_target_compile asm_conf) (target_get_pc (machine_config_target
@@ -4718,7 +4739,7 @@ let lab_to_targetProof_semantics_compile = prove
     // the original ffi names provided does not contain MappedRead or MappedWrite
     !ffis. lab_to_target_config_ffi_names c = SOME ffis ==> ALL (\x. ?s. x =
       ffi_ExtCall s) ffis) ==>
-    implements' T (machine_sem mc_conf ffi ms)
+    implements' T (targetSem_machine_sem mc_conf ffi ms)
       {labSem_semantics
          (lab_to_targetProof_make_init mc_conf ffi t m (dm INTER
            byte_aligned) (sdm INTER byte_aligned) ms code
@@ -4731,7 +4752,9 @@ let lab_to_targetProof_semantics_compile = prove
 let _ = do_list unhide_constant
   ["contain";
    "invariant";
-   "not"];;
+   "lab_to_target";
+   "not";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

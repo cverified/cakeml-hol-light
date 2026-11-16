@@ -24,7 +24,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvi_inlineProof"
   ["backendProps"; "bviProps"; "bviSem"; "bvi_inline"];;
 
-let _ = do_list hide_constant ["error"];;
+let _ = do_list hide_constant ["error"; "exps"; "prog"];;
 
 let inline_exps_LENGTH = prove
  (`!cs es. LENGTH (inline_exps cs es) = LENGTH es`,
@@ -185,7 +185,7 @@ let compile_prog_code_labels = prove
 
 let subspt_insert_union_fresh = prove
  (`!cs old name value.
-     subspt cs old /\ ~(name IN domain old) ==>
+     subspt cs old /\ ~(name IN sptree_domain old) ==>
      subspt (sptree_insert name value cs)
        (sptree_union old (sptree_insert name value LN))`,
   CHEAT_TAC);;
@@ -194,7 +194,7 @@ let inline_all_cache_subspt = prove
  (`!prog cs old final_cache out.
      inline_all cs prog = (final_cache,out) /\
      subspt cs old /\
-     DISJOINT (set_of_list (MAP FST prog)) (domain old) /\
+     DISJOINT (set_of_list (MAP FST prog)) (sptree_domain old) /\
      ALL_DISTINCT (MAP FST prog) ==>
      subspt final_cache (sptree_union old (fromAList out))`,
   CHEAT_TAC);;
@@ -316,7 +316,8 @@ let in_state_rel_def = new_definition
      subspt (FST (FST (bviSem_state_compile_oracle s 0))) (bviSem_state_code
        t) /\ bviSem_state_compile
      s = bvi_inlineProof_in_cc (bviSem_state_compile t) /\
-     domain (bviSem_state_code t) = domain (bviSem_state_code s) /\
+     sptree_domain (bviSem_state_code t) = sptree_domain (bviSem_state_code
+       s) /\
      (!k arity exp.
         sptree_lookup k (bviSem_state_code s) = SOME (arity,exp) ==>
         (?exp1. sptree_lookup k (bviSem_state_code t) = SOME (arity,exp1) /\
@@ -336,7 +337,7 @@ let inline_all_ALOOKUP = prove
  (`!prog cs old_target final_cache out k wanted_arity wanted_body.
      inline_all cs prog = (final_cache,out) /\
      subspt cs old_target /\
-     DISJOINT (set_of_list (MAP FST prog)) (domain old_target) /\
+     DISJOINT (set_of_list (MAP FST prog)) (sptree_domain old_target) /\
      ALL_DISTINCT (MAP FST prog) /\
      ALOOKUP prog k = SOME (wanted_arity,wanted_body) ==>
      (?body1.
@@ -349,8 +350,8 @@ let inline_all_ALOOKUP = prove
 let do_app_state_swap = prove
  (`~(op = clos_Install) ==>
        ((bviSem_do_app op args s = Rval (value,s1) /\
-         domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t)
-           ==>
+         sptree_domain (bviSem_state_code s) SUBSET sptree_domain
+           (bviSem_state_code t) ==>
          bviSem_do_app op args
            (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -363,8 +364,8 @@ let do_app_state_swap = prove
              (bviSem_state_refs_fupd (K (bviSem_state_refs s1))
             t))))) /\
         (bviSem_do_app op args s = Rerr error /\
-         (domain (bviSem_state_code t) SUBSET domain (bviSem_state_code s)
-           \/ ~(error = Rabort Rtype_error)) ==>
+         (sptree_domain (bviSem_state_code t) SUBSET sptree_domain
+           (bviSem_state_code s) \/ ~(error = Rabort Rtype_error)) ==>
          bviSem_do_app op args
            (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
              (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -379,7 +380,8 @@ let do_app_state_swap_Rval = prove
        (source_state)
        (t) value. ~(op = clos_Install) /\
      bviSem_do_app op args s = Rval (value,source_state) /\
-     domain (bviSem_state_code s) SUBSET domain (bviSem_state_code t) ==>
+     sptree_domain (bviSem_state_code s) SUBSET sptree_domain
+       (bviSem_state_code t) ==>
      bviSem_do_app op args
        (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
          (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -396,16 +398,15 @@ let do_app_state_swap_Rval = prove
 (* [local] *)
 let do_app_state_swap_Rerr = prove
  (`!op args (s)
-       (t) error'. ~(op = clos_Install) /\
-     bviSem_do_app op args s = Rerr error' /\
-     (domain (bviSem_state_code t) SUBSET domain (bviSem_state_code s) \/
-       ~(error' = Rabort Rtype_error)) ==>
+       (t) error. ~(op = clos_Install) /\
+     bviSem_do_app op args s = Rerr error /\
+     (sptree_domain (bviSem_state_code t) SUBSET sptree_domain
+       (bviSem_state_code s) \/ ~(error = Rabort Rtype_error)) ==>
      bviSem_do_app op args
        (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
          (bviSem_state_global_fupd (K (bviSem_state_global s))
          (bviSem_state_clock_fupd (K (bviSem_state_clock s))
-         (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) = Rerr
-         error'`,
+         (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) = Rerr error`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -420,11 +421,11 @@ let inline_all_head_names = prove
 let inline_all_lookup_union = prove
  (`inline_all cs prog = (final_cache,out) /\
    subspt cs target /\
-   domain target = domain source /\
+   sptree_domain target = sptree_domain source /\
    (!k arity exp. sptree_lookup k source = SOME (arity,exp) ==>
       (?exp1. sptree_lookup k target = SOME (arity,exp1) /\
              bvi_inlineProof_exp_rel target exp exp1)) /\
-   DISJOINT (set_of_list (MAP FST prog)) (domain target) /\
+   DISJOINT (set_of_list (MAP FST prog)) (sptree_domain target) /\
    ALL_DISTINCT (MAP FST prog) ==>
    (!k arity exp.
      sptree_lookup k (sptree_union source (fromAList prog)) = SOME
@@ -438,9 +439,9 @@ let inline_all_lookup_union = prove
 
 (* do_install_Rerr_type[local] *)
 let bvi_inlineProof_do_install_Rerr_type = prove
- (`!args (s:('c,'ffi)bviSem_state) error'.
-     bviSem_do_install args s = Rerr error' ==>
-     error' = Rabort Rtype_error`,
+ (`!args (s:('c,'ffi)bviSem_state) error.
+     bviSem_do_install args s = Rerr error ==>
+     error = Rabort Rtype_error`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -873,7 +874,9 @@ let compile_prog_semantics = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["error"];;
+  ["error";
+   "exps";
+   "prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -2,7 +2,7 @@
 (*  typeSystem: ported from HOL4's
     semantics/typeSystemScript.sml
     A definition theory, with 63 definitions, 3 datatypes and no
-    theorems.  Needed by 33 files of the port.  *)
+    theorems.  Needed by 54 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -158,13 +158,14 @@ let check_freevars_ast_def,check_freevars_ast_ind = define_shaped_rec
 (* Simultaneous substitution of types for type variables in a type *)
 let type_subst_def,type_subst_ind = define_shaped_rec
   "nested"
-  `((type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
+  `((typeSystem_type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
        ((match FLOOKUP s tv with
           NONE -> Tvar tv
         | SOME (t) -> t))) /\
-   ((type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn) =
-       (Tapp (MAP (type_subst s) ts) tn)) /\
-   ((type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) = (Tvar_db n))`;;
+   ((typeSystem_type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn) =
+       (Tapp (MAP (typeSystem_type_subst s) ts) tn)) /\
+   ((typeSystem_type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) =
+    (Tvar_db n))`;;
 
 (* Increment the deBruijn indices in a type by n levels, skipping all levels
  * less than skip. *)
@@ -251,19 +252,20 @@ let extend_dec_tenv_def = new_definition
 (*val lookup_varE : id modN varN -> tenv_val_exp -> maybe (nat * t)*)
 let lookup_varE_def = new_definition
   `((lookup_varE:(mlstring,mlstring)namespace_id->tenv_val_exp->(num#t) option)
-  id' tenvE =
-     ((match id' with
+  id tenvE =
+     ((match id with
       Short x -> tveLookup x ((0:num)) tenvE
     | _ -> NONE)))`;;
 
 
 (*val lookup_var : id modN varN -> tenv_val_exp -> type_env -> maybe (nat * t)*)
 let lookup_var_def = new_definition
-  `((lookup_var:(mlstring,mlstring)namespace_id->tenv_val_exp->type_env->(num
-  #t) option) id' tenvE tenv =
-     ((match lookup_varE id' tenvE with
+  `((typeSystem_lookup_var:(mlstring
+  ,mlstring)namespace_id->tenv_val_exp->type_env->(num#t) option) id tenvE tenv
+  =
+     ((match lookup_varE id tenvE with
       SOME x -> SOME x
-    | NONE -> nsLookup (type_env_v tenv) id')))`;;
+    | NONE -> nsLookup (type_env_v tenv) id)))`;;
 
 
 (*val num_tvs : tenv_val_exp -> nat*)
@@ -462,7 +464,8 @@ let type_name_subst_def,type_name_subst_ind = define_shaped_rec
     tenvT (Atapp ts tc) =
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
-        SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs args)) t
+        SOME (tvs,t) -> typeSystem_type_subst (alist_to_fmap (ZIP tvs
+            args)) t
       | NONE -> Ttup args)))
    // can't happen, for a type that passes the check`;;
 
@@ -499,13 +502,13 @@ let build_ctor_tenv_def,build_ctor_tenv_ind = define_wf
   `build_ctor_tenv tenvT x2 x3 =
      match (x2,x3) with
        ([],[]) -> (alist_to_ns [])
-     | (CONS (tvs,tn,ctors) tds,CONS id' ids) ->
+     | (CONS (tvs,tn,ctors) tds,CONS id ids) ->
       (nsAppend
        (build_ctor_tenv tenvT tds ids)
        (alist_to_ns
          (REVERSE
            (MAP
-             (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT) ts,id')))
+             (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT) ts,id)))
              ctors))))
      | (_,_) -> (alist_to_ns [])`;;
 
@@ -551,8 +554,8 @@ let type_p = cake_inductive
    (!tvs tenv cn ps ts tvs' tn ts' bindings.
    (ALL (check_freevars tvs []) ts' /\
    (LENGTH ts' = LENGTH tvs') /\
-   type_ps tvs tenv ps (MAP (type_subst (alist_to_fmap (ZIP tvs' ts'))) ts)
-     bindings /\
+   type_ps tvs tenv ps (MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs'
+     ts'))) ts) bindings /\
    (nsLookup (type_env_c tenv) cn = SOME (tvs',ts,tn))) ==>
    type_p tvs tenv (ast_Pcon (SOME cn) ps) (Tapp ts' tn) bindings) /\
    (!tvs tenv ps ts bindings.
@@ -610,8 +613,8 @@ let type_e = cake_inductive
    (!tenv tenvE cn es tvs tn ts' ts.
    (ALL (check_freevars (num_tvs tenvE) []) ts' /\
    (LENGTH tvs = LENGTH ts') /\
-   type_es tenv tenvE es (MAP (type_subst (alist_to_fmap (ZIP tvs ts'))) ts)
-     /\
+   type_es tenv tenvE es (MAP (typeSystem_type_subst (alist_to_fmap (ZIP tvs
+     ts'))) ts) /\
    (nsLookup (type_env_c tenv) cn = SOME (tvs,ts,tn))) ==>
    type_e tenv tenvE (ast_Con (SOME cn) es) (Tapp ts' tn)) /\
    (!tenv tenvE es ts.
@@ -620,7 +623,7 @@ let type_e = cake_inductive
    (!tenv tenvE n t targs tvs.
    ((tvs = LENGTH targs) /\
    ALL (check_freevars (num_tvs tenvE) []) targs /\
-   (lookup_var n tenvE tenv = SOME (tvs,t))) ==>
+   (typeSystem_lookup_var n tenvE tenv = SOME (tvs,t))) ==>
    type_e tenv tenvE (ast_Var n) (deBruijn_subst ((0:num)) targs t)) /\
    (!tenv tenvE n e t1 t2.
    (check_freevars (num_tvs tenvE) [] t1 /\

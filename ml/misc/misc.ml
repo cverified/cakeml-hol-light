@@ -2,7 +2,7 @@
 (*  misc: ported from HOL4's
     misc/miscScript.sml
     A definition theory, with 50 definitions, 1 datatype and 393
-    theorems.  Needed by 93 files of the port.  *)
+    theorems.  Needed by 129 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -23,6 +23,7 @@ needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/machine_ieee.ml";;
 needs "lib/numposrep.ml";;
+needs "lib/prog.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
@@ -292,13 +293,13 @@ let fromList2_def = new_definition
 (* [local] *)
 let EVEN_fromList2_lemma = prove
  (`!l n t.
-       EVEN n /\ (!x. x IN domain t ==> EVEN x) ==>
-       (!x. x IN domain (SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a
-         t)) (n,t) l)) ==> EVEN x)`,
+       EVEN n /\ (!x. x IN sptree_domain t ==> EVEN x) ==>
+       (!x. x IN sptree_domain (SND (FOLDL (\(i,t) a. (i + 2,sptree_insert
+         i a t)) (n,t) l)) ==> EVEN x)`,
   CHEAT_TAC);;
 
 let EVEN_fromList2 = prove
- (`!l n. n IN domain (fromList2 l) ==> EVEN n`,
+ (`!l n. n IN sptree_domain (fromList2 l) ==> EVEN n`,
   CHEAT_TAC);;
 
 let SUBMAP_mono_FUPDATE_LIST = prove
@@ -376,17 +377,17 @@ let tlookup_def = new_definition
   `tlookup m k = match sptree_lookup k m with NONE -> k | SOME k -> k`;;
 
 let tlookup_id = prove
- (`~(x IN domain names) ==> tlookup names x = x`,
+ (`~(x IN sptree_domain names) ==> tlookup names x = x`,
   CHEAT_TAC);;
 
 let tlookup_bij_suff = prove
- (`set_of_list (sptree_toList names) = domain names ==>
+ (`set_of_list (sptree_toList names) = sptree_domain names ==>
    BIJ (tlookup names) UNIV UNIV`,
   CHEAT_TAC);;
 
 let tlookup_bij_iff = prove
  (`BIJ (tlookup names) UNIV UNIV <=>
-   set_of_list (sptree_toList names) = domain names`,
+   set_of_list (sptree_toList names) = sptree_domain names`,
   CHEAT_TAC);;
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
@@ -517,12 +518,12 @@ new_type_abbrev("misc_num_set",`:1 spt`);;
    expands *)
 
 let toAList_domain = prove
- (`!x. MEM x (MAP FST (toAList t)) <=> x IN domain t`,
+ (`!x. MEM x (MAP FST (toAList t)) <=> x IN sptree_domain t`,
   CHEAT_TAC);;
 
 let domain_nat_set_from_list = prove
- (`!ls ns. domain (FOLDL (\s n. sptree_insert n one s) ns ls) = domain ns
-  UNION set_of_list ls`,
+ (`!ls ns. sptree_domain (FOLDL (\s n. sptree_insert n one s) ns ls) =
+  sptree_domain ns UNION set_of_list ls`,
   CHEAT_TAC);;
 add_simp domain_nat_set_from_list;;
 
@@ -1223,8 +1224,8 @@ let lookup_fromList2 = prove
   CHEAT_TAC);;
 
 let domain_fromList2 = prove
- (`!q. domain (fromList2 q) = set_of_list (list_of_seq (\x. 2 * x) (LENGTH
-  q))`,
+ (`!q. sptree_domain (fromList2 q) = set_of_list (list_of_seq (\x. 2 * x)
+  (LENGTH q))`,
   CHEAT_TAC);;
 
 let UNCURRY_eq_pair = prove
@@ -1704,7 +1705,7 @@ let INJ_UPDATE = prove
 (* TODO: candidate for move to HOL;
          subspt_domain exists already but is specialised to unit *)
 let subspt_domain_SUBSET = prove
- (`subspt t1 t2 ==> domain t1 SUBSET domain t2`,
+ (`subspt t1 t2 ==> sptree_domain t1 SUBSET sptree_domain t2`,
   CHEAT_TAC);;
 
 (* Some temporal logic definitions based on lazy lists *)
@@ -2172,7 +2173,7 @@ let eq_shape_map = prove
   CHEAT_TAC);;
 
 let eq_shape_IMP_domain = prove
- (`!t1 t2. eq_shape t1 t2 ==> domain t1 = domain t2`,
+ (`!t1 t2. eq_shape t1 t2 ==> sptree_domain t1 = sptree_domain t2`,
   CHEAT_TAC);;
 
 (* the termination relation is not in the HOL4 source; this one is
@@ -2188,22 +2189,22 @@ let copy_shape_def,copy_shape_ind = define_wf
    (copy_shape (LS x) (BN t1 t2) = LS x) /\
    (copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x (copy_shape LN
     t2)) /\
-   (copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else BN
-    u1 u2)) /\
+   (copy_shape (BN u1 u2) LN = (if sptree_domain (BN u1 u2) = {} then LN
+    else BN u1 u2)) /\
    (copy_shape (BN u1 u2) (LS y) = BN u1 u2) /\
    (copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1) (copy_shape u2
     t2)) /\
    (copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2) /\
    (copy_shape (BS u1 x u2) LN = BS u1 x u2) /\
    (copy_shape (BS u1 x u2) (LS y) =
-       (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)) /\
+       (if sptree_domain (BN u1 u2) = {} then LS x else BS u1 x u2)) /\
    (copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2) /\
    (copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
     (copy_shape u2 t2))`;;
 
 (* [local] *)
 let eq_shape_copy_shape = prove
- (`!s. domain s = {} ==> eq_shape (copy_shape LN s) s`,
+ (`!s. sptree_domain s = {} ==> eq_shape (copy_shape LN s) s`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2215,7 +2216,8 @@ let num_lemma = prove
   CHEAT_TAC);;
 
 let shape_eq_copy_shape = prove
- (`!t1 t2. domain t1 = domain t2 ==> eq_shape (copy_shape t1 t2) t2`,
+ (`!t1 t2. sptree_domain t1 = sptree_domain t2 ==> eq_shape (copy_shape t1
+  t2) t2`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2225,7 +2227,7 @@ let lookup_copy_shape_LN = prove
 
 (* [local] *)
 let domain_EMPTY_lookup = prove
- (`domain t = EMPTY ==> (!x. sptree_lookup x t = NONE)`,
+ (`sptree_domain t = EMPTY ==> (!x. sptree_lookup x t = NONE)`,
   CHEAT_TAC);;
 
 let lookup_copy_shape = prove
@@ -2241,7 +2243,8 @@ let lookup_zero = prove
   CHEAT_TAC);;
 
 let empty_sub = prove
- (`(\t. t = LN) (difference a b) /\ (subspt b a) ==> (domain a = domain b)`,
+ (`(\t. t = LN) (difference a b) /\ (subspt b a) ==> (sptree_domain a =
+  sptree_domain b)`,
   CHEAT_TAC);;
 
 let subspt_delete = prove
@@ -2256,8 +2259,8 @@ let inter_union_empty = prove
 
 let inter_insert_empty = prove
  (`!n t1 t2.
-   (\t. t = LN) (inter (sptree_insert n one t1) t2) ==> ~(n IN domain t2)
-     /\ (\t. t = LN) (inter t1 t2)`,
+   (\t. t = LN) (inter (sptree_insert n one t1) t2) ==> ~(n IN
+     sptree_domain t2) /\ (\t. t = LN) (inter t1 t2)`,
   CHEAT_TAC);;
 
 let fromList2_value = prove
@@ -2274,7 +2277,7 @@ let range_delete = prove
   CHEAT_TAC);;
 
 let range_insert = prove
- (`~(n IN domain fml) ==>
+ (`~(n IN sptree_domain fml) ==>
      range (sptree_insert n l fml) = l INSERT range fml`,
   CHEAT_TAC);;
 
@@ -2481,7 +2484,7 @@ let num_cmp_thm = prove
 
 let TotOrd_pair_cmp = prove
  (`TotOrd c1 /\ TotOrd c2 ==>
-   TotOrd (pair_compare c1 c2)`,
+   TotOrd (ternaryComparisons_pair_compare c1 c2)`,
   CHEAT_TAC);;
 
 (* and the names it reads as variables are constants again *)

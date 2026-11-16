@@ -2,8 +2,8 @@
 (*  flat_elim: ported from HOL4's
     compiler/backend/flat_elimScript.sml
     A definition theory, with 15 definitions and 3 theorems.  Needed
-    by backend_passes.ml, flat_elimProof.ml, source_to_flat.ml and
-    source_to_flatProof.ml.  *)
+    by backend_passes.ml, flat_elimProof.ml, source_to_flat.ml,
+    source_to_flatProof.ml and to_data_cv.ml.  *)
 (* ======================================================== *)
 
 (*

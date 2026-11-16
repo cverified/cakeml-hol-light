@@ -9,6 +9,7 @@
   Correctness proof for bvi_let
 *)
 
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;

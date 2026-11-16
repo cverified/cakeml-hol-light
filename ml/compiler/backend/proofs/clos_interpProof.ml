@@ -11,6 +11,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
@@ -24,6 +25,8 @@ needs "semantics/semanticPrimitives.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "clos_interpProof"
   ["backendProps"; "closLang"; "closProps"; "closSem"; "clos_interp"];;
+
+let _ = do_list hide_constant ["exps"];;
 
 (* ------------------------------------------------------------------------- *
    correctness of interpreter
@@ -123,7 +126,8 @@ let evaluate_Global_0 = prove
        clos_interpreter],closSem_state_clock_fupd (K k) t)`,
   CHEAT_TAC);;
 
-let v_to_list_list_to_v = prove
+(* v_to_list_list_to_v *)
+let clos_interpProof_v_to_list_list_to_v = prove
  (`!a. closSem_v_to_list (closSem_list_to_v a) = SOME a`,
   CHEAT_TAC);;
 
@@ -315,26 +319,30 @@ let evaluate_interp_thm = prove
    port lets its own machinery find one *)
 (* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves the
    termination *)
-let v_ok_def,v_ok_ind = define_shaped_rec_clauses
+let clos_interpProof_v_ok_def,clos_interpProof_v_ok_ind =
+  define_shaped_rec_clauses
   "nested"
-  [`(v_ok (closSem_Number i) <=> T) /\
-    (v_ok (closSem_Word64 w) <=> T) /\
-    (v_ok (closSem_Block n vs) <=> ALL v_ok vs) /\
-    (v_ok (closSem_ByteVector ws) <=> T) /\
-    (v_ok (closSem_RefPtr b n) <=> T) /\
-    (v_ok (closSem_Closure loco vs1 env1 n bod1) <=>
-        ~(has_install bod1) /\ ALL v_ok env1 /\ ALL v_ok vs1)`;
-   `v_ok (closSem_Recclosure loco vs1 env1 fns1 i) <=>
-        ALL v_ok env1 /\ ALL v_ok vs1 /\ i < LENGTH fns1 /\
+  [`(clos_interpProof_v_ok (closSem_Number i) <=> T) /\
+    (clos_interpProof_v_ok (closSem_Word64 w) <=> T) /\
+    (clos_interpProof_v_ok (closSem_Block n vs) <=> ALL
+    clos_interpProof_v_ok vs) /\
+    (clos_interpProof_v_ok (closSem_ByteVector ws) <=> T) /\
+    (clos_interpProof_v_ok (closSem_RefPtr b n) <=> T) /\
+    (clos_interpProof_v_ok (closSem_Closure loco vs1 env1 n bod1) <=>
+        ~(has_install bod1) /\ ALL clos_interpProof_v_ok env1 /\ ALL
+            clos_interpProof_v_ok vs1)`;
+   `clos_interpProof_v_ok (closSem_Recclosure loco vs1 env1 fns1 i) <=>
+        ALL clos_interpProof_v_ok env1 /\ ALL clos_interpProof_v_ok vs1
+            /\ i < LENGTH fns1 /\
         ALL ((~) o has_install o SND) fns1`];;
-add_simp v_ok_def;;
+add_simp clos_interpProof_v_ok_def;;
 
 let res_ok_def = new_definition
   `res_ok x1 =
    match x1 with
      Rerr (Rabort _) -> T
-   | Rerr (Rraise v) -> v_ok v
-   | Rval v -> ALL v_ok v`;;
+   | Rerr (Rraise v) -> clos_interpProof_v_ok v
+   | Rval v -> ALL clos_interpProof_v_ok v`;;
 add_simp res_ok_def;;
 
 let state_rel'_def = new_definition
@@ -346,20 +354,20 @@ let state_rel'_def = new_definition
        /\ closSem_state_clock
      t = closSem_state_clock s /\ closSem_state_ffi
      t = closSem_state_ffi s /\ closSem_state_globals
-     s = closSem_state_globals t /\ ALL (OPTION_ALL v_ok)
+     s = closSem_state_globals t /\ ALL (OPTION_ALL clos_interpProof_v_ok)
        (closSem_state_globals t) /\ closSem_state_refs
      s = closSem_state_refs t /\
-     FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> ALL v_ok vs)
-       (closSem_state_refs t) /\
-     FEVERY (\(k,v). !m w. v = closSem_Thunk m w ==> v_ok w)
-       (closSem_state_refs t) /\ closSem_state_compile
+     FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> ALL
+       clos_interpProof_v_ok vs) (closSem_state_refs t) /\
+     FEVERY (\(k,v). !m w. v = closSem_Thunk m w ==> clos_interpProof_v_ok
+       w) (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t)
        /\ closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o closSem_state_compile_oracle s`;;
 
 let lookup_vars_ok = prove
- (`!vs env env'. lookup_vars vs env = SOME env' /\ ALL v_ok env ==> ALL v_ok
-  env'`,
+ (`!vs env env'. lookup_vars vs env = SOME env' /\ ALL clos_interpProof_v_ok
+  env ==> ALL clos_interpProof_v_ok env'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -388,14 +396,16 @@ let evaluate_change_oracle = prove
      tmp = (xs,env,s1) /\
      (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr (Rabort
        Rtype_error)) ==>
-     state_rel' s1 t1 /\ ~(has_install_list xs) /\ ALL v_ok env ==>
+     state_rel' s1 t1 /\ ~(has_install_list xs) /\ ALL clos_interpProof_v_ok
+       env ==>
      (?t2.
         (closSem_evaluate (xs,env,t1) = (res,t2)) /\
         state_rel' s2 t2 /\ res_ok res)) /\
    (!loc f args (s:('c,'ffi)closSem_state) res s2 t1.
        evaluate_app loc f args s = (res,s2) /\ ~(res = Rerr (Rabort
          Rtype_error)) ==>
-       state_rel' s t1 /\ ALL v_ok args /\ v_ok f ==>
+       state_rel' s t1 /\ ALL clos_interpProof_v_ok args
+         /\ clos_interpProof_v_ok f ==>
        (?t2.
           (evaluate_app loc f args t1 = (res,t2)) /\
           state_rel' s2 t2 /\ res_ok res))`,
@@ -459,6 +469,10 @@ let insert_interp_no_mti = prove
 let insert_interp_esgc_free = prove
  (`ALL closProps_esgc_free (insert_interp xs) = ALL closProps_esgc_free xs`,
   CHEAT_TAC);;
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;
