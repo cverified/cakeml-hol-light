@@ -247,9 +247,12 @@ RESOLVE = os.environ.get('CAKE_RESOLVE') == '1'
 
 
 def read_resolved():
-  """what the resolution round found: the constant that each
+  """what the resolution round found: the **theory** that each
      overloaded name of each block means, as HOL Light's
-     typechecker resolved it"""
+     typechecker resolved it (and '*lib*' for the hand written
+     library layer).  A theory and not a name, because the name
+     of a constant moves -- adding the Silver model's datatypes
+     gave asm's Imm its prefix in eighty files"""
   out = {}
   try:
     f = open(T + 'resolved.txt')
@@ -397,8 +400,7 @@ class Porter:
     # what the round read off the typechecker for a name in a
     # block, which beats every rule but the one that a block
     # defining a name writes that name
-    self.ctx.resolved = (
-      lambda nm: RESOLVED.get((self.thy, self.curblock, nm)))
+    self.ctx.resolved = self.resolved_name
     self.ctx.arm_thys = self.arm_thys
     self.ctx.body_pr = self.pr_body
     # HOL4's auxiliary size functions of a datatype family
@@ -416,6 +418,7 @@ class Porter:
     # in the block that uses it, and the block has the name that
     # the HOL4 source gives it
     self.curblock = ''
+    self.libcand = db.lib_candidates()
     self.ctx.accessor_names = {}
     # the record types that the blocks of this file have named so
     # far (two_pass), and the record arguments of the constants
@@ -3134,6 +3137,19 @@ class Porter:
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     return max(ts, key=lambda x: rank.get(x, -1))
 
+  def resolved_name(self, nm):
+    """the name that the resolution round's answer comes to here:
+       the table says which theory the name means, and this is
+       the name that the port gives that theory's constant"""
+    t = RESOLVED.get((self.thy, self.curblock, nm))
+    if not t: return None
+    if t == '*lib*': return self.libcand.get(nm)
+    r = self.ctx.names.get((t, nm))
+    if r is None and t == self.thy: r = self.ctx.names.get(nm)
+    # a theory whose constant of this name the port did not
+    # rename keeps the name as the source writes it
+    return r or nm
+
   def resolve_overload(self, nm):
     """the constant that an overloaded name means here: the one
        that the resolution round read off HOL Light's typechecker
@@ -3149,7 +3165,7 @@ class Porter:
     # which is another mechanism than this one
     if nm in self.ctx.accessor_names:
       return self.ctx.accessor_names[nm]
-    r = RESOLVED.get((self.thy, self.curblock, nm))
+    r = self.resolved_name(nm)
     if r: return r
     if RESOLVE: return None
     try:

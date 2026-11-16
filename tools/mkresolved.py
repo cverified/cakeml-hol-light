@@ -18,10 +18,11 @@ tools/resolve.ml reads so that it logs nothing else.
 `table' reads the log of the round and writes tools/resolved.txt,
 whose lines are
 
-  <theory> <block> <HOL4 name> <the constant of the port>
+  <theory> <block> <HOL4 name> <the theory it means, or *lib*>
 
-A block that used two constants of one name is no answer for that
-name and is left out, with a line on stderr.
+and the port turns the theory back into the name it gives that
+theory's constant.  A block that used two of them for one name is
+no answer for that name and is left out, with a line on stderr.
 """
 import sys, os, collections
 
@@ -30,11 +31,22 @@ sys.path.insert(0, T)
 import db as dbmod
 
 
+LIB = '*lib*'
+
+
 def candidates(db):
-  """for every theory, the constants that each of its overloaded
-     names could mean: the ones that the theories in its scope
-     define under that name, and the one that the hand written
-     library layer provides under it"""
+  """for every theory, what each of its overloaded names could
+     mean: the theory of every constant that a theory in its scope
+     has under that name, and LIB for the one that the hand
+     written library layer provides under it.
+
+     The answer is a **theory** and not a constant, because the
+     name of a constant moves: adding the datatypes of the Silver
+     model gave asm's Imm its prefix in eighty files, and a table
+     of names written before that would have gone stale in every
+     one of them.  tools/port.py turns the theory back into the
+     name it gives that theory's constant, as con_thy's answer is
+     turned"""
   out = {}
   tykinds = ('type', 'tyabbrev')
   for thy, path, kind in dbmod.load_order():
@@ -42,12 +54,11 @@ def candidates(db):
     lib = db.lib_ambiguous(thy)
     d = {}
     for nm in set(db.overloaded_for(thy)) | set(lib):
-      cs = []
+      cs = {}
       for t, k in db.defs.get(nm, []):
         if t not in anc or k in tykinds: continue
-        new = db.rename.get((t, nm), nm)
-        if new not in cs: cs.append(new)
-      if nm in lib and lib[nm] not in cs: cs.append(lib[nm])
+        cs.setdefault(db.rename.get((t, nm), nm), t)
+      if nm in lib: cs.setdefault(lib[nm], LIB)
       if len(cs) > 1: d[nm] = cs
     out[thy] = d
   return out
@@ -63,7 +74,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     cs = set()
     for d in cand.values():
-      for v in d.values(): cs |= set(v)
+      for v in d.values(): cs |= set(v)      # the constants
     with open(out + 'consts.txt', 'w') as f:
       for c in sorted(cs): f.write(c + '\n')
     # and the overloads of the library layer that the round has to
@@ -87,14 +98,14 @@ def main():
     thy, blk, c = v
     n += 1
     for nm, cs in cand.get(thy, {}).items():
-      if c in cs: got[(thy, blk, nm)].add(c)
+      if c in cs: got[(thy, blk, nm)].add(cs[c])
   bad = 0
   with open(T + 'resolved.txt', 'w') as f:
     for k in sorted(got):
       v = got[k]
       if len(v) != 1:
         bad += 1
-        print('two constants of %s in %s %s: %s'
+        print('two theories for %s in %s %s: %s'
               % (k[2], k[0], k[1], ' '.join(sorted(v))),
               file=sys.stderr)
         continue
