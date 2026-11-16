@@ -230,12 +230,14 @@ let product_def = new_definition
 
 let mem_product = prove
  (`is_set_theory (mem:'U->'U->bool) ==>
-    (!a x y. (mem:'U->'U->bool) a (x * y) <=> (?b c. a = (setSpec_pair mem
+    (!a x y. (mem:'U->'U->bool) a (setSpec_product mem x y) <=> (?b c. a =
+      (setSpec_pair mem
       b c) /\ (mem:'U->'U->bool) b x /\ (mem:'U->'U->bool) c y))`,
   CHEAT_TAC);;
 
 let relspace_def = new_definition
-  `relspace (mem':'U->'U->bool) x y = (power mem') (x * y)`;;
+  `relspace (mem':'U->'U->bool) x y = (power mem') (setSpec_product mem' x
+    y)`;;
 
 (* HOL4 setSpecScript.sml:294: the overload Relspace, which the port expands *)
 
@@ -296,7 +298,8 @@ let holds_def = new_definition
 (* HOL4 setSpecScript.sml:365: the overload Holds, which the port expands *)
 
 let abstract_def = new_definition
-  `abstract (mem':'U->'U->bool) dom rng f = (setSpec_sub mem' (dom * rng)
+  `abstract (mem':'U->'U->bool) dom rng f = (setSpec_sub mem' (setSpec_product
+    mem' dom rng)
   (\x. ?a. x = (setSpec_pair mem' a (f a))))`;;
 
 (* HOL4 setSpecScript.sml:371: the overload Abstract, which the port expands *)
@@ -364,8 +367,7 @@ let is_infinite_def = new_definition
   s}`;;
 
 let is_model_def = new_definition
-  `is_model (setSpec_pair mem' (mem':'U->'U->bool) (setSpec_pair mem'
-  (indset:'U) (ch:'U->'U))) <=>
+  `is_model ((mem':'U->'U->bool),(indset:'U),(ch:'U->'U)) <=>
      is_set_theory mem' /\
      is_infinite mem' indset /\
      is_choice mem' ch`;;
@@ -386,7 +388,7 @@ let funspace_inhabited = prove
   CHEAT_TAC);;
 
 let tuple_def,tuple_ind = define_guess
-  `(tuple0 (mem':'U->'U->bool) [] = {}) /\
+  `(tuple0 (mem':'U->'U->bool) [] = setSpec_empty mem') /\
    (tuple0 (mem':'U->'U->bool) (CONS a as) = (setSpec_pair mem' a (tuple0
     (mem':'U->'U->bool) as)))`;;
 (* HOL4 setSpecScript.sml:515: the overload tuple, which the port expands *)
@@ -408,7 +410,8 @@ let tuple_inj = prove
 
 let bigcross_def,bigcross_ind = define_guess
   `(bigcross0 (mem':'U->'U->bool) [] = (setSpec_one mem')) /\
-   (bigcross0 (mem':'U->'U->bool) (CONS a as) = a * (bigcross0
+   (bigcross0 (mem':'U->'U->bool) (CONS a as) = setSpec_product mem' a
+     (bigcross0
     (mem':'U->'U->bool) as))`;;
 (* HOL4 setSpecScript.sml:549: the overload bigcross, which the port expands *)
 

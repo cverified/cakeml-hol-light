@@ -400,13 +400,10 @@ let type_ok_def,type_ok_ind = define_guess
           ALL (type_ok tysig) args)`;;
 
 let holSyntax_term_ok_def,holSyntax_term_ok_ind = define_guess
-  `(holSyntax_term_ok sig (holSyntax_Var x ty) <=> type_ok ((\ctxt.
-    alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) sig) ty) /\
+  `(holSyntax_term_ok sig (holSyntax_Var x ty) <=> type_ok (FST sig) ty) /\
    (holSyntax_term_ok sig (holSyntax_Const name ty) <=>
-         (?ty0. FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-             consts_of_upd ctxt)) ctxt)) sig) name = SOME ty0 /\
-               type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-                   types_of_upd ctxt)) ctxt)) sig) ty /\
+         (?ty0. FLOOKUP (SND sig) name = SOME ty0 /\
+               type_ok (FST sig) ty /\
                (\ty0 ty. ?i. ty = TYPE_SUBST i ty0) ty0 ty)) /\
    (holSyntax_term_ok sig (holSyntax_Comb tm1 tm2) <=>
          holSyntax_term_ok sig tm1 /\
@@ -415,8 +412,7 @@ let holSyntax_term_ok_def,holSyntax_term_ok_ind = define_guess
    (holSyntax_term_ok sig (holSyntax_Abs v tm) <=>
          (?x ty.
            v = holSyntax_Var x ty /\
-           type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd
-               ctxt)) ctxt)) sig) ty /\
+           type_ok (FST sig) ty /\
            holSyntax_term_ok sig tm))`;;
 
 (* Well-formed sets of hypotheses, represented as lists,
@@ -442,12 +438,9 @@ new_type_abbrev("thy",`:sig#(holSyntax_term->bool)`);;
 
 let is_std_sig_def = new_definition
   `is_std_sig (sig:(mlstring,num)fmap#(mlstring,type)fmap) <=>
-     FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-       ctxt)) sig) (implode "fun") = SOME 2 /\
-     FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-       ctxt)) sig) (implode "bool") = SOME 0 /\
-     FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-       ctxt)) ctxt)) sig) (implode "=") = SOME ((\s t. holSyntax_Tyapp
+     FLOOKUP (FST sig) (implode "fun") = SOME 2 /\
+     FLOOKUP (FST sig) (implode "bool") = SOME 0 /\
+     FLOOKUP (SND sig) (implode "=") = SOME ((\s t. holSyntax_Tyapp
        (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A")) ((\s t.
        holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode
        "A")) (holSyntax_Tyapp (implode "bool") [])))`;;
@@ -455,40 +448,25 @@ let is_std_sig_def = new_definition
 let theory_ok_def = new_definition
   `theory_ok
   (thy:((mlstring,num)fmap#(mlstring,type)fmap)#(holSyntax_term->bool)) <=>
-     (!ty. ty IN FRANGE ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-       consts_of_upd ctxt)) ctxt)) thy) ==> type_ok ((\ctxt. alist_to_fmap
-       ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) thy) ty) /\
-     (!p. p IN ((\ctxt. set_of_list ((\ctxt. FLAT (MAP (\upd. APPEND
-       (axexts_of_upd upd) (conexts_of_upd upd)) ctxt)) ctxt)) thy) ==>
-       holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     (!ty. ty IN FRANGE (SND (FST thy)) ==> type_ok (FST (FST thy)) ty) /\
+     (!p. p IN (SND thy) ==>
+       holSyntax_term_ok (FST thy)
        p /\ has_type p (holSyntax_Tyapp (implode "bool") [])) /\
-     is_std_sig ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-       ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt))
-       thy)`;;
+     is_std_sig (FST thy)`;;
 
 (* Sequents provable from a theory *)
 
 let proves = cake_inductive
   `((
-      ~(EX (VFREE_IN (holSyntax_Var x ty)) h) /\ type_ok ((\ctxt.
-        alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) thy) ty
+      ~(EX (VFREE_IN (holSyntax_Var x ty)) h) /\ type_ok (FST (FST thy)) ty
         /\ (|-) (thy,h) ((===) l r) ==> (|-) (thy,h) ((===) (holSyntax_Abs
         (holSyntax_Var x ty) l) (holSyntax_Abs (holSyntax_Var x ty) r)))) /\
    ((
       theory_ok thy /\ has_type p (holSyntax_Tyapp (implode "bool") [])
-        /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-        alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-        ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-        ctxt)) ctxt)) thy) p ==> (|-) (thy,[p]) p)) /\
+        /\ holSyntax_term_ok (FST thy) p ==> (|-) (thy,[p]) p)) /\
    ((
-      theory_ok thy /\ type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-        types_of_upd ctxt)) ctxt)) thy) ty /\ holSyntax_term_ok
-        ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap ((\ctxt. FLAT
-        (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt.
-        FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) t ==> (|-) (thy,[])
+      theory_ok thy /\ type_ok (FST (FST thy)) ty /\ holSyntax_term_ok
+        (FST thy) t ==> (|-) (thy,[])
         ((===) (holSyntax_Comb (holSyntax_Abs (holSyntax_Var x ty) t)
         (holSyntax_Var x ty)) t))) /\
    ((
@@ -501,29 +479,21 @@ let proves = cake_inductive
    ((
       (!s s'. MEM (s',s) ilist ==>
                 (?x ty. (s = holSyntax_Var x ty) /\ has_type s' ty
-                  /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-                  ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-                  ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-                  consts_of_upd ctxt)) ctxt)) ctxt)) thy) s')) /\ (|-) (thy,h)
+                  /\ holSyntax_term_ok (FST thy) s')) /\ (|-) (thy,h)
                   c ==> (|-) (thy,term_image (VSUBST ilist) h) (VSUBST ilist
                   c))) /\
    ((
-      (ALL (type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd
-        ctxt)) ctxt)) thy)) (MAP FST tyin)) /\ (|-) (thy,h) c ==> (|-)
+      (ALL (type_ok (FST (FST thy))) (MAP FST tyin)) /\ (|-) (thy,h) c ==> (|-)
         (thy,term_image (holSyntax_INST tyin) h) (holSyntax_INST tyin c))) /\
    ((
       (|-) (thy,h1) ((===) l1 r1) /\ (|-) (thy,h2) ((===) l2 r2) /\
       welltyped (holSyntax_Comb l1 l2) ==> (|-) (thy,term_union h1 h2)
         ((===) (holSyntax_Comb l1 l2) (holSyntax_Comb r1 r2)))) /\
    ((
-      theory_ok thy /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-        ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-        ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-        ctxt)) ctxt)) thy) t ==> (|-) (thy,[]) ((===) t t))) /\
+      theory_ok thy /\ holSyntax_term_ok (FST thy) t ==> (|-) (thy,[]) ((===) t
+        t))) /\
    ((
-      theory_ok thy /\ c IN ((\ctxt. set_of_list ((\ctxt. FLAT (MAP
-        (\upd. APPEND (axexts_of_upd upd) (conexts_of_upd upd)) ctxt))
-        ctxt)) thy) ==> (|-) (thy,[]) c))`;;
+      theory_ok thy /\ c IN (SND thy) ==> (|-) (thy,[]) c))`;;
 
 (* A context is a sequence of updates *)
 
