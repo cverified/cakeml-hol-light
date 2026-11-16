@@ -1269,6 +1269,9 @@ class Ctx:
                abbrevs=None, tynames=None, overloaded=None,
                con_argty=None, defnames=None, rectys=None):
     self.names = names or {}     # cakeml name -> hol light name
+    # what a resolution round found for a name in a block, which
+    # tools/port.py sets (None where there is no table)
+    self.resolved = None
     self.tynames = tynames or {} # the same for the type names
     self.con_argty = con_argty or {}  # (con,index) -> type text
     self.overloaded = overloaded or set()  # names HOL4 overloads
@@ -1376,6 +1379,13 @@ class Ctx:
     # and everything else the name that HOL4 overloads with it
     if n in self.defining:
       return self.names.get((self.thy, n), self.names.get(n, n))
+    # what the resolution round read off HOL Light's typechecker
+    # for this name in this block (tools/resolved.txt): the
+    # typechecker resolves a name as HOL4 does, so its answer
+    # beats every rule below
+    if self.resolved is not None:
+      r = self.resolved(n)
+      if r: return r
     # a name HOL4 overloads is written out as the constant it
     # means here: HOL Light has one namespace and no theory
     # scope, so Var of closLang is clos_Var and Var of bvl is

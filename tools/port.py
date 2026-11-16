@@ -385,12 +385,20 @@ class Porter:
     # against cfFFIType's, llist's fromList against sptree's --
     # although only one theory of the port has it.  A round writes
     # such a name as the source writes it and registers the
-    # library's constant beside the port's (tools/resolve.ml), and
-    # a plain port reads the answer back out of the table; where
-    # the table has nothing, con_thy answers as it did before,
-    # because a theory of the scope does define the name
-    self.ctx.overloaded = (set(self.ctx.overloaded) |
-                           set(db.lib_ambiguous(thy)))
+    # library's constant beside the port's (tools/resolve.ml); a
+    # plain port leaves the name alone, because the rule that the
+    # library's meaning stands where nothing says otherwise is
+    # what makes stackProps' LPREFIX (fromList ...) llist's and
+    # not sptree's.  What a plain port does read back is the
+    # table, and that is a step of its own (ctx.resolved)
+    if RESOLVE:
+      self.ctx.overloaded = (set(self.ctx.overloaded) |
+                             set(db.lib_ambiguous(thy)))
+    # what the round read off the typechecker for a name in a
+    # block, which beats every rule but the one that a block
+    # defining a name writes that name
+    self.ctx.resolved = (
+      lambda nm: RESOLVED.get((self.thy, self.curblock, nm)))
     self.ctx.arm_thys = self.arm_thys
     self.ctx.body_pr = self.pr_body
     # HOL4's auxiliary size functions of a datatype family
