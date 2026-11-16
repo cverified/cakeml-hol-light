@@ -14570,6 +14570,16 @@ THM_PATCH = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # HOL4 writes Num (Num (ABS i)): the inner Num is integer's,
+  # which takes an integer to a number, and the outer is
+  # cfFFIType's, which takes a number to an FFI value.  One block
+  # that means a name two ways is the one shape a resolution
+  # round cannot answer -- its table says what a name means in a
+  # block, and here it means both -- so it is said here
+  ('cfHeapsBase', 'encode_int_def'): [
+    ('cfFFIType_Num (cfFFIType_Num (abs i))',
+     'cfFFIType_Num (num_of_int (abs i))'),
+  ],
   # HOL4's record literal <| hash_tab_32 := (n,[]) |> is of the
   # type that run_ienc_state_32 takes, which is the record of an
   # initial state, ienc_state_32.  Both records have a field of
