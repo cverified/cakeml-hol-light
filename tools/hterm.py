@@ -368,6 +368,15 @@ def tokenize(s):
 #    hol4 name : (hol4 prec, assoc, hol light name, hol light prec)
 
 INFIX = {
+  # HOL4 has --> as an infix of its own grammar and CakeML's
+  # translator overloads it with its Arrow, the relation between a
+  # HOL function and a piece of CakeML that computes it.  Nothing
+  # of the port declares the fixity, so `Eq a x --> b` parsed as
+  # an application of four things and came out as
+  # `Eq a x (Arrow) b`.  The name is the token, so the overload of
+  # the file that uses it says what it is applied to: 24 theories
+  # use it, 253 times, and every one of them is the translator's
+  '-->':   (450, 'r', '-->',  None),
   ',':     (50,  'r', ',',      14),
   '<=>':   (100, 'r', '<=>',     2),
   '==>':   (200, 'r', '==>',     4),
