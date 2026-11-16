@@ -1835,7 +1835,12 @@ BINDERS = set(['minimal'])
 # the binders of HOL4 that the port writes as a constant applied to
 # an abstraction, and whether the pmatch syntax of the patternMatches
 # library is enabled in this file
-HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'SEP_EXISTS', 'OLEAST'])
+# the four POSTs of cfHeapsBase and the two FUNs of
+# ml_translator are binders that HOL4 makes with
+# new_binder_definition in an ML block of the source
+HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'SEP_EXISTS', 'OLEAST',
+                    'POSTv', 'POSTe', 'POSTf', 'POSTd',
+                    'FUN_FORALL', 'FUN_EXISTS'])
 PMATCH = [False]
 
 
