@@ -580,6 +580,13 @@ class Db:
   def is_needed(self, thy, names):
     if any((thy, nm) in overrides.ALSO_NEEDED for nm in names):
       return True
+    # of a library theory that the port only takes a part of, a
+    # name outside that part is not ported, whatever needs it:
+    # regexp_compiler is in ml/lib for its vector and nothing
+    # else, and its fromList is llist's name for another function
+    only = overrides.ONLY_NAMES.get(thy)
+    if only is not None and not any(nm in only for nm in names):
+      return False
     # a name that the hand written library layer provides is not
     # ported again -- but only where what it provides is *this*
     # theory's.  llist's fromList is not balanced_map's, and

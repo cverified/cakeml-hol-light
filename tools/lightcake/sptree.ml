@@ -232,7 +232,7 @@ let SPTAUX_lookup_fromList_gen = prove
 let lookup_fromList = prove
  (`sptree_lookup n (sptree_fromList l) =
    if n < LENGTH l then SOME (EL n (l:A list)) else NONE`,
-  REWRITE_TAC[fromList_def; SPTAUX_lookup_fromList_gen; ADD_CLAUSES; LT;
+  REWRITE_TAC[sptree_fromList_def; SPTAUX_lookup_fromList_gen; ADD_CLAUSES; LT;
               SUB_0; lookup_rwts]);;
 
 let domain_fromList = prove

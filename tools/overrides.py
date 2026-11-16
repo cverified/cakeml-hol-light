@@ -13354,6 +13354,17 @@ MAIN_THEORY = {
 # this says the exceptions: a proof about bvl that names asm's Xor
 # or backend_common's word_shift wants that one wherever it stands.
 CON_FILE = {
+  # the Inst of `<target>_enc (Inst (Const n c))' is asm's: what
+  # the file builds is the assembly that the target's encoder
+  # takes.  The port declares <target>_enc in compiler, which
+  # loads after these files, so a resolution round has no type to
+  # resolve the name by and takes the first candidate
+  'ag32Prog': {'Inst': 'asm'},
+  'arm7Prog': {'Inst': 'asm'},
+  'arm8Prog': {'Inst': 'asm'},
+  'mipsProg': {'Inst': 'asm'},
+  'riscvProg': {'Inst': 'asm'},
+  'x64Prog': {'Inst': 'asm'},
   # clos_knownProof defines a v_rel of its own, on a
   # configuration, a globals approximation and two values, and it
   # means that one everywhere; clos_ticksProof's, which comes

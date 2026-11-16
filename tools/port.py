@@ -3144,6 +3144,14 @@ class Porter:
     """the name that the resolution round's answer comes to here:
        the table says which theory the name means, and this is
        the name that the port gives that theory's constant"""
+    # an override of a human beats the round: the round reads the
+    # types the session has, and a file that uses a constant the
+    # port only declares in a later file (x64Prog's x64_enc, which
+    # compiler declares) gives it nothing to resolve by, so it
+    # takes the first candidate.  CON_OF and CON_FILE are where
+    # such a case is said, and they come first
+    if (nm in self.conof_said or nm in self.con_file or
+        nm in self.front_thy): return None
     t = RESOLVED.get((self.thy, self.curblock, nm))
     if not t: return None
     if t == '*lib*': return self.libcand.get(nm)
