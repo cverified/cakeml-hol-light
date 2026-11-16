@@ -258,6 +258,29 @@ FIELD_DEFAULT = {
   'max_app': 'closSem_state',
 }
 
+# the record type whose name the port puts in front of the
+# overload of a field that several records have, where they are
+# not all of one name and the bare field name would be the
+# overload (db.ambiguous_fields).  A bare one is a name that HOL4
+# writes for a variable, so every bound variable of that name
+# takes a prime; a qualified one is the name HOL4 gives the
+# accessor itself and clashes with nothing.
+#
+# Four of these were qualified before the port took in Pancake and
+# Candle, because every record that had the field was called
+# state: a context of Pancake with a field of the same name made
+# them bare and put a prime on a hundred and eighty variables of
+# the compiler's proofs.  So the type that was there first is
+# named here, and the other records reach the field through the
+# accessor of their own type, as they did before
+FIELD_OVERLOAD = {
+  'loc': 'loc_err_info',       # infer's, against panStatic's context
+  'target': 'machine_config',  # targetSem's, against crep_to_loop's
+  'locals': 'state',           # dataSem's and wordSem's
+  'globals': 'state',          # closSem's, bvlSem's and flatSem's
+  'last': 'context',           # panStatic has it on two records
+}
+
 # the record type of a variable, where one theory uses two record
 # types that have a field of the same name and the type of the
 # variable is the only thing that says which one it is
@@ -912,6 +935,30 @@ RENAME = {
   ('cmlPEG', 'assert'): 'OPTION_GUARD',
   ('cmlPtreeConversion', 'assert'): 'OPTION_GUARD',
   ('fromSexp', 'assert'): 'OPTION_GUARD',
+
+  # HOL4 lets a variable shadow a constant and HOL Light does not,
+  # so a constant whose name is one that CakeML writes for a
+  # variable costs a prime on every one of those variables -- and
+  # the name of a constant is the port's to choose, where the
+  # names of the variables are HOL4's and the port keeps them.
+  # Each of these is defined in one theory of the whole
+  # distribution and is a variable in many: h is an overload of
+  # one of Candle's axioms and is the head of a list in thirty-four
+  # files of the compiler, exps is one definition of Pancake's
+  # crepLang and a variable of the closure conversion, name is one
+  # of basis' CommandLineProof.  Together they were a prime on
+  # six hundred variables
+  ('holAxioms', 'h'): 'holAxioms_h',
+  ('CommandLineProof', 'name'): 'CommandLineProof_name',
+  ('compute_eval', 'subst'): 'compute_eval_subst',
+  ('compute_eval', 'check'): 'compute_eval_check',
+  ('crepLang', 'exps'): 'crepLang_exps',
+  ('holSyntaxExtra', 'db'): 'holSyntaxExtra_db',
+  ('DoubleProg', 'sign'): 'DoubleProg_sign',
+  ('cf', 'cf'): 'cf_cf',
+  ('setSpec', 'pair'): 'setSpec_pair',
+  ('basis_ffi', 'post'): 'basis_ffi_post',
+  ('errorLogMonad', 'log'): 'errorLogMonad_log',
 }
 
 # the same for a constant whose name a type of the same theory

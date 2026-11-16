@@ -1393,13 +1393,27 @@ class Porter:
       self._con_ovl = out
     return self._con_ovl
 
+  def keeps_name(self, thy, n):
+    """whether the port gives a definition of a theory the name
+       that the HOL4 source gives it.  A name that every theory
+       defining it renames away is the name of no constant of the
+       port, so a variable of that name clashes with nothing and
+       keeps its own name -- which is what the port is after,
+       because HOL4 writes that name.  One definition of prog in
+       the whole distribution (backend_x64_eval's, which is the
+       empty program of a cv_compute experiment) would otherwise
+       put a prime on six hundred variables of the compiler's
+       proofs"""
+    return ((thy, n) not in self.db.rename and
+            overrides.RENAME_CONST.get((thy, n), n) == n)
+
   def is_const(self, n):
     # a name that the port overloads the accessors of a record
     # field with is a constant of HOL Light as well
     return (n in self.db.hl or n in self.db.provided or
             n in set(self.db.ambiguous_fields().values()) or
-            any(k not in ('type', 'tyabbrev')
-                for _, k in self.db.defs.get(n, [])))
+            any(k not in ('type', 'tyabbrev') and self.keeps_name(t, n)
+                for t, k in self.db.defs.get(n, [])))
 
   def typ(self, text, keep=False):
     ty = hterm.parse_type_text(text)
@@ -5248,6 +5262,27 @@ def file_patch(thy, text, used=None):
                     for l in text.split('\n'))
 
 
+def near(text, ws):
+  """what stands where a patch looked, for a patch that does not
+     apply.  The commonest reason is that a name resolves to
+     another theory than it did -- a theory that comes earlier in
+     the porting order has taken it -- and then the words of the
+     patch are there but for one, so the longest prefix of them
+     that is still in the text says where to look and what the
+     port says there now"""
+  best = 0
+  for k in range(len(ws), 0, -1):
+    pat = re.compile(r'\s+'.join(re.escape(w) for w in ws[:k]))
+    m = pat.search(text)
+    if m:
+      best = k
+      got = ' '.join(text[m.start():m.start() + len(' '.join(ws))
+                          + 40].split())
+      return ('\n   the first %d word(s) of it are there, and what '
+              'follows is\n   %s' % (k, got))
+  return '\n   not one word of it is in the block'
+
+
 def patch_text(text, patches, what='DEF_PATCH'):
   """apply the DEF_PATCH (or THM_PATCH) entries of a block to its
      text.  The text is laid out already, so a patch is matched
@@ -5257,11 +5292,12 @@ def patch_text(text, patches, what='DEF_PATCH'):
      is broken again.  A patch that does not apply is an error and
      not a silence"""
   for was, now in patches:
-    pat = re.compile(r'\s+'.join(re.escape(w) for w in was.split()))
+    ws = was.split()
+    pat = re.compile(r'\s+'.join(re.escape(w) for w in ws))
     m = pat.search(text)
     if m is None:
-      raise SyntaxError('%s does not apply: %s'
-                        % (what, ' '.join(was.split())[:40]))
+      raise SyntaxError('%s does not apply: %s%s'
+                        % (what, ' '.join(ws)[:40], near(text, ws)))
     text = text[:m.start()] + ' '.join(now.split()) + text[m.end():]
   return '\n'.join(wrap(l, 0, 79) if len(l) > 79 else l
                    for l in text.split('\n'))

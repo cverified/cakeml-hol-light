@@ -895,8 +895,13 @@ class Db:
     for f, tys in out.items():
       if len(tys) < 2 or f in overrides.FIELD_DEFAULT: continue
       names = set(ty for _, ty in tys)
+      # the bare name of a field is one that HOL4 writes for a
+      # variable, so where the records are not all of one name
+      # the port puts the type that FIELD_OVERLOAD names in front
+      # of it instead (overrides.FIELD_OVERLOAD says why)
       self._ambflds[f] = (names.pop() + '_' + f if len(names) == 1
-                          else f)
+                          else overrides.FIELD_OVERLOAD[f] + '_' + f
+                          if f in overrides.FIELD_OVERLOAD else f)
     return self._ambflds
 
   def fields_for(self, thy):
