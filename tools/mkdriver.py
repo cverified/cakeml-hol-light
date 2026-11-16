@@ -18,7 +18,11 @@ import os, sys, io
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
-ML = T + '../ml/'
+# the tree to read the files from: ml/ itself, or the scratch tree
+# of a resolution round (CAKE_ML=tmp/res)
+ML = os.environ.get('CAKE_ML') or T + '../ml/'
+if not ML.endswith('/'): ML += '/'
+REAL = T + '../ml/'
 
 HEAD = '''let cake_t0 = Sys.time();;
 let cake_file s =
@@ -46,7 +50,9 @@ def main():
       tolerant.main()
     finally:
       sys.stdout = keep
-    real = ML + f
+    # the digest that stops a `needs' of a later file from
+    # loading the real file over the copy is the real file's
+    real = REAL + f
     drv.append('cake_file "%s";;' % f)
     drv.append('loadt "%s";;' % cp)
     drv.append('loaded_files := (Filename.basename "%s",'

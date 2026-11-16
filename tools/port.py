@@ -221,6 +221,34 @@ DEBUG_NAMES = os.environ.get('CAKE_DEBUG_NAMES')
 # which of them the port reads now: an entry that a run does not
 # bear out any more is a statement won back
 RETRY_UNSTATED = os.environ.get('RETRY') == '1'
+# with CAKE_RESOLVE=1 the port does not decide what an overloaded
+# name means: it writes the name as the source writes it and lets
+# HOL Light's typechecker resolve it against the interface, which
+# is what HOL4 does and what PLAN.md decided the port is to do.
+# The file then says where each term stands (cake_at), the session
+# logs the constants of every term it parses, and
+# tools/mkresolved.py turns that log into tools/resolved.txt,
+# which a plain port reads back
+RESOLVE = os.environ.get('CAKE_RESOLVE') == '1'
+
+
+def read_resolved():
+  """what the resolution round found: the constant that each
+     overloaded name of each block means, as HOL Light's
+     typechecker resolved it"""
+  out = {}
+  try:
+    f = open(T + 'resolved.txt')
+  except IOError:
+    return out
+  with f:
+    for l in f:
+      v = l.rstrip('\n').split('\t')
+      if len(v) == 4: out[(v[0], v[1], v[2])] = v[3]
+  return out
+
+
+RESOLVED = read_resolved()
 
 
 def dbg(where, old, new):
@@ -350,6 +378,11 @@ class Porter:
     # means in this theory, so that HOL Light has one name per
     # constant and nothing is resolved while a file loads
     self.ctx.resolve = self.resolve_overload
+    # the block that is being written, which is what the table of
+    # the resolution round is keyed by: a name means one constant
+    # in the block that uses it, and the block has the name that
+    # the HOL4 source gives it
+    self.curblock = ''
     self.ctx.accessor_names = {}
     # the record types that the blocks of this file have named so
     # far (two_pass), and the record arguments of the constants
@@ -1504,6 +1537,7 @@ class Porter:
           # overrides give as the expression that HOL4 evaluates
           for (t, nm), v in overrides.ANTIQUOTE.items():
             if t == self.thy: hterm.ANTIQ[nm] = v
+        self.curblock = b.name or ''
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
@@ -1520,6 +1554,12 @@ class Porter:
                        else 'the %s' % b.kind.lower()))
       new = self.out[before:]
       if new:
+        # the resolution round says where each term stands, so
+        # that the constants the session resolves them to can be
+        # read back against the block that wrote them
+        if RESOLVE and b.name:
+          new = ['cake_at "%s" "%s";;'
+                 % (self.thy, b.name.replace('"', '')) ] + new
         # the needs of the port start a paragraph of their own
         blanks = max(1, b.blanks) if b.kind == 'Ancestors' else b.blanks
         chunks.append((blanks, '\n'.join(new)))
@@ -3029,10 +3069,23 @@ class Porter:
     return max(ts, key=lambda x: rank.get(x, -1))
 
   def resolve_overload(self, nm):
-    """the constant that an overloaded name means here: the
-       one HOL4's own resolution would take, which con_thy
-       works out.  None where this port cannot tell, and the
-       name is then left as it stands"""
+    """the constant that an overloaded name means here: the one
+       that the resolution round read off HOL Light's typechecker
+       (tools/resolved.txt), and where that has nothing the one
+       HOL4's own resolution would take, which con_thy works out.
+       None where this port cannot tell, and the name is then left
+       as it stands -- which is what the resolution round itself
+       writes everywhere, so that the typechecker does the
+       resolving and the session says what it took"""
+    # the accessor of a record field, which the record block of
+    # the theory that defines the record put in the map: a field
+    # is syntax in HOL4 and resolved by the type of the record,
+    # which is another mechanism than this one
+    if nm in self.ctx.accessor_names:
+      return self.ctx.accessor_names[nm]
+    r = RESOLVED.get((self.thy, self.curblock, nm))
+    if r: return r
+    if RESOLVE: return None
     try:
       # a constructor first, and only that, so that con_thy can
       # narrow by the types the block is about (its contys): with
@@ -3044,10 +3097,6 @@ class Porter:
         t = self.con_thy(nm, ('con', 'def', 'rel'), arity=ar)
     except Exception:
       t = None
-    # the accessor of a record field, which the record block of
-    # the theory that defines the record put in the map
-    if nm in self.ctx.accessor_names:
-      return self.ctx.accessor_names[nm]
     if not t: return None
     # the map keys a name of this theory itself without the
     # theory in front of it, as hterm.Ctx.name reads it

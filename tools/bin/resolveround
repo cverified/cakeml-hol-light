@@ -1,0 +1,45 @@
+#!/bin/sh
+# resolveround : the round that lets HOL Light's typechecker say
+# what each overloaded name of the port means.
+#
+# PLAN.md, "Names are to be resolved by typechecking, at conversion
+# time": HOL4 resolves an overloaded name by the type that makes
+# the term typecheck, and the port is to do the same rather than
+# decide statically and need an override table for every name that
+# two theories share.
+#
+# The round is: port the whole tree with CAKE_RESOLVE=1, which
+# writes every overloaded name as the source writes it; load that
+# tree as an abstract with tools/resolve.ml, which logs the
+# constants of every term the session parses; and turn the log
+# into tools/resolved.txt, which a plain port reads back and
+# writes into ml/.
+#
+# It takes about three quarters of an hour, almost all of it the
+# session reading the statements.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C || exit 1
+set -e
+echo "== the constants a resolution says something about"
+python3 -I tools/mkresolved.py consts tmp/res
+echo "== the port with nothing resolved"
+CAKE_RESOLVE=1 python3 -I tools/dryport.py tmp/res | tail -3
+echo "== the files to load"
+CAKE_ML=$C/tmp/res CAKE_UNSTATED=unstated-res.txt \
+  python3 -I tools/mkdriver.py tmp/drvres
+rm -f tmp/res/resolve.txt tmp/unstated-res.txt
+: > tmp/unstated-res.txt
+echo "== the session"
+repl-kill res > /dev/null 2>&1 || true
+TIMEOUT=300 repl-clone hol-template-cakeml res > /dev/null
+TIMEOUT=300 repl-step res 'loadt "'$C'/ml/lib/fast.ml";;' \
+  > /dev/null
+TIMEOUT=300 repl-step res 'loadt "'$C'/tools/resolve.ml";;' \
+  > /dev/null
+TIMEOUT=${TIMEOUT:-5400} repl-step res \
+  'loadt "'$C'/tmp/drvres/driver.ml";;' | tail -3
+TIMEOUT=120 repl-step res 'flush_all ();;' > /dev/null
+echo "== the table"
+python3 -I tools/mkresolved.py table tmp/res
+wc -l tools/resolved.txt tmp/unstated-res.txt
