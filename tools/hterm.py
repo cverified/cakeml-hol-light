@@ -26,9 +26,27 @@ UNI = {
 GREEK = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
                  ["'" + c for c in 'abcdefghijklmnopqrstuvwxy']))
 
-# the Greek letters that a CakeML source uses for a term variable
-# and not for a type variable; HOL Light needs an ASCII name
+# the ASCII name of a Greek letter that stands for a term
+# variable and not for a type variable.  Which of the two it is
+# the place says: a letter that follows a colon is the type
+# variable, and everywhere else it is a term variable of its own
+# (Candle writes the type assignment of an interpretation as γ and
+# the context as δ, and holSemantics has α as a type variable in
+# the same statement).  GREEK_VAR is tried first, so a letter in
+# it is a term variable wherever it stands
 GREEK_VAR = {'μ': 'mu', 'σ': 'sigma', 'τ': 'tau', 'ρ': 'rho'}
+
+GREEK_NAME = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
+                      ['alpha', 'beta', 'gamma', 'delta', 'epsilon',
+                       'zeta', 'eta', 'theta', 'iota', 'kappa',
+                       'lambda', 'mu', 'nu', 'xi', 'omicron', 'pi',
+                       'rho', 'sigma', 'sigma', 'tau', 'upsilon',
+                       'phi', 'chi', 'psi', 'omega']))
+
+# a type that is parsed on its own (tools/hterm.py's
+# parse_type_text) has no colon in front of it, so the letters of
+# it are type variables whatever they would be in a term
+IN_TYPE = [False]
 
 KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
             'do', 'od', 'with', 'otherwise', 'some']
@@ -276,8 +294,15 @@ def tokenize(s):
       toks.append(Tok('id', GREEK_VAR[c] + s[i+1:j], start, nl, icol))
       i = j; col += j - i; nl = 0; continue
     if c in GREEK:
-      toks.append(Tok('tyvar', GREEK[c], start, nl, icol))
-      i += 1; col += 1; nl = 0; continue
+      # the colon of a type annotation (or of a type quotation) is
+      # what says that this letter is a type variable
+      if IN_TYPE[0] or (toks and toks[-1].text == ':'):
+        toks.append(Tok('tyvar', GREEK[c], start, nl, icol))
+        i += 1; col += 1; nl = 0; continue
+      j = i + 1
+      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
+      toks.append(Tok('id', GREEK_NAME[c] + s[i+1:j], start, nl, icol))
+      i = j; col += j - i; nl = 0; continue
     if c == '𝕌':
       toks.append(Tok('sym', '𝕌', start, nl, icol))
       i += 1; col += 1; nl = 0; continue
@@ -3103,7 +3128,12 @@ class TypeParser:
 
 
 def parse_type_text(s):
-  return TypeParser(tokenize(s)[:-1]).parse()
+  IN_TYPE[0] = True
+  try:
+    toks = tokenize(s)[:-1]
+  finally:
+    IN_TYPE[0] = False
+  return TypeParser(toks).parse()
 
 
 def type_subst(ty, sub):
