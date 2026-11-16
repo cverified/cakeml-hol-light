@@ -1575,6 +1575,14 @@ INT_RESULT = set([
 IFF_IS_EQ = set([
   # the two sides are of type (α wordLang$prog) option
   ('word_alloc', 'oracle_colour_ok_def'),
+  # ordav compares two variables of a term of the Candle kernel
+  # and gives an ordering, which HOL4 may write its iff at because
+  # the iff of HOL4 is its equality with another precedence and no
+  # type of its own.  The alpha_lt beside it does give a boolean,
+  # and so do the four comparisons of mlstring and toto's TotOrd,
+  # which are the only other definitions of the scope that write
+  # the iff with an ordering anywhere in them
+  ('holSyntax', 'ordav_def'),
 ])
 
 # definitions in which a ~ without an argument ($~) is the negation
