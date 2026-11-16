@@ -77,8 +77,20 @@ Light running, and resolution at conversion time makes a round
 *port -> abstract -> re-port*.  That is why the abstract's speed
 mattered enough to spend a day on.
 
-Not yet done.  `PENDING.md` lists what the override tables cannot
-reach without it.
+**Done, 2026-11-16** (`tools/bin/resolveround`, and `CLAUDE.md`
+says how it works).  The first round: 492 files loaded in 1903s
+with every overloaded name written as the source writes it and
+every constant registered under its HOL4 name, 23,460 constants
+logged, **10,274 resolutions** over 4,250 blocks, and 117 files of
+`ml/` changed by them.  Fifty `THM_PATCH` and `DEF_PATCH` entries
+became unnecessary, which is the table shrinking rather than
+growing for the first time.
+
+What a round cannot answer is a block that means one name two
+ways -- `evaluate` of two languages in one theorem of a compiler
+proof.  `tools/resolved-both.txt` is that list, 499 blocks, and
+they are the blocks where the port's one choice per name cannot
+be right for both.  Those keep a patch.
 
 ## How Freek wants choices made
 
