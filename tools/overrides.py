@@ -1506,6 +1506,41 @@ INT_ARGS = {
 # every spot that matches is patched.  An entry that matches
 # nowhere in the file is reported in tools/warnings.txt
 FILE_PATCH = {
+  # HOL4 declares tysof and tmsof three times over, each at a type
+  # of its own, and its parser uses the one in force where the
+  # block stands: FST and SND of a signature up to line 478, then
+  # those after sigof for a theory, then the fold over a context
+  # from line 595 on.  The port keeps one value for an overload of
+  # a theory and took the last, so every block before 595 got the
+  # fold.  Which of the three a place means is what it is applied
+  # to, so that is what this says; sigof and axsof are declared
+  # twice and go the same way.  Six names of two theories of the
+  # whole scope are overloaded more than once (these four and
+  # basis_ffi's two), and a port that followed the declaration
+  # order would need none of it
+  'holSyntax': [
+    (r'\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_'
+     r'upd\s+ctxt\)\)\s+ctxt\)\)\s+sig',
+     r'FST sig'),
+    (r'\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of'
+     r'_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig',
+     r'SND sig'),
+    (r'\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_'
+     r'upd\s+ctxt\)\)\s+ctxt\)\)\s+thy',
+     r'FST (FST thy)'),
+    (r'\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of'
+     r'_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy',
+     r'SND (FST thy)'),
+    (r'\(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fma'
+     r'p\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)'
+     r'\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+c'
+     r'onsts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy',
+     r'FST thy'),
+    (r'\(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s'
+     r'+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctx'
+     r't\)\)\s+ctxt\)\)\s+thy',
+     r'SND thy'),
+  ],
   'word_to_stackProof': [
     (r'stackSem_set_var\s+0\s+c1\s*\(\s*stackSem_set_var\s+r\s+c\s+s\s*\)',
      r'wordSem_set_var 0 c1 (wordSem_set_var r c s)'),
