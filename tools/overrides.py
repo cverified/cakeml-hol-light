@@ -154,6 +154,13 @@ TYPE_MAP = {
 # does not declare one.  The value is the text of the type with a
 # %s for each argument of it, in order
 TYPE_ABBREV = {
+  # ml_translator abbreviates state for semanticPrimitives' state,
+  # which takes a parameter -- and HOL Light's new_type_abbrev
+  # takes none, so the port cannot declare it and writes it out.
+  # A key that names the theory is for a name that one theory of
+  # the port abbreviates and the rest mean something else by
+  ('ml_translator', 'state'): '(%s)semanticPrimitives_state',
+
   # HOL4's substScript.sml abbreviates the type of a triangular
   # substitution (type_abbrev_pp ("subst", ``:(num |-> 'a term)``))
   'subst': '(num,%s term)fmap',

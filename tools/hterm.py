@@ -3212,7 +3212,14 @@ def print_type(ty, ctx=None, prec=0):
   # a type abbreviation of HOL4 that the port writes out, because
   # HOL Light has none (overrides.TYPE_ABBREV): HOL4's 'a subst is
   # the finite map (num |-> 'a term)
-  abb = TYPE_ABBREV.get(name.split('$')[-1])
+  # a key may name the theory whose abbreviation it is, for a name
+  # that only one theory abbreviates: ml_translator's `Type state`
+  # is semanticPrimitives' state, and every other theory of the
+  # port means something else by the name
+  bare = name.split('$')[-1]
+  abb = TYPE_ABBREV.get(bare)
+  if abb is None and ctx is not None:
+    abb = TYPE_ABBREV.get((ctx.thy, bare))
   if abb is not None:
     return abb % tuple(print_type(a, ctx, 6) for a in args)
   nm = ctx.tyname(name) if ctx is not None else name
