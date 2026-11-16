@@ -348,6 +348,59 @@ harness was half an abstract, from comparing processor time on the
 first 160 files -- the small ones -- against elapsed time averaged
 over all 492.
 
+## The resolution round: the typechecker says what a name means
+
+HOL4 resolves an overloaded name **by the type that makes the term
+typecheck**, in the scope of the theory.  The port decides
+statically (`con_thy`), and `PLAN.md` says that is the wrong
+mechanism: it needs an override line every time upstream gives two
+theories a name, and the port is to be kept in step with HOL4 for
+a while.
+
+HOL Light has the same machinery and the port already builds the
+interface, one scope per file (`ml/lib/theorem.ml`, `cake_theory`).
+So a **round** asks it:
+
+```
+tools/bin/resolveround
+```
+
+1. `CAKE_RESOLVE=1 tools/dryport.py tmp/res` writes the whole port
+   with every overloaded name as the source writes it, says where
+   each block stands (`cake_at`), and registers each constant
+   under its HOL4 name as the block defining it goes by
+   (`cake_ovl`).  **That registration is the round**: the port
+   itself registers nothing, so without it a bare name is a free
+   variable, not an overloaded one -- and a statement full of free
+   variables typechecks and means nothing.  The first round was
+   written without it and reported *fewer* unread statements than
+   a real load, which is the kind of number to read twice.
+2. `tools/resolve.ml` shadows `parse_term`, so every term the
+   session reads logs the constants it resolved to, and registers
+   the overloads of the hand written library layer that no file of
+   the port registers (`baseovl.txt`: `Num` is `num_of_int` as
+   well as `cfFFIType_Num`).
+3. `tools/mkresolved.py table` writes `tools/resolved.txt`:
+
+   ```
+   <theory> <block> <HOL4 name> <the theory it means, or *lib*>
+   ```
+
+   A **theory**, not a constant: names move (adding the Silver
+   model's datatypes gave `asm`'s `Imm` its prefix in eighty
+   files), and `tools/port.py` turns the theory back into the name
+   it gives that theory's constant.
+
+A plain port reads the table in `hterm.Ctx.name`, as a step of its
+own: after the rule that a block defining a name writes that name,
+and before every rule that guesses.
+
+**What a round cannot answer** is a block that means a name two
+ways -- `cfHeapsBase`'s `encode_int` writes `Num (Num (ABS i))`,
+integer's inside cfFFIType's.  The table is per block, so such a
+block comes back as a conflict and is dropped; those are what
+`DEF_PATCH` is for, and there are few.
+
 ## Running HOL Light
 
 The opam HOL Light needs its own opam switch, so first
