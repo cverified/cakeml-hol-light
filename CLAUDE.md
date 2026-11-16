@@ -265,6 +265,76 @@ abstract did not is a thing to fix in the abstract.
 `tools/bin/tryfile` is the same idea for one file: the port it
 stands on as an abstract, the file itself for real.
 
+## What an abstract may do, and what it may not
+
+**An abstract reproduces every side effect of a real load, with
+the same statements, and proves nothing.**  Freek, 2026-11-16:
+"the side effects should (apart from the state of some kernel
+lists) be exactly the same", and "the distinctness and injectivity
+theorems need to be stated, but the proofs don't need to be
+given".
+
+So for anything a file makes -- a definition, a datatype, an
+inductive -- the abstract makes the constants and the types for
+real, through the kernel, and *assumes* every theorem.  It also
+fills every table a later file might read, because a statement of
+the port may ask for one by name and OCaml will evaluate that even
+where the proof it is part of is thrown away
+(`REWRITE_TAC[distinctness "ordering"]`).
+
+A statement that an abstract assumes is **harvested from a real
+construction, not computed**.  HOL Light states and proves a
+datatype's induction and recursion theorems together, and a
+datatype that recurses through a list -- CakeML's expressions do
+-- gets a statement about the list as well.  Harvesting makes the
+abstract's theorem the run's theorem by construction;
+`tools/harvest_datatypes.ml` and `tools/mkdatatypes.py` write
+`ml/lib/datatypes.txt`, which `ml/lib/fast.ml` reads.
+
+**The rule has been broken twice, both times silently**, and both
+were found only by loading the same tree each way and diffing:
+
+- `fast_definition` assumed a definition's equations as the file
+  writes them, with no quantifier, where a real load closes every
+  clause (`close_clause`).  Every theorem that HOL4 computes by
+  specializing a definition then died in `dest_forall`.
+- the datatype fake left HOL Light's `distinctness_store`,
+  `injectivity_store` and `basic_rectype_net` empty, and ten
+  statements of `ternaryComparisons`, `toto` and `sptree` were
+  reported unread that a run reads.  The first fix called
+  `extend_rectype_net`, which *proves* those two theorems -- the
+  one thing an abstract must not do.
+
+So the test of any change here is not a count.  It is the **same
+list**: load the tree with the abstract and with a real
+construction, and diff the statements each reports.
+
+### Where an abstract's time goes (measured, 492 files)
+
+| | wall | unread |
+|---|---|---|
+| file at a time, as `tools/bin/abstract` ran it | ~2850 s | |
+| one `loadt` of a generated driver, datatypes real | 2564 s | 364 |
+| the same, datatypes assumed, the stores left empty | 2011 s | 374 |
+| the same, with the stores filled | to measure | must be 364 |
+
+The third row is what the two broken fakes above cost; the fourth
+is the one that has to be run before the table is trusted, and it
+has not been (the machine was rebooted under it).  Until then
+`ml/lib/datatypes.txt` is a speed-up that no whole-port comparison
+has checked -- the ten-file comparison over `ternaryComparisons`,
+`toto` and `sptree` is all there is.
+
+97% of an abstract is HOL Light parsing and typechecking the
+15,000 statements and making the assumed definitions.  The shell
+is 2.5%; `tools/mkdriver.py` writes all 492 instrumented copies in
+0.92 seconds and one file that loads them in order, where
+`tools/bin/abstract` spent a tmux round trip and two python
+processes on each.  Do not guess at this: I twice told Freek the
+harness was half an abstract, from comparing processor time on the
+first 160 files -- the small ones -- against elapsed time averaged
+over all 492.
+
 ## Running HOL Light
 
 The opam HOL Light needs its own opam switch, so first

@@ -1,3 +1,72 @@
+# Where this is going, decided with Freek on 2026-11-16
+
+_These are goals and decisions that no file carried before, and
+that the rest of this plan is subordinate to._
+
+## The two CakeMLs are to be developed in parallel
+
+Freek: "one goal might be to have the HOL4 and HOL Light versions
+of CakeML developed in parallel for a while, and move the changes
+to the other side all the time."
+
+That is a stronger requirement than a one-off port, and it decides
+things the port would otherwise be free about.  A change made
+upstream in HOL4 has to be carryable into `ml/` by re-running the
+translation, without somebody first hand-editing a table to say
+what a new name means; and a change made here has to be carryable
+back.  Measured against that, the override tables are the problem,
+not the solution: `tools/overrides.py` needs a line every time
+upstream introduces a name that two theories share, and widening
+the scope to 445 theories produced nineteen such failures in one
+pass.
+
+## Names are to be resolved by typechecking, at conversion time
+
+HOL4 resolves an overloaded name **by the type that makes the term
+typecheck**, within the theory's visible overloads.  HOL Light has
+the same machinery -- `make_overloadable`, `overload_interface`,
+and resolution inside `retypecheck` -- and it is **not restricted
+to operators**; an ordinary function application resolves the same
+way.  Measured in a session:
+
+```
+two constants bvl_Var : num->num#bool and bvi_Var : num->num#num,
+both registered under the name Var:
+   parse_term "SND (Var 3) <=> T"   ->  bvl_Var
+   parse_term "SND (Var 3) = 0"     ->  bvi_Var
+```
+
+So the port does not have to guess.  The direction decided is:
+**let HOL Light's typechecker do the resolving, at conversion
+time, and write the resolved constant into `ml/`.**  The files
+keep saying `bvl_Var`, so a load pays nothing, a proof names a
+constant, and carrying a theorem back to HOL4 is dropping a
+prefix.  A development session can declare the overloads, and then
+goals print `Var` as HOL4 writes it -- HOL Light's interface works
+in reverse, a term built from bvi_Var prints as `Var 7` -- so
+nothing is lost in reading.
+
+What this costs is that porting stops being pure text:
+`tools/port.py` writes 492 files in three minutes with no HOL
+Light running, and resolution at conversion time makes a round
+*port -> abstract -> re-port*.  That is why the abstract's speed
+mattered enough to spend a day on.
+
+Not yet done.  `PENDING.md` lists what the override tables cannot
+reach without it.
+
+## How Freek wants choices made
+
+- **"A hybrid never appeals to me."**  Pick one mechanism and
+  apply it everywhere, rather than splitting the difference.  The
+  arrangement above is not a hybrid: every name in `ml/` is
+  resolved the same way, by the typechecker; the session interface
+  is a view onto it.
+- **Measure before claiming.**  Three times in one day I gave a
+  number I had not checked -- an abstract's cost, the harness's
+  share of it, twice -- and each time the correction came from
+  Freek pushing, not from me.
+
 # Plan for the pass that is going on: the HOL Light idiom
 
 _A theorem of the port is written the way HOL Light writes one:_
