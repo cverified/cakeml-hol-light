@@ -51,8 +51,8 @@ let RatProg_div_gcd_def = new_definition
 let RAT_TYPE_def = new_definition
   `RAT_TYPE (r:rat) =
      (\v. ?(n:int) (d:num). (r = (rat_of_int n) / &d) /\
-                           hol4_gcd (num_of_int (abs n)) d = 1 /\ ~(d = 0)
-                             /\
+                           hol4_gcd (cfFFIType_Num (abs n)) d = 1 /\ ~(d =
+                             0) /\
                            RATIONAL_TYPE (RatPair n d) v)`;;
 
 (* HOL4 RatProgScript.sml:44: the ML values that the definitions below
@@ -157,11 +157,11 @@ let RatProg_pair_compare_def = new_definition
   `RatProg_pair_compare (RatPair n1 d1) (RatPair n2 d2) =
      let x1 = n1 * &d2 in
      let x2 = n2 * &d1 in
-       if x1 < x2 then LESS else if x2 < x1 then GREATER else ast_Equal`;;
+       if x1 < x2 then LESS else if x2 < x1 then GREATER else EQUAL`;;
 
 let rat_compare_def = new_definition
   `rat_compare (r1:rat) r2 =
-     if r1 < r2 then LESS else if r2 < r1 then GREATER else ast_Equal`;;
+     if r1 < r2 then LESS else if r2 < r1 then GREATER else EQUAL`;;
 
 (* HOL4 RatProgScript.sml:286-287: ML code, not ported *)
 
@@ -312,13 +312,13 @@ let SGN_ABS = prove
   CHEAT_TAC);;
 
 let Int_Num_ABS = prove
- (`&(num_of_int (abs n)) = abs n`,
+ (`&(cfFFIType_Num (abs n)) = abs n`,
   CHEAT_TAC);;
 
 (* Num_le *)
 let num_le = prove
- (`x <= y /\ x >= (&0) ==>
-   num_of_int x <= num_of_int y`,
+ (`x <= y /\ x >= 0 ==>
+   cfFFIType_Num x <= cfFFIType_Num y`,
   CHEAT_TAC);;
 
 let int_divides_ABS = prove
@@ -327,7 +327,7 @@ let int_divides_ABS = prove
   CHEAT_TAC);;
 
 let gcd_RATND = prove
- (`hol4_gcd (num_of_int (abs n)) d = 1 /\ 0 < d ==>
+ (`hol4_gcd (cfFFIType_Num (abs n)) d = 1 /\ 0 < d ==>
    RATN (rat_of_int n / &d) = n /\
    RATD (rat_of_int n / &d) = d`,
   CHEAT_TAC);;

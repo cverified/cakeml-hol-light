@@ -121,10 +121,10 @@ let to_word64Prog_i2w_eq_n2w_lemma = prove
 
 (* assign_rw[local] *)
 let to_word64Prog_assign_rw = prove
- (`(i < 0 ==> n2w ((decProg_Tyapp (implode "num") []) ((&4) * ((&0) - i))) =
-  n2w ((decProg_Tyapp (implode "num") []) (abs ((&4) * ((&0) - i))))) /\
-   (~(i < 0) ==> n2w ((decProg_Tyapp (implode "num") []) ((&4) * i)) = n2w
-     ((decProg_Tyapp (implode "num") []) (abs ((&4) * i))))`,
+ (`(i < 0 ==> n2w ((decProg_Tyapp (implode "num") []) (4 * (0 - i))) = n2w
+  ((decProg_Tyapp (implode "num") []) (abs (4 * (0 - i))))) /\
+   (~(i < 0) ==> n2w ((decProg_Tyapp (implode "num") []) (4 * i)) = n2w
+     ((decProg_Tyapp (implode "num") []) (abs (4 * i))))`,
   CHEAT_TAC);;
 
 (* TODO: word_mul should maybe target a real op ?

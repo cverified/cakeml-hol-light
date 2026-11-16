@@ -33,8 +33,7 @@ let _ = cake_theory "wordProps"
   ["asm"; "backendProps"; "mllist"; "reg_alloc"; "wordConvs"; "wordLang";
    "wordSem"];;
 
-let _ = do_list hide_constant ["Term"; "comp"; "db"; "exps"; "precondition";
-       "prog"];;
+let _ = do_list hide_constant ["Term"; "comp"; "db"; "exps"; "precondition"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2865,8 +2864,7 @@ let _ = do_list unhide_constant
    "comp";
    "db";
    "exps";
-   "precondition";
-   "prog"];;
+   "precondition"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

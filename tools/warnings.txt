@@ -120,7 +120,7 @@ bvl_to_bvi	Overload nss
 bvl_to_bvi	line 365 is 92 characters
 bvl_to_bvi	line 381 is 84 characters
 clos_annotate	derive shift_SING: '\\\\ MP_TAC (Q'
-clos_annotate	line 24 is 90 characters
+clos_annotate	line 22 is 90 characters
 clos_call	ML code skipped: val free_ind = theorem "free_ind";
 clos_call	ML code skipped: val selftest = let
 clos_call	ML code skipped: val f = ``Fn «» (SOME 800) NONE 1 (Op None (IntOp Add) [Var 
@@ -567,7 +567,7 @@ ml_translator	ML code skipped: val tac2 =   rw[Eval_rw,CHAR_def,NUM_def,INT_def]
 ml_translator	ML code skipped: val str_cmp_tac =   Cases_on ‘s1’ \\ Cases_on ‘s2’   \\ simp
 ml_translator	ML code skipped: val two_pow_64 = EVAL ``2i**64`` |> concl |> rand
 ml_translator	Theorem v1_size: the auxiliary size function v1_size
-ml_translator	line 349 is 83 characters
+ml_translator	line 354 is 83 characters
 cfFFIType	derive ffi_distinct: '\\\\ fs [Num_d'
 cfFFIType	ML code skipped: val destNum_def_name = "destNum_def"; val destNum_def = new_
 cfFFIType	ML code skipped: val destStr_def_name = "destStr_def" val destStr_def = new_s
@@ -649,7 +649,7 @@ cf	ML code skipped: Resume cf_sound[Log]:   cf_strip_sound_full_tac \\   fs [sou
 cf	ML code skipped: Resume cf_sound[If]:   cf_strip_sound_full_tac \\ fs [do_if_
 cf	ML code skipped: Resume cf_sound[Mat]:   cf_strip_sound_full_tac   \\ `EVERY 
 cf	ML code skipped: Finalise cf_sound
-cf	line 1841 is 87 characters
+cf	line 1842 is 87 characters
 std_prelude	ML code skipped: val _ = (use_full_type_names := false)
 std_prelude	ML code skipped: val _ = register_type ``:ordering``; val _ = register_type `
 std_prelude	ML code skipped: val res = translate FST; val res = translate SND; val res = 
@@ -1430,8 +1430,8 @@ crep_inline	line 195 is 91 characters
 crep_inline	line 196 is 127 characters
 crep_inline	line 250 is 108 characters
 crep_inline	line 252 is 90 characters
-pan_to_target	line 43 is 91 characters
-pan_to_target	line 80 is 91 characters
+pan_to_target	line 41 is 91 characters
+pan_to_target	line 78 is 91 characters
 compiler	ML code skipped: val help_string = (* beginning of --help string *) ‘  Usage:
 compiler	ML code skipped: val current_version_tm = mlstring_from_proc "git" ["rev-pars
 compiler	ML code skipped: val date_str = Date.toString (Date.fromTimeUniv (Time.now ()
@@ -2201,9 +2201,9 @@ camlPtreeConversion	ML code skipped: val _ = disable_monad "option";
 camlPtreeConversion	derive ptree_PPattern_ind: '++ CONJ_ss) '
 camlPtreeConversion	derive ptree_Expr_ind: '++ CONJ_ss) '
 camlPtreeConversion	Overload cmlpegexec
-camlPtreeConversion	line 1281 is 80 characters
-camlPtreeConversion	line 1402 is 82 characters
-camlPtreeConversion	line 2511 is 80 characters
+camlPtreeConversion	line 1377 is 80 characters
+camlPtreeConversion	line 1498 is 82 characters
+camlPtreeConversion	line 2708 is 80 characters
 caml_lexProg	ML code skipped: open preamble caml_lexTheory; open parserProgTheory ml_trans
 caml_lexProg	ML code skipped: val _ = translation_extends "parserProg";
 caml_lexProg	ML code skipped: val RW = REWRITE_RULE val RW1 = ONCE_REWRITE_RULE fun list_d
@@ -4543,7 +4543,6 @@ backend_x64_cv	ML code skipped: val _ = cv_auto_trans export_funcs_alt_def;
 backend_x64_cv	ML code skipped: val _ = cv_auto_trans         (export_x64Theory.export_funcs
 backend_x64_cv	ML code skipped: val _ = cv_auto_trans         (export_x64Theory.x64_export_d
 backend_x64_cv	ML code skipped: val _ = cv_trans backend_x64Theory.to_livesets_x64_def; val 
-backend_x64_eval	ML code skipped: val res = eval_cake_compile_x64 "" prog_def "empty_prog.S";
 perms	derive perms_ok_exp_thm: not a name
 perms	derive perms_ok_dec_thm: not a name
 perms	derive perms_ok_def: not a name
@@ -5455,11 +5454,11 @@ wordProps	ML code skipped: Finalise locals_rel_evaluate_thm;
 wordProps	Overload PERM_STACK
 wordProps	ML code skipped: Resume permute_swap_lemma2[Loop]:   fs[evaluate_def] >>   Ca
 wordProps	ML code skipped: Finalise permute_swap_lemma2;
-wordProps	line 135 is 81 characters
-wordProps	line 1793 is 106 characters
-wordProps	line 1895 is 85 characters
-wordProps	line 1924 is 87 characters
-wordProps	line 2277 is 84 characters
+wordProps	line 134 is 81 characters
+wordProps	line 1792 is 106 characters
+wordProps	line 1894 is 85 characters
+wordProps	line 1923 is 87 characters
+wordProps	line 2276 is 84 characters
 word_simpProof	ML code skipped: val s = ``s:('a,'c,'ffi) wordSem$state``
 word_simpProof	ML code skipped: Resume evaluate_sf_gc_consts[Call]:   rpt gen_tac \\ rpt DIS
 word_simpProof	ML code skipped: Resume evaluate_sf_gc_consts[Loop]:   rpt gen_tac \\ rpt DIS
@@ -6289,7 +6288,7 @@ source_to_flatProof	ML code skipped: rveq >>   fs [] >>   first_x_assum (drule_t
 source_to_flatProof	ML code skipped: Finalise compile_correct;
 source_to_flatProof	ML code skipped: val COUNT_LIST_ADD_SYM = COUNT_LIST_ADD   |> CONV_RULE (SIMP
 source_to_flatProof	derive compile_flat_BAG_ALL_DISTINCT: no BAG_ALL_DISTINCT_SUB_BAG
-source_to_flatProof	line 228 is 81 characters
+source_to_flatProof	line 227 is 81 characters
 source_letProof	derive evaluate_lift_start: rule Once/0
 stack_allocProof	ML code skipped: val _ = (max_print_depth := 18);
 stack_allocProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def val
@@ -6404,7 +6403,7 @@ word_to_stackProof	ML code skipped: val init_state_ok_semantics' =   state_rel_I
 word_to_stackProof	ML code skipped: val wconvs = [post_alloc_conventions_def,wordConvsTheory.ful
 word_to_stackProof	ML code skipped: val reg_bound_ind = stackPropsTheory.reg_bound_ind val reg_b
 word_to_stackProof	FILE_PATCH matches nothing: \bstate_clock_fupd\b
-word_to_stackProof	line 650 is 82 characters
+word_to_stackProof	line 649 is 82 characters
 stack_to_labProof	ML code skipped: val get_labels_def = stackSemTheory.get_labels_def; val get_
 stack_to_labProof	Overload Loc
 stack_to_labProof	derive code_installed'_cons_non_label: '\\\\ fs [code_'

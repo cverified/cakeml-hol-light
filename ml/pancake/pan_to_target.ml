@@ -23,8 +23,6 @@ needs "pancake/pan_to_word.ml";;
 let _ = cake_theory "pan_to_target"
   ["backend"; "mllist"; "pan_to_word"; "word_depth"; "word_to_word"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -107,10 +105,6 @@ let pan_to_target_compile_prog_eq = prove
        backend_from_word_0 asm_conf c names prog2
    // func names`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

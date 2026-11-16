@@ -208,9 +208,9 @@ let arm8Prog_notw = prove
 
 (* Num_rw[local] *)
 let num_rw = prove
- (`(if len < (&1) then NONE
+ (`(if len < 1 then NONE
    else f ((decProg_Tyapp (implode "num") []) len)) =
-   if len < (&1) then NONE
+   if len < 1 then NONE
      else f ((decProg_Tyapp (implode "num") []) (abs len))`,
   CHEAT_TAC);;
 

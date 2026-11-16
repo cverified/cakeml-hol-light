@@ -151,7 +151,7 @@ let PreImp_def = new_definition
   `PreImp b1 b2 = (PRECONDITION b1 ==> b2)`;;
 
 let PreImpEval_def = new_definition
-  `PreImpEval b env code P = PreImp b (ast_Eval env code P)`;;
+  `PreImpEval b env code P = PreImp b (ml_translator_Eval env code P)`;;
 
 (* Theorems *)
 
@@ -172,7 +172,7 @@ let AppReturns_thm = prove
 (* Eval_lemma *)
 let eval_lemma = prove
  (`!env exp P.
-           ast_Eval env exp P <=>
+           ml_translator_Eval env exp P <=>
             (!refs.
                 ?ck1 res refs' ck2.
                     evaluate (semanticPrimitives_state_refs_fupd (K refs)
@@ -196,75 +196,79 @@ let evaluate_empty_state_IMP = prove
   CHEAT_TAC);;
 
 let Eval_Arrow = prove
- (`ast_Eval env x1 ((a (Arrow) b) f) ==>
-   ast_Eval env x2 (a x) ==>
-   ast_Eval env (ast_App ast_Opapp [x1; x2]) (b (f x))`,
+ (`ml_translator_Eval env x1 ((a (Arrow) b) f) ==>
+   ml_translator_Eval env x2 (a x) ==>
+   ml_translator_Eval env (ast_App ast_Opapp [x1; x2]) (b (f x))`,
   CHEAT_TAC);;
 
 let Eval_Fun = prove
- (`(!v x. a x v ==> ast_Eval (ml_prog_write name v env) body (b ((f:'a->'b)
-  x))) ==>
-    ast_Eval env (ast_Fun name body) ((a (Arrow) b) f)`,
+ (`(!v x. a x v ==> ml_translator_Eval (ml_prog_write name v env) body (b
+  ((f:'a->'b) x))) ==>
+    ml_translator_Eval env (ast_Fun name body) ((a (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Fun_Eq = prove
- (`(!v. a x v ==> ast_Eval (ml_prog_write name v env) body (b (f x))) ==>
-    ast_Eval env (ast_Fun name body) ((ml_translator_Eq a x (Arrow) b) f)`,
+ (`(!v. a x v ==> ml_translator_Eval (ml_prog_write name v env) body (b (f x)))
+  ==>
+    ml_translator_Eval env (ast_Fun name body) ((ml_translator_Eq a x
+      (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let And_IMP_Eq = prove
- (`ast_Eval env exp ((ast_And a P (Arrow) b) f) ==>
-    (P x ==> ast_Eval env exp ((ml_translator_Eq a x (Arrow) b) f))`,
+ (`ml_translator_Eval env exp ((ast_And a P (Arrow) b) f) ==>
+    (P x ==> ml_translator_Eval env exp ((ml_translator_Eq a x (Arrow) b)
+      f))`,
   CHEAT_TAC);;
 
 let Eq_IMP_And = prove
- (`(!x. P x ==> ast_Eval env (ast_Fun name exp) ((ml_translator_Eq a x (Arrow)
-  b) f)) ==>
-    ast_Eval env (ast_Fun name exp) ((ast_And a P (Arrow) b) f)`,
+ (`(!x. P x ==> ml_translator_Eval env (ast_Fun name exp) ((ml_translator_Eq a
+  x (Arrow) b) f)) ==>
+    ml_translator_Eval env (ast_Fun name exp) ((ast_And a P (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Fun_And = prove
- (`(!v x. P x ==> a x v ==> ast_Eval (ml_prog_write name v env) body (b (f x)))
-  ==>
-    ast_Eval env (ast_Fun name body) ((ast_And a P (Arrow) b) f)`,
+ (`(!v x. P x ==> a x v ==> ml_translator_Eval (ml_prog_write name v env) body
+  (b (f x))) ==>
+    ml_translator_Eval env (ast_Fun name body) ((ast_And a P (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Let = prove
- (`ast_Eval env exp (a res) /\
-    (!v. a res v ==> ast_Eval (ml_prog_write name v env) body (b (f res)))
-      ==>
-    ast_Eval env (ast_Let (SOME name) exp body) (b (LET f res))`,
+ (`ml_translator_Eval env exp (a res) /\
+    (!v. a res v ==> ml_translator_Eval (ml_prog_write name v env) body (b
+      (f res))) ==>
+    ml_translator_Eval env (ast_Let (SOME name) exp body) (b (LET f res))`,
   CHEAT_TAC);;
 
 let Eval_Var_general = prove
- (`P v ==> (!iden. nsLookup (sem_env_v env) iden = SOME v ==> ast_Eval env
-  (ast_Var iden) P)`,
+ (`P v ==> (!iden. nsLookup (sem_env_v env) iden = SOME v ==>
+  ml_translator_Eval env (ast_Var iden) P)`,
   CHEAT_TAC);;
 
 let Eval_Var_Short = prove
  (`P v ==> (!name env.
                (nsLookup (sem_env_v env) (Short name) = SOME v) ==>
-               ast_Eval env (ast_Var (Short name)) P)`,
+               ml_translator_Eval env (ast_Var (Short name)) P)`,
   CHEAT_TAC);;
 
 let Eval_Var_Long = prove
  (`P v ==> (!m name env.
                (nsLookup (sem_env_v env) (Long m (Short name)) = SOME v) ==>
-               ast_Eval env (ast_Var (Long m (Short name))) P)`,
+               ml_translator_Eval env (ast_Var (Long m (Short name))) P)`,
   CHEAT_TAC);;
 
 let Eval_Var_SWAP_ENV = prove
  (`!env1.
-      ast_Eval env1 (ast_Var (Short name)) P /\
+      ml_translator_Eval env1 (ast_Var (Short name)) P /\
       (ml_prog_lookup_var name env = ml_prog_lookup_var name env1) ==>
-      ast_Eval env (ast_Var (Short name)) P`,
+      ml_translator_Eval env (ast_Var (Short name)) P`,
   CHEAT_TAC);;
 
 let LOOKUP_VAR_def = new_definition
   `LOOKUP_VAR name env x = (ml_prog_lookup_var name env = SOME x)`;;
 
 let LOOKUP_VAR_THM = prove
- (`LOOKUP_VAR name env x ==> ast_Eval env (ast_Var (Short name)) ((=) x)`,
+ (`LOOKUP_VAR name env x ==> ml_translator_Eval env (ast_Var (Short name))
+  ((=) x)`,
   CHEAT_TAC);;
 
 let LOOKUP_VAR_SIMP = prove
@@ -273,47 +277,48 @@ let LOOKUP_VAR_SIMP = prove
   CHEAT_TAC);;
 
 let Eval_Val_INT = prove
- (`!n. ast_Eval env (ast_Lit (ast_IntLit n)) (INT n)`,
+ (`!n. ml_translator_Eval env (ast_Lit (ast_IntLit n)) (INT n)`,
   CHEAT_TAC);;
 
 let Eval_Val_NUM = prove
- (`!n. ast_Eval env (ast_Lit (ast_IntLit (&n))) (NUM n)`,
+ (`!n. ml_translator_Eval env (ast_Lit (ast_IntLit (&n))) (NUM n)`,
   CHEAT_TAC);;
 
 let Eval_Val_UNIT = prove
- (`ast_Eval env (ast_Con NONE []) (UNIT_TYPE one)`,
+ (`ml_translator_Eval env (ast_Con NONE []) (UNIT_TYPE one)`,
   CHEAT_TAC);;
 
 let Eval_Val_BOOL_T = prove
- (`ast_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_IntT) [ast_Lit
-  (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL T)`,
+ (`ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_IntT)
+  [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL T)`,
   CHEAT_TAC);;
 
 let Eval_Val_BOOL_F = prove
- (`ast_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_Lit
-  (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL F)`,
+ (`ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT)
+  [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL F)`,
   CHEAT_TAC);;
 
 let Eval_Val_CHAR = prove
- (`!c. ast_Eval env (ast_Lit (ast_Char c)) (CHAR c)`,
+ (`!c. ml_translator_Eval env (ast_Lit (ast_Char c)) (CHAR c)`,
   CHEAT_TAC);;
 
 let Eval_Val_STRING = prove
- (`!s. ast_Eval env (ast_Lit (ast_StrLit s)) (STRING_TYPE s)`,
+ (`!s. ml_translator_Eval env (ast_Lit (ast_StrLit s)) (STRING_TYPE s)`,
   CHEAT_TAC);;
 
 let Eval_Val_WORD = prove
  (`!(w:'a word).
     dimindex (:'a) <= 64 ==>
-    ast_Eval env (ast_Lit (if dimindex (:'a) <= 8 then ast_Word8 (w2w w <<
-      (8 - dimindex (:'a)))
+    ml_translator_Eval env (ast_Lit (if dimindex (:'a) <= 8 then ast_Word8
+      (w2w w << (8 - dimindex (:'a)))
                    else ast_Word64 (w2w w << (64 - dimindex (:'a)))))
              (WORD w)`,
   CHEAT_TAC);;
 
 let Eval_Val_FLOAT64 = prove
  (`!(f:(52,11)float).
-     ast_Eval env (ast_Lit (ast_Float64 (float_to_fp64 f))) (FLOAT64 f)`,
+     ml_translator_Eval env (ast_Lit (ast_Float64 (float_to_fp64 f)))
+       (FLOAT64 f)`,
   CHEAT_TAC);;
 
 (* Equality *)
@@ -522,64 +527,68 @@ let empty_state_with_ffi_elim = prove
 (* HOL4 ml_translatorScript.sml:670-677: a proof *)
 
 let Eval_Equality = prove
- (`ast_Eval env x1 (a y1) /\ ast_Eval env x2 (a y2) ==>
+ (`ml_translator_Eval env x1 (a y1) /\ ml_translator_Eval env x2 (a y2) ==>
     EqualityType a ==>
-    ast_Eval env (ast_App ast_Equality [x1; x2]) (BOOL (y1 = y2))`,
+    ml_translator_Eval env (ast_App ast_Equality [x1; x2]) (BOOL (y1 =
+      y2))`,
   CHEAT_TAC);;
 
 (* booleans *)
 
 let Eval_Or = prove
- (`(a1 ==> ast_Eval env x1 (BOOL b1)) /\
-   (a2 ==> ast_Eval env x2 (BOOL b2)) ==>
+ (`(a1 ==> ml_translator_Eval env x1 (BOOL b1)) /\
+   (a2 ==> ml_translator_Eval env x2 (BOOL b2)) ==>
    (a1 /\ (~(CONTAINER b1) ==> a2) ==>
-    ast_Eval env (ast_Log Orelse x1 x2) (BOOL (b1 \/ b2)))`,
+    ml_translator_Eval env (ast_Log Orelse x1 x2) (BOOL (b1 \/ b2)))`,
   CHEAT_TAC);;
 
 let Eval_And = prove
- (`(a1 ==> ast_Eval env x1 (BOOL b1)) /\
-   (a2 ==> ast_Eval env x2 (BOOL b2)) ==>
+ (`(a1 ==> ml_translator_Eval env x1 (BOOL b1)) /\
+   (a2 ==> ml_translator_Eval env x2 (BOOL b2)) ==>
    (a1 /\ (CONTAINER b1 ==> a2) ==>
-    ast_Eval env (ast_Log Andalso x1 x2) (BOOL (b1 /\ b2)))`,
+    ml_translator_Eval env (ast_Log Andalso x1 x2) (BOOL (b1 /\ b2)))`,
   CHEAT_TAC);;
 
 let Eval_If = prove
- (`(a1 ==> ast_Eval env x1 (BOOL b1)) /\
-   (a2 ==> ast_Eval env x2 (a b2)) /\
-   (a3 ==> ast_Eval env x3 (a b3)) ==>
+ (`(a1 ==> ml_translator_Eval env x1 (BOOL b1)) /\
+   (a2 ==> ml_translator_Eval env x2 (a b2)) /\
+   (a3 ==> ml_translator_Eval env x3 (a b3)) ==>
    (a1 /\ (CONTAINER b1 ==> a2) /\ (~(CONTAINER b1) ==> a3) ==>
-    ast_Eval env (ast_If x1 x2 x3) (a (if b1 then b2 else b3)))`,
+    ml_translator_Eval env (ast_If x1 x2 x3) (a (if b1 then b2 else b3)))`,
   CHEAT_TAC);;
 
 let Eval_Bool_Not = prove
- (`ast_Eval env x1 (BOOL b1) ==>
-   ast_Eval env (ast_App (ast_Arith ast_Not ast_BoolT) [x1]) (BOOL (~b1))`,
+ (`ml_translator_Eval env x1 (BOOL b1) ==>
+   ml_translator_Eval env (ast_App (ast_Arith ast_Not ast_BoolT) [x1])
+     (BOOL (~b1))`,
   CHEAT_TAC);;
 
 let Eval_Implies = prove
- (`ast_Eval env x1 (BOOL b1) ==>
-   ast_Eval env x2 (BOOL b2) ==>
-   ast_Eval env (ast_If x1 x2 (ast_App (ast_Test (ast_Compare ast_Leq)
-     ast_IntT) [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))])) (BOOL
-     (b1 ==> b2))`,
+ (`ml_translator_Eval env x1 (BOOL b1) ==>
+   ml_translator_Eval env x2 (BOOL b2) ==>
+   ml_translator_Eval env (ast_If x1 x2 (ast_App (ast_Test (ast_Compare
+     ast_Leq) ast_IntT) [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit
+     (&0))])) (BOOL (b1 ==> b2))`,
   CHEAT_TAC);;
 
 let Eval_BOOL_EQ = prove
- (`ast_Eval env x1 (BOOL b1) ==>
-   ast_Eval env x2 (BOOL b2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_BoolT) [x1; x2]) (BOOL
-     (b1 = b2))`,
+ (`ml_translator_Eval env x1 (BOOL b1) ==>
+   ml_translator_Eval env x2 (BOOL b2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_BoolT) [x1;
+     x2]) (BOOL (b1 = b2))`,
   CHEAT_TAC);;
 
 (* misc *)
 
 let Eval_Var_SIMP = prove
- (`ast_Eval (ml_prog_write x v env) (ast_Var (Short y)) p =
-      if x = y then p v else ast_Eval env ((ast_Var (Short y):ast_exp)) p`,
+ (`ml_translator_Eval (ml_prog_write x v env) (ast_Var (Short y)) p =
+      if x = y then p v else ml_translator_Eval env ((ast_Var (Short
+        y):ast_exp)) p`,
   CHEAT_TAC);;
 
 let Eval_Eq = prove
- (`ast_Eval env exp (a x) ==> ast_Eval env exp ((ml_translator_Eq a x) x)`,
+ (`ml_translator_Eval env exp (a x) ==> ml_translator_Eval env exp
+  ((ml_translator_Eq a x) x)`,
   CHEAT_TAC);;
 
 let FUN_FORALL = new_definition
@@ -600,13 +609,13 @@ let eval_rel_11 = prove
   CHEAT_TAC);;
 
 let Eval_FUN_FORALL = prove
- (`(!x. ast_Eval env exp ((p x) f)) ==>
-    ast_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
+ (`(!x. ml_translator_Eval env exp ((p x) f)) ==>
+    ml_translator_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
   CHEAT_TAC);;
 
 let Eval_FUN_FORALL_EQ = prove
- (`(!x. ast_Eval env exp ((p x) f)) =
-    ast_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
+ (`(!x. ml_translator_Eval env exp ((p x) f)) =
+    ml_translator_Eval env exp ((FUN_FORALL (\x. p x)) f)`,
   CHEAT_TAC);;
 
 let FUN_FORALL_PUSH1 = prove
@@ -628,24 +637,24 @@ let Eval_Recclosure_ALT = prove
  (`!funs fname name body.
       (ALL_DISTINCT (MAP (\(f,x,e). f) funs)) ==>
       (!v. a n v ==>
-           ast_Eval (ml_prog_write name v (write_rec funs env2 env2)) body
-             (b (f n))) ==>
+           ml_translator_Eval (ml_prog_write name v (write_rec funs env2
+             env2)) body (b (f n))) ==>
       LOOKUP_VAR fname env (semanticPrimitives_Recclosure env2 funs fname)
         ==>
       (find_recfun fname funs = SOME (name,body)) ==>
-      ast_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a n (Arrow)
-        b) f)`,
+      ml_translator_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a
+        n (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Recclosure = prove
  (`(!v. a n v ==>
-         ast_Eval (ml_prog_write name v (write_rec [(fname,name,body)] env2
-           env2))
+         ml_translator_Eval (ml_prog_write name v (write_rec
+           [(fname,name,body)] env2 env2))
               body (b (f n))) ==>
     LOOKUP_VAR fname env (semanticPrimitives_Recclosure env2
       [(fname,name,body)] fname) ==>
-    ast_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a n (Arrow) b)
-      f)`,
+    ml_translator_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a n
+      (Arrow) b) f)`,
   CHEAT_TAC);;
 
 let SafeVar_def = new_definition
@@ -654,76 +663,78 @@ let SafeVar_def = new_definition
 let Eval_Eq_Recclosure = prove
  (`LOOKUP_VAR name env (semanticPrimitives_Recclosure x1 x2 x3) ==>
     (P f (semanticPrimitives_Recclosure x1 x2 x3) =
-     ast_Eval env (ast_Var (Short name)) (P f))`,
+     ml_translator_Eval env (ast_Var (Short name)) (P f))`,
   CHEAT_TAC);;
 
 let Eval_Eq_Fun = prove
- (`ast_Eval env (ast_Fun v x) p ==>
-    (!env2. ast_Eval env2 (ast_Var name) ((=) (semanticPrimitives_Closure
-      env v x)) ==>
-           ast_Eval env2 (ast_Var name) p)`,
+ (`ml_translator_Eval env (ast_Fun v x) p ==>
+    (!env2. ml_translator_Eval env2 (ast_Var name) ((=)
+      (semanticPrimitives_Closure env v x)) ==>
+           ml_translator_Eval env2 (ast_Var name) p)`,
   CHEAT_TAC);;
 
 let Eval_WEAKEN = prove
- (`ast_Eval env exp P ==> (!v. P v ==> Q v) ==> ast_Eval env exp Q`,
+ (`ml_translator_Eval env exp P ==> (!v. P v ==> Q v) ==> ml_translator_Eval
+  env exp Q`,
   CHEAT_TAC);;
 
 let Eval_CONST = prove
  (`(!v. P v = (v = x)) ==>
-    ast_Eval env (ast_Var name) ((=) x) ==> ast_Eval env (ast_Var name) P`,
+    ml_translator_Eval env (ast_Var name) ((=) x) ==> ml_translator_Eval
+      env (ast_Var name) P`,
   CHEAT_TAC);;
 
 (* arithmetic for integers *)
 
 let Eval_INT_ADD = prove
  (`!n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Add ast_IntT) [x1; x2]) (INT (n1
-       + n2))`,
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Add ast_IntT) [x1;
+       x2]) (INT (n1 + n2))`,
   CHEAT_TAC);;
 
 let Eval_INT_SUB = prove
  (`!n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Sub ast_IntT) [x1; x2]) (INT (n1
-       - n2))`,
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Sub ast_IntT) [x1;
+       x2]) (INT (n1 - n2))`,
   CHEAT_TAC);;
 
 let Eval_INT_MULT = prove
  (`!n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Mul ast_IntT) [x1; x2]) (INT (n1
-       * n2))`,
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Mul ast_IntT) [x1;
+       x2]) (INT (n1 * n2))`,
   CHEAT_TAC);;
 
 let Eval_INT_DIV = prove
  (`!n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
      PRECONDITION (~(n2 = 0)) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Div ast_IntT) [x1; x2]) (INT (n1
-       / n2))`,
+     ml_translator_Eval env (ast_App (ast_Arith ast_Div ast_IntT) [x1;
+       x2]) (INT (n1 / n2))`,
   CHEAT_TAC);;
 
 let Eval_INT_MOD = prove
  (`!n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
      PRECONDITION (~(n2 = 0)) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Mod ast_IntT) [x1; x2]) (INT (n1
-       % n2))`,
+     ml_translator_Eval env (ast_App (ast_Arith ast_Mod ast_IntT) [x1;
+       x2]) (INT (n1 % n2))`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Eval_INT_CMP = prove
  (`!f n1 n2.
-     ast_Eval env x1 (INT n1) ==>
-     ast_Eval env x2 (INT n2) ==>
-     ast_Eval env (ast_App (ast_Test (ast_Compare f) ast_IntT) [x1; x2])
-       (BOOL (semanticPrimitives_int_cmp f n1 n2))`,
+     ml_translator_Eval env x1 (INT n1) ==>
+     ml_translator_Eval env x2 (INT n2) ==>
+     ml_translator_Eval env (ast_App (ast_Test (ast_Compare f) ast_IntT)
+       [x1; x2]) (BOOL (semanticPrimitives_int_cmp f n1 n2))`,
   CHEAT_TAC);;
 
 let Eval_INT_LESS = SIMP_RULE [int_cmp_def] (CAKE_SPEC `ast_Lt` Eval_INT_CMP);;
@@ -735,22 +746,22 @@ let Eval_INT_GREATER_EQ =
   SIMP_RULE [int_cmp_def] (CAKE_SPEC `ast_Geq` Eval_INT_CMP);;
 
 let Eval_INT_EQ = prove
- (`ast_Eval env x1 (INT i1) ==>
-   ast_Eval env x2 (INT i2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x1; x2]) (BOOL (i1
-     = i2))`,
+ (`ml_translator_Eval env x1 (INT i1) ==>
+   ml_translator_Eval env x2 (INT i2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x1; x2])
+     (BOOL (i1 = i2))`,
   CHEAT_TAC);;
 
 let Eval_NUM_EQ = prove
- (`ast_Eval env x1 (NUM n1) ==>
-   ast_Eval env x2 (NUM n2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x1; x2]) (BOOL (n1
-     = n2))`,
+ (`ml_translator_Eval env x1 (NUM n1) ==>
+   ml_translator_Eval env x2 (NUM n2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x1; x2])
+     (BOOL (n1 = n2))`,
   CHEAT_TAC);;
 
 let Eval_Num = prove
- (`ast_Eval env x1 (INT i) ==> PRECONDITION ((&0) <= i) ==>
-   ast_Eval env x1 (NUM (num_of_int i))`,
+ (`ml_translator_Eval env x1 (INT i) ==> PRECONDITION ((&0) <= i) ==>
+   ml_translator_Eval env x1 (NUM (num_of_int i))`,
   CHEAT_TAC);;
 
 (* HOL4 ml_translatorScript.sml:1043: ML code, not ported *)
@@ -761,8 +772,8 @@ let Eval_Num = prove
 (* HOL4 ml_translatorScript.sml:1059: ML code, not ported *)
 
 let Eval_Num_ABS = prove
- (`ast_Eval env x1 (INT i) ==>
-   ast_Eval env (ast_Let (SOME (implode "k")) x1
+ (`ml_translator_Eval env x1 (INT i) ==>
+   ml_translator_Eval env (ast_Let (SOME (implode "k")) x1
        (ast_If (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_Var
          (Short (implode "k")); ast_Lit (ast_IntLit (&0))])
           (ast_App (ast_Arith ast_Sub ast_IntT) [ast_Lit (ast_IntLit (&0));
@@ -784,27 +795,27 @@ let eval_num_of_int = REWRITE_RULE [GSYM num_of_int_def] Eval_Num_ABS;;
 
 (* Eval_int_of_num *)
 let eval_int_of_num = prove
- (`ast_Eval env x1 (NUM n) ==>
-   ast_Eval env x1 (INT (int_of_num n))`,
+ (`ml_translator_Eval env x1 (NUM n) ==>
+   ml_translator_Eval env x1 (INT (int_of_num n))`,
   CHEAT_TAC);;
 
 (* Eval_int_of_num_o *)
 let eval_int_of_num_o = prove
- (`ast_Eval env x1 ((A (Arrow) NUM) f) ==>
-   ast_Eval env x1 ((A (Arrow) INT) (int_of_num o f))`,
+ (`ml_translator_Eval env x1 ((A (Arrow) NUM) f) ==>
+   ml_translator_Eval env x1 ((A (Arrow) INT) (int_of_num o f))`,
   CHEAT_TAC);;
 
 (* Eval_o_int_of_num *)
 let eval_o_int_of_num = prove
- (`ast_Eval env x1 ((INT (Arrow) A) f) ==>
-   ast_Eval env x1 ((NUM (Arrow) A) (f o int_of_num))`,
+ (`ml_translator_Eval env x1 ((INT (Arrow) A) f) ==>
+   ml_translator_Eval env x1 ((NUM (Arrow) A) (f o int_of_num))`,
   CHEAT_TAC);;
 
 (* Eval_int_negate *)
 let eval_int_negate = prove
- (`ast_Eval env x1 (INT i) ==>
-   ast_Eval env (ast_App (ast_Arith ast_Sub ast_IntT) [ast_Lit (ast_IntLit
-     (&0)); x1]) (INT (--i))`,
+ (`ml_translator_Eval env x1 (INT i) ==>
+   ml_translator_Eval env (ast_App (ast_Arith ast_Sub ast_IntT) [ast_Lit
+     (ast_IntLit (&0)); x1]) (INT (--i))`,
   CHEAT_TAC);;
 
 (* arithmetic for num *)
@@ -836,10 +847,10 @@ let sub_check_def = new_definition
   `sub_check (n:num) m = n - m`;;
 
 let Eval_NUM_SUB_check = prove
- (`ast_Eval env x1 (NUM m) ==>
-   ast_Eval env x2 (NUM n) ==>
-   ast_Eval env (ast_Let (SOME (implode "k")) (ast_App (ast_Arith ast_Sub
-     ast_IntT) [x1; x2])
+ (`ml_translator_Eval env x1 (NUM m) ==>
+   ml_translator_Eval env x2 (NUM n) ==>
+   ml_translator_Eval env (ast_Let (SOME (implode "k")) (ast_App (ast_Arith
+     ast_Sub ast_IntT) [x1; x2])
        (ast_If (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_Var
          (Short (implode "k")); ast_Lit (ast_IntLit (&0))])
            (ast_Lit (ast_IntLit (&0))) (ast_Var (Short (implode
@@ -847,10 +858,10 @@ let Eval_NUM_SUB_check = prove
   CHEAT_TAC);;
 
 let Eval_NUM_SUB_check' = prove
- (`ast_Eval env x1 (NUM m) ==>
-   ast_Eval env x2 (NUM n) ==>
-   ast_Eval env (ast_Let (SOME (implode "k")) (ast_App (ast_Arith ast_Sub
-     ast_IntT) [x1; x2])
+ (`ml_translator_Eval env x1 (NUM m) ==>
+   ml_translator_Eval env x2 (NUM n) ==>
+   ml_translator_Eval env (ast_Let (SOME (implode "k")) (ast_App (ast_Arith
+     ast_Sub ast_IntT) [x1; x2])
        (ast_If (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_Var
          (Short (implode "k")); ast_Lit (ast_IntLit (&0))])
            (ast_Lit (ast_IntLit (&0))) (ast_Var (Short (implode
@@ -872,9 +883,9 @@ let Eval_NUM_SUB_check' = prove
    value of an ML expression: Eval_NUM_GREATER_EQ *)
 
 let Eval_NUM_EQ_0 = prove
- (`!n. ast_Eval env x (NUM n) ==>
-        ast_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x; ast_Lit
-          (ast_IntLit (&0))]) (BOOL (n = 0))`,
+ (`!n. ml_translator_Eval env x (NUM n) ==>
+        ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_IntT) [x;
+          ast_Lit (ast_IntLit (&0))]) (BOOL (n = 0))`,
   CHEAT_TAC);;
 
 (* word operations *)
@@ -883,9 +894,9 @@ let Eval_NUM_EQ_0 = prove
 
 (* Eval_word_and *)
 let eval_word_and = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
         (ast_App (ast_Arith ast_And (if dimindex (:'a) <= 8 then ast_WordT
           ast_W8 else ast_WordT ast_W64)) [x1; x2])
         (WORD (word_and w1 w2))`,
@@ -893,9 +904,9 @@ let eval_word_and = prove
 
 (* Eval_word_or *)
 let eval_word_or = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
         (ast_App (ast_Arith ast_Or (if dimindex (:'a) <= 8 then ast_WordT
           ast_W8 else ast_WordT ast_W64)) [x1; x2])
         (WORD (word_or w1 w2))`,
@@ -903,9 +914,9 @@ let eval_word_or = prove
 
 (* Eval_word_xor *)
 let eval_word_xor = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
         (ast_App (ast_Arith ast_Xor (if dimindex (:'a) <= 8 then ast_WordT
           ast_W8 else ast_WordT ast_W64)) [x1; x2])
         (WORD (word_xor w1 w2))`,
@@ -941,9 +952,9 @@ let eval_word_add_lemma = prove
 
 (* Eval_word_add *)
 let eval_word_add = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
         (ast_App (ast_Arith ast_Add (if dimindex (:'a) <= 8 then ast_WordT
           ast_W8 else ast_WordT ast_W64)) [x1; x2])
         (WORD (word_add w1 w2))`,
@@ -960,9 +971,9 @@ let eval_word_sub_lemma = prove
 
 (* Eval_word_sub *)
 let eval_word_sub = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
         (ast_App (ast_Arith ast_Sub (if dimindex (:'a) <= 8 then ast_WordT
           ast_W8 else ast_WordT ast_W64)) [x1; x2])
         (WORD (word_sub w1 w2))`,
@@ -970,9 +981,9 @@ let eval_word_sub = prove
 
 (* Eval_word_eq *)
 let eval_word_eq = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
      (ast_App (ast_Test ast_Equal (ast_WordT (if dimindex (:'a) <= 8 then
        ast_W8 else ast_W64))) [x1; x2])
      (BOOL (w1 = w2))`,
@@ -985,9 +996,9 @@ let less_two_pow_lemma = prove
 
 (* Eval_word_lo *)
 let eval_word_lo = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
      (if dimindex (:'a) <= 8 then
         ast_App (ast_Test (ast_Compare ast_Lt) (ast_WordT ast_W8)) [x1; x2]
       else ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_App
@@ -999,9 +1010,9 @@ let eval_word_lo = prove
 
 (* Eval_word_ls *)
 let eval_word_ls = prove
- (`ast_Eval env x1 (WORD (w1:'a word)) /\
-   ast_Eval env x2 (WORD (w2:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w1:'a word)) /\
+   ml_translator_Eval env x2 (WORD (w2:'a word)) ==>
+   ml_translator_Eval env
      (if dimindex (:'a) <= 8 then
         ast_App (ast_Test (ast_Compare ast_Leq) (ast_WordT ast_W8)) [x1; x2]
       else ast_App (ast_Test (ast_Compare ast_Leq) ast_IntT) [ast_App
@@ -1033,8 +1044,8 @@ let w2n_w2w_64 = prove
 
 (* Eval_w2n *)
 let eval_w2n = prove
- (`ast_Eval env x1 (WORD (w:'a word)) ==>
-   ast_Eval env
+ (`ml_translator_Eval env x1 (WORD (w:'a word)) ==>
+   ml_translator_Eval env
      (if dimindex (:'a) = 8 then
         ast_App (ast_FromTo (ast_WordT ast_W8) ast_IntT) [x1]
       else if dimindex (:'a) = 64 then
@@ -1055,8 +1066,8 @@ let eval_w2n = prove
 (* Eval_i2w *)
 let eval_i2w = prove
  (`dimindex (:'a) <= 64 ==>
-   ast_Eval env x1 (INT n) ==>
-   ast_Eval env
+   ml_translator_Eval env x1 (INT n) ==>
+   ml_translator_Eval env
      (if dimindex (:'a) = 8 then
         ast_App (ast_FromTo ast_IntT (ast_WordT ast_W8)) [x1]
       else if dimindex (:'a) = 64 then
@@ -1072,8 +1083,8 @@ let eval_i2w = prove
 (* Eval_n2w *)
 let eval_n2w = prove
  (`dimindex (:'a) <= 64 ==>
-   ast_Eval env x1 (NUM n) ==>
-   ast_Eval env
+   ml_translator_Eval env x1 (NUM n) ==>
+   ml_translator_Eval env
      (if dimindex (:'a) = 8 then
         ast_App (ast_FromTo ast_IntT (ast_WordT ast_W8)) [x1]
       else if dimindex (:'a) = 64 then
@@ -1089,8 +1100,8 @@ let eval_n2w = prove
 (* Eval_w2w *)
 let eval_w2w = prove
  (`dimindex (:'a) <= 64 /\ dimindex (:'b) <= 64 ==>
-   ast_Eval env x1 (WORD (w:'b word)) ==>
-   ast_Eval env
+   ml_translator_Eval env x1 (WORD (w:'b word)) ==>
+   ml_translator_Eval env
      (if (dimindex (:'a) <= 8 <=> dimindex (:'b) <= 8) then
         let w = (if dimindex (:'a) <= 8 then ast_W8 else ast_W64) in
           if dimindex (:'b) <= dimindex (:'a) then
@@ -1112,18 +1123,18 @@ let eval_w2w = prove
 (* Eval_word_lsl *)
 let eval_word_lsl = prove
  (`!n.
-      ast_Eval env x1 (WORD (w1:'a word)) ==>
-      ast_Eval env (ast_App (ast_Shift (if dimindex (:'a) <= 8 then ast_W8
-        else ast_W64) Lsl n) [x1])
+      ml_translator_Eval env x1 (WORD (w1:'a word)) ==>
+      ml_translator_Eval env (ast_App (ast_Shift (if dimindex (:'a) <= 8
+        then ast_W8 else ast_W64) Lsl n) [x1])
         (WORD (word_lsl w1 n))`,
   CHEAT_TAC);;
 
 (* Eval_word_lsr *)
 let eval_word_lsr = prove
  (`!n.
-      ast_Eval env x1 (WORD (w1:'a word)) ==>
-      ast_Eval env (let w = (if dimindex (:'a) <= 8 then ast_W8 else
-        ast_W64) in
+      ml_translator_Eval env x1 (WORD (w1:'a word)) ==>
+      ml_translator_Eval env (let w = (if dimindex (:'a) <= 8 then ast_W8
+        else ast_W64) in
                 let k = (if dimindex (:'a) <= 8 then 8 else 64) - dimindex
                   (:'a) in
                   if dimindex (:'a) = 8 \/ dimindex (:'a) = 64 then
@@ -1136,9 +1147,9 @@ let eval_word_lsr = prove
 (* Eval_word_asr *)
 let eval_word_asr = prove
  (`!n.
-      ast_Eval env x1 (WORD (w1:'a word)) ==>
-      ast_Eval env (let w = (if dimindex (:'a) <= 8 then ast_W8 else
-        ast_W64) in
+      ml_translator_Eval env x1 (WORD (w1:'a word)) ==>
+      ml_translator_Eval env (let w = (if dimindex (:'a) <= 8 then ast_W8
+        else ast_W64) in
                 let k = (if dimindex (:'a) <= 8 then 8 else 64) - dimindex
                   (:'a) in
                   if dimindex (:'a) = 8 \/ dimindex (:'a) = 64 then
@@ -1151,10 +1162,10 @@ let eval_word_asr = prove
 (* Eval_word_ror *)
 let eval_word_ror = prove
  (`!n.
-      ast_Eval env x1 (WORD (w1:'a word)) ==>
+      ml_translator_Eval env x1 (WORD (w1:'a word)) ==>
       (~(dimindex (:'a) = 8) ==> dimindex (:'a) = 64) ==>
-      ast_Eval env (ast_App (ast_Shift (if dimindex (:'a) <= 8 then ast_W8
-        else ast_W64) Ror n) [x1])
+      ml_translator_Eval env (ast_App (ast_Shift (if dimindex (:'a) <= 8
+        then ast_W8 else ast_W64) Ror n) [x1])
         (WORD (word_ror w1 n))`,
   CHEAT_TAC);;
 
@@ -1171,10 +1182,10 @@ let float64_fma_def = new_definition
 
 let Eval_FLOAT_FMA = prove
  (`!f1 f2 f3.
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env x3 (FLOAT64 f3) ==>
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env x3 (FLOAT64 f3) ==>
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env
           (ast_App (ast_Arith ast_FMA ast_Float64T) [x1; x2; x3])
           (FLOAT64 (float64_fma f2 f3 f1))`,
   CHEAT_TAC);;
@@ -1213,34 +1224,34 @@ let float64_div_thm = prove
 
 let Eval_FLOAT_ADD = prove
  (`!f1 f2.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Add ast_Float64T) [x1; x2])
-       (FLOAT64 (float64_add f1 f2))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Add ast_Float64T) [x1;
+       x2]) (FLOAT64 (float64_add f1 f2))`,
   CHEAT_TAC);;
 
 let Eval_FLOAT_SUB = prove
  (`!f1 f2.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Sub ast_Float64T) [x1; x2])
-       (FLOAT64 (float64_sub f1 f2))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Sub ast_Float64T) [x1;
+       x2]) (FLOAT64 (float64_sub f1 f2))`,
   CHEAT_TAC);;
 
 let Eval_FLOAT_MULT = prove
  (`!f1 f2.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Mul ast_Float64T) [x1; x2])
-       (FLOAT64 (float64_mul f1 f2))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Mul ast_Float64T) [x1;
+       x2]) (FLOAT64 (float64_mul f1 f2))`,
   CHEAT_TAC);;
 
 let Eval_FLOAT_DIV = prove
  (`!f1 f2.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Div ast_Float64T) [x1; x2])
-       (FLOAT64 (float64_div f1 f2))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Div ast_Float64T) [x1;
+       x2]) (FLOAT64 (float64_div f1 f2))`,
   CHEAT_TAC);;
 
 let lift_fp_cmp_def = new_definition
@@ -1284,20 +1295,20 @@ let float64_equal_thm = prove
 (* [local] *)
 let Eval_FP_cmp = prove
  (`!cmp f1 f2.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env x2 (FLOAT64 f2) ==>
-     ast_Eval env (ast_App (ast_Test (ast_Compare cmp) ast_Float64T) [x1;
-       x2]) (BOOL (lift_fp_cmp cmp f1 f2))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env x2 (FLOAT64 f2) ==>
+     ml_translator_Eval env (ast_App (ast_Test (ast_Compare cmp)
+       ast_Float64T) [x1; x2]) (BOOL (lift_fp_cmp cmp f1 f2))`,
   CHEAT_TAC);;
 
 (* HOL4 ml_translatorScript.sml:1973-1990: a theorem that HOL4 states as the
    value of an ML expression: Eval_ *)
 
 let Eval_FLOAT_EQ = prove
- (`ast_Eval env x1 (FLOAT64 f1) ==>
-   ast_Eval env x2 (FLOAT64 f2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_Float64T) [x1; x2]) (BOOL
-     (float64_equal f1 f2))`,
+ (`ml_translator_Eval env x1 (FLOAT64 f1) ==>
+   ml_translator_Eval env x2 (FLOAT64 f2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_Float64T) [x1;
+     x2]) (BOOL (float64_equal f1 f2))`,
   CHEAT_TAC);;
 
 let lift_fp_uop_def = new_definition
@@ -1326,37 +1337,37 @@ let float64_sqrt_thm = prove
 
 let Eval_FLOAT_ABS = prove
  (`!f1.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Abs ast_Float64T) [x1]) (FLOAT64
-       (float64_abs f1))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Abs ast_Float64T)
+       [x1]) (FLOAT64 (float64_abs f1))`,
   CHEAT_TAC);;
 
 let Eval_FLOAT_NEG = prove
  (`!f1.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Neg ast_Float64T) [x1]) (FLOAT64
-       (float64_neg f1))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Neg ast_Float64T)
+       [x1]) (FLOAT64 (float64_neg f1))`,
   CHEAT_TAC);;
 
 let Eval_FLOAT_SQRT = prove
  (`!f1.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env (ast_App (ast_Arith ast_Sqrt ast_Float64T) [x1])
-       (FLOAT64 (float64_sqrt f1))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env (ast_App (ast_Arith ast_Sqrt ast_Float64T)
+       [x1]) (FLOAT64 (float64_sqrt f1))`,
   CHEAT_TAC);;
 
 let Eval_FP_fromWord = prove
  (`!w1.
-     ast_Eval env x1 (WORD (w1:word64)) ==>
-     ast_Eval env (ast_App (ast_FromTo (ast_WordT ast_W64) ast_Float64T)
-       [x1]) (FLOAT64 (fp64_to_float w1))`,
+     ml_translator_Eval env x1 (WORD (w1:word64)) ==>
+     ml_translator_Eval env (ast_App (ast_FromTo (ast_WordT ast_W64)
+       ast_Float64T) [x1]) (FLOAT64 (fp64_to_float w1))`,
   CHEAT_TAC);;
 
 let Eval_FP_toWord = prove
  (`!f1.
-     ast_Eval env x1 (FLOAT64 f1) ==>
-     ast_Eval env (ast_App (ast_FromTo ast_Float64T (ast_WordT ast_W64))
-       [x1]) (WORD (float_to_fp64 f1))`,
+     ml_translator_Eval env x1 (FLOAT64 f1) ==>
+     ml_translator_Eval env (ast_App (ast_FromTo ast_Float64T (ast_WordT
+       ast_W64)) [x1]) (WORD (float_to_fp64 f1))`,
   CHEAT_TAC);;
 
 
@@ -1420,30 +1431,30 @@ let IsTypeRep_PAIR = prove
 (* characters *)
 
 let Eval_Ord = prove
- (`ast_Eval env x (CHAR c) ==>
-   ast_Eval env (ast_App (ast_FromTo ast_CharT ast_IntT) [x]) (NUM (ORD
-     c))`,
+ (`ml_translator_Eval env x (CHAR c) ==>
+   ml_translator_Eval env (ast_App (ast_FromTo ast_CharT ast_IntT) [x])
+     (NUM (ORD c))`,
   CHEAT_TAC);;
 
 let Eval_Chr = prove
- (`ast_Eval env x (NUM n) ==>
+ (`ml_translator_Eval env x (NUM n) ==>
    n < 256 ==>
-   ast_Eval env (ast_App (ast_FromTo ast_IntT ast_CharT) [x]) (CHAR (CHR
-     n))`,
+   ml_translator_Eval env (ast_App (ast_FromTo ast_IntT ast_CharT) [x])
+     (CHAR (CHR n))`,
   CHEAT_TAC);;
 
 (* Eval_char_to_word8 *)
 let eval_char_to_word8 = prove
- (`ast_Eval env x (CHAR c) ==>
-   ast_Eval env (ast_App (ast_FromTo ast_CharT (ast_WordT ast_W8)) [x])
-     (WORD (char_to_word8 c))`,
+ (`ml_translator_Eval env x (CHAR c) ==>
+   ml_translator_Eval env (ast_App (ast_FromTo ast_CharT (ast_WordT
+     ast_W8)) [x]) (WORD (char_to_word8 c))`,
   CHEAT_TAC);;
 
 (* Eval_word8_to_char *)
 let eval_word8_to_char = prove
- (`ast_Eval env x (WORD c) ==>
-   ast_Eval env (ast_App (ast_FromTo (ast_WordT ast_W8) ast_CharT) [x])
-     (CHAR (word8_to_char c))`,
+ (`ml_translator_Eval env x (WORD c) ==>
+   ml_translator_Eval env (ast_App (ast_FromTo (ast_WordT ast_W8)
+     ast_CharT) [x]) (CHAR (word8_to_char c))`,
   CHEAT_TAC);;
 
 (* Boolv_11 *)
@@ -1453,18 +1464,18 @@ let boolv_11 = prove
 
 (* Eval_char_lt *)
 let eval_char_lt = prove
- (`ast_Eval env x1 (CHAR c1) ==>
-   ast_Eval env x2 (CHAR c2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_CharT) [x1;
-     x2]) (BOOL (c1 < c2))`,
+ (`ml_translator_Eval env x1 (CHAR c1) ==>
+   ml_translator_Eval env x2 (CHAR c2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Lt)
+     ast_CharT) [x1; x2]) (BOOL (c1 < c2))`,
   CHEAT_TAC);;
 
 (* Eval_char_le *)
 let eval_char_le = prove
- (`ast_Eval env x1 (CHAR c1) ==>
-   ast_Eval env x2 (CHAR c2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_CharT) [x1;
-     x2]) (BOOL (c1 <= c2))`,
+ (`ml_translator_Eval env x1 (CHAR c1) ==>
+   ml_translator_Eval env x2 (CHAR c2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Leq)
+     ast_CharT) [x1; x2]) (BOOL (c1 <= c2))`,
   CHEAT_TAC);;
 
 (* HOL4 ml_translatorScript.sml:2254-2258: a theorem that HOL4 states as the
@@ -1475,10 +1486,10 @@ let eval_char_le = prove
 
 (* Eval_char_eq *)
 let eval_char_eq = prove
- (`ast_Eval env x1 (CHAR c1) ==>
-   ast_Eval env x2 (CHAR c2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_CharT) [x1; x2]) (BOOL
-     (c1 = c2))`,
+ (`ml_translator_Eval env x1 (CHAR c1) ==>
+   ml_translator_Eval env x2 (CHAR c2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_CharT) [x1;
+     x2]) (BOOL (c1 = c2))`,
   CHEAT_TAC);;
 
 (* strings *)
@@ -1494,179 +1505,182 @@ let LIST_TYPE_CHAR_v_to_char_list = prove
 (* Eval_implode *)
 let eval_implode = prove
  (`!env x1 l.
-      ast_Eval env x1 (LIST_TYPE CHAR l) ==>
-      ast_Eval env (ast_App ast_Implode [x1]) (STRING_TYPE (implode l))`,
+      ml_translator_Eval env x1 (LIST_TYPE CHAR l) ==>
+      ml_translator_Eval env (ast_App ast_Implode [x1]) (STRING_TYPE
+        (implode l))`,
   CHEAT_TAC);;
 
 (* Eval_explode *)
 let eval_explode = prove
  (`!env x1 l.
-      ast_Eval env x1 (STRING_TYPE s) ==>
-      ast_Eval env (ast_App ast_Explode [x1]) (LIST_TYPE CHAR (explode s))`,
+      ml_translator_Eval env x1 (STRING_TYPE s) ==>
+      ml_translator_Eval env (ast_App ast_Explode [x1]) (LIST_TYPE CHAR
+        (explode s))`,
   CHEAT_TAC);;
 
 (* Eval_strlen *)
 let eval_strlen = prove
  (`!env x1 s.
-      ast_Eval env x1 (STRING_TYPE s) ==>
-      ast_Eval env (ast_App ast_Strlen [x1]) (NUM (strlen s))`,
+      ml_translator_Eval env x1 (STRING_TYPE s) ==>
+      ml_translator_Eval env (ast_App ast_Strlen [x1]) (NUM (strlen s))`,
   CHEAT_TAC);;
 
 (* Eval_strsub *)
 let eval_strsub = prove
  (`!env x1 x2 s n.
-      ast_Eval env x1 (STRING_TYPE s) ==>
-      ast_Eval env x2 (NUM n) ==>
+      ml_translator_Eval env x1 (STRING_TYPE s) ==>
+      ml_translator_Eval env x2 (NUM n) ==>
       n < strlen s ==>
-      ast_Eval env (ast_App ast_Strsub [x1; x2]) (CHAR (strsub s n))`,
+      ml_translator_Eval env (ast_App ast_Strsub [x1; x2]) (CHAR (strsub s
+        n))`,
   CHEAT_TAC);;
 
 (* Eval_concat *)
 let eval_concat = prove
  (`!env x ls.
-     ast_Eval env x (LIST_TYPE STRING_TYPE ls) ==>
-     ast_Eval env (ast_App ast_Strcat [x]) (STRING_TYPE (mlvector_concat
-       ls))`,
+     ml_translator_Eval env x (LIST_TYPE STRING_TYPE ls) ==>
+     ml_translator_Eval env (ast_App ast_Strcat [x]) (STRING_TYPE
+       (mlvector_concat ls))`,
   CHEAT_TAC);;
 
 (* Eval_substring *)
 let eval_substring = prove
  (`!env x1 x2 x3 len off st.
-    ast_Eval env x1 (STRING_TYPE st) ==>
-    ast_Eval env x2 (NUM off) ==>
-    ast_Eval env x3 (NUM len) ==>
+    ml_translator_Eval env x1 (STRING_TYPE st) ==>
+    ml_translator_Eval env x2 (NUM off) ==>
+    ml_translator_Eval env x3 (NUM len) ==>
       off + len <= strlen st ==>
-    ast_Eval env (ast_App ast_CopyStrStr [x1; x2; x3]) (STRING_TYPE
-      (substring st off len))`,
+    ml_translator_Eval env (ast_App ast_CopyStrStr [x1; x2; x3])
+      (STRING_TYPE (substring st off len))`,
   CHEAT_TAC);;
 
 (* HOL4 ml_translatorScript.sml:2391-2396: a proof *)
 
 (* Eval_str_eq *)
 let eval_str_eq = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test ast_Equal ast_StrT) [x1; x2]) (BOOL (s1
-     = s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test ast_Equal ast_StrT) [x1; x2])
+     (BOOL (s1 = s2))`,
   CHEAT_TAC);;
 
 (* Eval_mlstring_lt *)
 let eval_mlstring_lt = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_StrT) [x1;
-     x2]) (BOOL (mlstring_lt s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Lt)
+     ast_StrT) [x1; x2]) (BOOL (mlstring_lt s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_mlstring_le *)
 let eval_mlstring_le = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_StrT) [x1;
-     x2]) (BOOL (mlstring_le s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Leq)
+     ast_StrT) [x1; x2]) (BOOL (mlstring_le s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_mlstring_gt *)
 let eval_mlstring_gt = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Gt) ast_StrT) [x1;
-     x2]) (BOOL (mlstring_gt s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Gt)
+     ast_StrT) [x1; x2]) (BOOL (mlstring_gt s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_mlstring_ge *)
 let eval_mlstring_ge = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_Compare ast_Geq) ast_StrT) [x1;
-     x2]) (BOOL (mlstring_ge s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Geq)
+     ast_StrT) [x1; x2]) (BOOL (mlstring_ge s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_fast_lt *)
 let eval_fast_lt = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_AltCompare ast_Lt) ast_StrT) [x1;
-     x2]) (BOOL (fast_lt s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_AltCompare ast_Lt)
+     ast_StrT) [x1; x2]) (BOOL (fast_lt s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_fast_le *)
 let eval_fast_le = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_AltCompare ast_Leq) ast_StrT) [x1;
-     x2]) (BOOL (fast_le s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_AltCompare ast_Leq)
+     ast_StrT) [x1; x2]) (BOOL (fast_le s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_fast_gt *)
 let eval_fast_gt = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_AltCompare ast_Gt) ast_StrT) [x1;
-     x2]) (BOOL (fast_gt s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_AltCompare ast_Gt)
+     ast_StrT) [x1; x2]) (BOOL (fast_gt s1 s2))`,
   CHEAT_TAC);;
 
 (* Eval_fast_ge *)
 let eval_fast_ge = prove
- (`ast_Eval env x1 (STRING_TYPE s1) ==>
-   ast_Eval env x2 (STRING_TYPE s2) ==>
-   ast_Eval env (ast_App (ast_Test (ast_AltCompare ast_Geq) ast_StrT) [x1;
-     x2]) (BOOL (fast_ge s1 s2))`,
+ (`ml_translator_Eval env x1 (STRING_TYPE s1) ==>
+   ml_translator_Eval env x2 (STRING_TYPE s2) ==>
+   ml_translator_Eval env (ast_App (ast_Test (ast_AltCompare ast_Geq)
+     ast_StrT) [x1; x2]) (BOOL (fast_ge s1 s2))`,
   CHEAT_TAC);;
 
 (* char list as string *)
 
 (* Eval_implode_nop *)
 let eval_implode_nop = prove
- (`ast_Eval env x (HOL_STRING_TYPE cs) ==>
-   ast_Eval env x (STRING_TYPE (implode cs))`,
+ (`ml_translator_Eval env x (HOL_STRING_TYPE cs) ==>
+   ml_translator_Eval env x (STRING_TYPE (implode cs))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_explode = prove
- (`ast_Eval env x (STRING_TYPE s) ==>
-   ast_Eval env x (HOL_STRING_TYPE (explode s))`,
+ (`ml_translator_Eval env x (STRING_TYPE s) ==>
+   ml_translator_Eval env x (HOL_STRING_TYPE (explode s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_INTRO = prove
- (`ast_Eval env x (LIST_TYPE CHAR cs) ==>
-   ast_Eval env (ast_App ast_Implode [x]) (HOL_STRING_TYPE cs)`,
+ (`ml_translator_Eval env x (LIST_TYPE CHAR cs) ==>
+   ml_translator_Eval env (ast_App ast_Implode [x]) (HOL_STRING_TYPE cs)`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_DEST = prove
- (`ast_Eval env x (HOL_STRING_TYPE cs) ==>
-   ast_Eval env (ast_App ast_Explode [x]) (LIST_TYPE CHAR cs)`,
+ (`ml_translator_Eval env x (HOL_STRING_TYPE cs) ==>
+   ml_translator_Eval env (ast_App ast_Explode [x]) (LIST_TYPE CHAR cs)`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_LENGTH = prove
  (`!env x1 s.
-      ast_Eval env x1 (HOL_STRING_TYPE s) ==>
-      ast_Eval env (ast_App ast_Strlen [x1]) (NUM (LENGTH s))`,
+      ml_translator_Eval env x1 (HOL_STRING_TYPE s) ==>
+      ml_translator_Eval env (ast_App ast_Strlen [x1]) (NUM (LENGTH s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_EL = prove
  (`!env x1 x2 s n.
-      ast_Eval env x2 (NUM n) ==>
-      ast_Eval env x1 (HOL_STRING_TYPE s) ==>
+      ml_translator_Eval env x2 (NUM n) ==>
+      ml_translator_Eval env x1 (HOL_STRING_TYPE s) ==>
       n < LENGTH s ==>
-      ast_Eval env (ast_App ast_Strsub [x1; x2]) (CHAR (EL n s))`,
+      ml_translator_Eval env (ast_App ast_Strsub [x1; x2]) (CHAR (EL n s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_HD = prove
  (`!env x1 s n.
-      ast_Eval env x1 (HOL_STRING_TYPE s) ==> ~(s = "") ==>
-      ast_Eval env (ast_App ast_Strsub [x1; ast_Lit (ast_IntLit (&0))])
-        (CHAR (HD s))`,
+      ml_translator_Eval env x1 (HOL_STRING_TYPE s) ==> ~(s = "") ==>
+      ml_translator_Eval env (ast_App ast_Strsub [x1; ast_Lit (ast_IntLit
+        (&0))]) (CHAR (HD s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_APPEND = prove
  (`!env x1 x2 s1 s2 n.
-      ast_Eval env x1 (HOL_STRING_TYPE s1) ==>
-      ast_Eval env x2 (HOL_STRING_TYPE s2) ==>
+      ml_translator_Eval env x1 (HOL_STRING_TYPE s1) ==>
+      ml_translator_Eval env x2 (HOL_STRING_TYPE s2) ==>
       lookup_cons (Short (implode "::")) env = SOME (2,TypeStamp (implode
         "::") 1) /\
       lookup_cons (Short (implode "[]")) env = SOME (0,TypeStamp (implode
         "[]") 1) ==>
-      ast_Eval env
+      ml_translator_Eval env
         (ast_App ast_Strcat [ast_Con (SOME (Short (implode "::")))
                     [x1; ast_Con (SOME (Short (implode "::")))
                          [x2; ast_Con (SOME (Short (implode "[]"))) []]]])
@@ -1675,13 +1689,13 @@ let Eval_HOL_STRING_APPEND = prove
 
 let Eval_HOL_STRING_CONS = prove
  (`!env x1 x2 c s n.
-      ast_Eval env x1 (CHAR c) ==>
-      ast_Eval env x2 (HOL_STRING_TYPE s) ==>
+      ml_translator_Eval env x1 (CHAR c) ==>
+      ml_translator_Eval env x2 (HOL_STRING_TYPE s) ==>
       lookup_cons (Short (implode "::")) env = SOME (2,TypeStamp (implode
         "::") 1) /\
       lookup_cons (Short (implode "[]")) env = SOME (0,TypeStamp (implode
         "[]") 1) ==>
-      ast_Eval env
+      ml_translator_Eval env
         (ast_App ast_Strcat [ast_Con (SOME (Short (implode "::")))
                     [ast_App ast_Implode [ast_Con (SOME (Short (implode
                       "::")))
@@ -1694,25 +1708,28 @@ let Eval_HOL_STRING_CONS = prove
 
 let Eval_HOL_STRING_FLAT = prove
  (`!env x ls.
-     ast_Eval env x (LIST_TYPE HOL_STRING_TYPE ls) ==>
-     ast_Eval env (ast_App ast_Strcat [x]) (HOL_STRING_TYPE (FLAT ls))`,
+     ml_translator_Eval env x (LIST_TYPE HOL_STRING_TYPE ls) ==>
+     ml_translator_Eval env (ast_App ast_Strcat [x]) (HOL_STRING_TYPE
+       (FLAT ls))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_IMPLODE = prove
  (`!env x1 s.
-      ast_Eval env x1 (LIST_TYPE CHAR s) ==>
-      ast_Eval env (ast_App ast_Implode [x1]) (HOL_STRING_TYPE (IMPLODE
-        s))`,
+      ml_translator_Eval env x1 (LIST_TYPE CHAR s) ==>
+      ml_translator_Eval env (ast_App ast_Implode [x1]) (HOL_STRING_TYPE
+        (IMPLODE s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_EXPLODE = prove
  (`!env x1 s.
-      ast_Eval env x1 (HOL_STRING_TYPE s) ==>
-      ast_Eval env (ast_App ast_Explode [x1]) (LIST_TYPE CHAR (EXPLODE s))`,
+      ml_translator_Eval env x1 (HOL_STRING_TYPE s) ==>
+      ml_translator_Eval env (ast_App ast_Explode [x1]) (LIST_TYPE CHAR
+        (EXPLODE s))`,
   CHEAT_TAC);;
 
 let Eval_HOL_STRING_LITERAL = prove
- (`!s. ast_Eval env (ast_Lit (ast_StrLit (implode s))) (HOL_STRING_TYPE s)`,
+ (`!s. ml_translator_Eval env (ast_Lit (ast_StrLit (implode s)))
+  (HOL_STRING_TYPE s)`,
   CHEAT_TAC);;
 
 (* vectors *)
@@ -1732,27 +1749,29 @@ let IsTypeRep_VECTOR = prove
 (* Eval_sub *)
 let eval_sub = prove
  (`!env x1 x2 a n v.
-      ast_Eval env x1 (VECTOR_TYPE a v) ==>
-      ast_Eval env x2 (NUM n) ==>
+      ml_translator_Eval env x1 (VECTOR_TYPE a v) ==>
+      ml_translator_Eval env x2 (NUM n) ==>
       n < length v ==>
-      ast_Eval env (ast_App ast_Vsub [x1; x2]) (a (regexp_compiler_sub v
-        n))`,
+      ml_translator_Eval env (ast_App ast_Vsub [x1; x2]) (a
+        (regexp_compiler_sub v n))`,
   CHEAT_TAC);;
 
 (* Eval_sub_unsafe *)
 let eval_sub_unsafe = prove
  (`!env x1 x2 a n v.
-      ast_Eval env x1 (VECTOR_TYPE a v) ==>
-      ast_Eval env x2 (NUM n) ==>
+      ml_translator_Eval env x1 (VECTOR_TYPE a v) ==>
+      ml_translator_Eval env x2 (NUM n) ==>
       n < length v ==>
-      ast_Eval env (ast_App ast_Vsub_unsafe [x1; x2]) (a (sub_unsafe v n))`,
+      ml_translator_Eval env (ast_App ast_Vsub_unsafe [x1; x2]) (a
+        (sub_unsafe v n))`,
   CHEAT_TAC);;
 
 (* Eval_vector *)
 let eval_vector = prove
  (`!env x1 a l.
-      ast_Eval env x1 (LIST_TYPE a l) ==>
-      ast_Eval env (ast_App ast_VfromList [x1]) (VECTOR_TYPE a (Vector l))`,
+      ml_translator_Eval env x1 (LIST_TYPE a l) ==>
+      ml_translator_Eval env (ast_App ast_VfromList [x1]) (VECTOR_TYPE a
+        (Vector l))`,
   CHEAT_TAC);;
 
 let list_to_v_LIST_TYPE = prove
@@ -1779,17 +1798,17 @@ let v_to_list_LIST_TYPE = prove
 
 let Eval_ListAppend = prove
  (`!env x1 x2 a l1 l2.
-     ast_Eval env x2 (LIST_TYPE a l1) ==>
-     ast_Eval env x1 (LIST_TYPE a l2) ==>
-     ast_Eval env (ast_App ast_ListAppend [x2; x1]) (LIST_TYPE a (APPEND
-       l1 l2))`,
+     ml_translator_Eval env x2 (LIST_TYPE a l1) ==>
+     ml_translator_Eval env x1 (LIST_TYPE a l2) ==>
+     ml_translator_Eval env (ast_App ast_ListAppend [x2; x1]) (LIST_TYPE a
+       (APPEND l1 l2))`,
   CHEAT_TAC);;
 
 (* Eval_length *)
 let eval_length = prove
  (`!env x1 x2 a n v.
-      ast_Eval env x1 (VECTOR_TYPE a v) ==>
-      ast_Eval env (ast_App ast_Vlength [x1]) (NUM (length v))`,
+      ml_translator_Eval env x1 (VECTOR_TYPE a v) ==>
+      ml_translator_Eval env (ast_App ast_Vlength [x1]) (NUM (length v))`,
   CHEAT_TAC);;
 
 (* This is useful to force the type inferencer to give the type unit
@@ -1800,10 +1819,10 @@ add_simp force_unit_type_def;;
 
 (* Eval_force_unit_type *)
 let eval_force_unit_type = prove
- (`ast_Eval env x1 (UNIT_TYPE u) ==>
-   ast_Eval env x2 ((a:'a->semanticPrimitives_v->bool) y) ==>
-   ast_Eval env (ast_Mat x1 [(ast_Pcon NONE [],x2)]) (a (force_unit_type u
-     y))`,
+ (`ml_translator_Eval env x1 (UNIT_TYPE u) ==>
+   ml_translator_Eval env x2 ((a:'a->semanticPrimitives_v->bool) y) ==>
+   ml_translator_Eval env (ast_Mat x1 [(ast_Pcon NONE [],x2)]) (a
+     (force_unit_type u y))`,
   CHEAT_TAC);;
 
 let force_gc_to_run_def = new_definition
@@ -1811,9 +1830,9 @@ let force_gc_to_run_def = new_definition
 
 (* Eval_force_gc_to_run *)
 let eval_force_gc_to_run = prove
- (`ast_Eval env x1 (INT i1) ==>
-   ast_Eval env x2 (INT i2) ==>
-   ast_Eval env (ast_App ast_ConfigGC [x1; x2]) (UNIT_TYPE
+ (`ml_translator_Eval env x1 (INT i1) ==>
+   ml_translator_Eval env x2 (INT i2) ==>
+   ml_translator_Eval env (ast_App ast_ConfigGC [x1; x2]) (UNIT_TYPE
      (force_gc_to_run i1 i2))`,
   CHEAT_TAC);;
 
@@ -1825,8 +1844,8 @@ let force_out_of_memory_error_def = new_definition
 
 (* Eval_force_out_of_memory_error *)
 let eval_force_out_of_memory_error = prove
- (`ast_Eval env x (a i) ==>
-   ast_Eval env (ast_Let (SOME (implode "a")) x
+ (`ml_translator_Eval env x (a i) ==>
+   ml_translator_Eval env (ast_Let (SOME (implode "a")) x
             (ast_Let (SOME (implode "n")) (ast_Lit (ast_IntLit (&((&2:int)
               EXP 64))))
             (ast_Let NONE (ast_App ast_Aalloc [ast_Var (Short (implode
@@ -1837,9 +1856,9 @@ let eval_force_out_of_memory_error = prove
 
 (* Eval_empty_ffi *)
 let eval_empty_ffi = prove
- (`ast_Eval env x (STRING_TYPE s) ==>
-   ast_Eval env (ast_App (ast_FFI (implode "")) [x; ast_App ast_Aw8alloc
-     [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_Word8 (n2w 0))]])
+ (`ml_translator_Eval env x (STRING_TYPE s) ==>
+   ml_translator_Eval env (ast_App (ast_FFI (implode "")) [x; ast_App
+     ast_Aw8alloc [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_Word8 (n2w 0))]])
      (UNIT_TYPE (empty_ffi s))`,
   CHEAT_TAC);;
 
@@ -1848,9 +1867,9 @@ let pure_seq_def = new_definition
 
 (* Eval_pure_seq *)
 let eval_pure_seq = prove
- (`ast_Eval env x (a a1) ==>
-   ast_Eval env y (b b1) ==>
-   ast_Eval env (ast_Let NONE x y) (b (pure_seq a1 b1))`,
+ (`ml_translator_Eval env x (a a1) ==>
+   ml_translator_Eval env y (b b1) ==>
+   ml_translator_Eval env (ast_Let NONE x y) (b (pure_seq a1 b1))`,
   CHEAT_TAC);;
 
 
@@ -1893,13 +1912,13 @@ let TRUE_def = new_definition
   `TRUE = T`;;
 
 let Eval_Val_BOOL_FALSE = prove
- (`ast_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT) [ast_Lit
-  (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL FALSE)`,
+ (`ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Lt) ast_IntT)
+  [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL FALSE)`,
   CHEAT_TAC);;
 
 let Eval_Val_BOOL_TRUE = prove
- (`ast_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_IntT) [ast_Lit
-  (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL TRUE)`,
+ (`ml_translator_Eval env (ast_App (ast_Test (ast_Compare ast_Leq) ast_IntT)
+  [ast_Lit (ast_IntLit (&0)); ast_Lit (ast_IntLit (&0))]) (BOOL TRUE)`,
   CHEAT_TAC);;
 
 let MEMBER_def,MEMBER_ind = define_guess
@@ -2026,8 +2045,8 @@ let PULL_EXISTS_EXTRA = prove
   CHEAT_TAC);;
 
 let Eval_Fun_rw = prove
- (`ast_Eval env (ast_Fun n exp) P <=> P (semanticPrimitives_Closure env n
-  exp)`,
+ (`ml_translator_Eval env (ast_Fun n exp) P <=> P (semanticPrimitives_Closure
+  env n exp)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2043,24 +2062,24 @@ let evaluate_Var = prove
   CHEAT_TAC);;
 
 let Eval_Var_nsLookup = prove
- (`ast_Eval env (ast_Var id) P <=> (match nsLookup (sem_env_v env) id with
-  NONE -> F | SOME v -> P v)`,
+ (`ml_translator_Eval env (ast_Var id) P <=> (match nsLookup (sem_env_v env)
+  id with NONE -> F | SOME v -> P v)`,
   CHEAT_TAC);;
 
 let Eval_Var = prove
- (`ast_Eval env (ast_Var (Short n)) P <=>
+ (`ml_translator_Eval env (ast_Var (Short n)) P <=>
    (?v. ml_prog_lookup_var n env = SOME v /\ P v)`,
   CHEAT_TAC);;
 
 let Eval_Fun_Var_intro = prove
- (`ast_Eval cl_env (ast_Fun n exp) P ==>
+ (`ml_translator_Eval cl_env (ast_Fun n exp) P ==>
    (!name. LOOKUP_VAR name env (semanticPrimitives_Closure cl_env n exp) ==>
-   ast_Eval env (ast_Var (Short name)) P)`,
+   ml_translator_Eval env (ast_Var (Short name)) P)`,
   CHEAT_TAC);;
 
 let Eval_Var_LOOKUP_VAR_elim = prove
- (`(!env. LOOKUP_VAR name env v ==> ast_Eval env (ast_Var (Short name)) P)
-  ==> P v`,
+ (`(!env. LOOKUP_VAR name env v ==> ml_translator_Eval env (ast_Var (Short
+  name)) P) ==> P v`,
   CHEAT_TAC);;
 
 let PRECONDITION_T = CAKE_EVAL [PRECONDITION_def] `PRECONDITION T`;;
@@ -2090,7 +2109,7 @@ let no_change_refs_def,no_change_refs_ind = define_guess
    | ast_App oper es -> ((match oper with
            ast_Opassign -> F
          | ast_Opapp -> F
-         | ast_Eval -> F
+         | ml_translator_Eval -> F
          | ast_Opref -> F
          | ast_Aw8alloc -> F
          | ast_Aw8update -> F
@@ -2128,7 +2147,7 @@ let eval_rel_no_change_refs = prove
 (* Eval_constant *)
 let eval_constant = prove
  (`!refs.
-     ast_Eval env exp P ==>
+     ml_translator_Eval env exp P ==>
      (?v refs'. eval_rel (semanticPrimitives_state_refs_fupd (K refs)
        ml_translator_empty_state) env exp
                         (semanticPrimitives_state_refs_fupd (K (APPEND refs
@@ -2137,7 +2156,7 @@ let eval_constant = prove
   CHEAT_TAC);;
 
 let Eval_evaluate_IMP = prove
- (`ast_Eval env exp P /\
+ (`ml_translator_Eval env exp P /\
    eval_rel s env exp s' v ==>
    P v`,
   CHEAT_TAC);;
@@ -2298,15 +2317,15 @@ let write_list_thm = prove
 
 let IMP_Eval_Mat_cases = prove
  (`!a (r1:'a) env exp r2 y.
-      ast_Eval env exp (a r1) /\
+      ml_translator_Eval env exp (a r1) /\
       (match y with INL (vars',exp) ->
                    (ALL_DISTINCT (ast_pats_bindings (MAP ast_Pvar vars')) /\
                     (!v. a r1 v ==>
                          (?name vals t.
                            v = semanticPrimitives_Conv NONE vals /\
                            LENGTH vals = LENGTH vars' /\
-                           ast_Eval (ml_translator_write_list (ZIP vars'
-                             vals) env) exp r2)))
+                           ml_translator_Eval (ml_translator_write_list (ZIP
+                             vars' vals) env) exp r2)))
        | INR ps -> ALL_DISTINCT (MAP (SND o SND o SND) ps) /\
                    good_cons_env ps env /\
                    (!v. a r1 v ==>
@@ -2314,15 +2333,15 @@ let IMP_Eval_Mat_cases = prove
                           v = semanticPrimitives_Conv (SOME t) vals /\
                           MEM (name,vars',exp,t) ps /\
                           LENGTH vals = LENGTH vars' /\
-                          ast_Eval (ml_translator_write_list (ZIP vars'
-                            vals) env) exp r2))) ==>
-      ast_Eval env (ast_Mat exp (Mat_cases y)) r2`,
+                          ml_translator_Eval (ml_translator_write_list (ZIP
+                            vars' vals) env) exp r2))) ==>
+      ml_translator_Eval env (ast_Mat exp (Mat_cases y)) r2`,
   CHEAT_TAC);;
 
 (* [local] *)
 let Eval_Con_lemma = prove
  (`!ps refs.
-     (!p_1 p_2. MEM (p_1,p_2) ps ==> ast_Eval env p_2 p_1) ==>
+     (!p_1 p_2. MEM (p_1,p_2) ps ==> ml_translator_Eval env p_2 p_1) ==>
      (?ck1 ck2 refs' vals.
        evaluate (semanticPrimitives_state_refs_fupd (K refs)
          (semanticPrimitives_state_clock_fupd (K ck1)
@@ -2337,20 +2356,20 @@ let Eval_Con_lemma = prove
 let Eval_Con = prove
  (`!ps stamp.
       lookup_cons name env = SOME (LENGTH ps,stamp) /\
-      ALL (\(p,x). ast_Eval env x p) ps /\
+      ALL (\(p,x). ml_translator_Eval env x p) ps /\
       (!vals.
          ALL2 (\(p,x) v. p v) ps vals ==>
          q (semanticPrimitives_Conv (SOME stamp) vals)) ==>
-      ast_Eval env (ast_Con (SOME name) (MAP SND ps)) q`,
+      ml_translator_Eval env (ast_Con (SOME name) (MAP SND ps)) q`,
   CHEAT_TAC);;
 
 let Eval_Con_NONE = prove
  (`!ps.
-      ALL (\(p,x). ast_Eval env x p) ps /\
+      ALL (\(p,x). ml_translator_Eval env x p) ps /\
       (!vals.
          ALL2 (\(p,x) v. p v) ps vals ==>
          q (semanticPrimitives_Conv NONE vals)) ==>
-      ast_Eval env (ast_Con NONE (MAP SND ps)) q`,
+      ml_translator_Eval env (ast_Con NONE (MAP SND ps)) q`,
   CHEAT_TAC);;
 
 (* translation of a new ref *)
@@ -2359,7 +2378,7 @@ let Eval_Con_NONE = prove
    variables of its own are read as variables *)
 let new_ref_thm = prove
  (cake_as_vars (fun () ->
-    `ast_Eval env e (a (x:'a)) ==>
+    `ml_translator_Eval env e (a (x:'a)) ==>
      no_change_refs e ==>
      (!refs.
        ?init_v loc_v.

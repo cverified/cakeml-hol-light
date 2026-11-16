@@ -12,7 +12,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
@@ -34,7 +33,7 @@ let _ = cake_theory "flat_patternProof"
    "flatSem"; "flat_pattern"; "misc"; "mlstring"; "pattern_semantics";
    "semanticPrimitives"; "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["exps"; "prog"; "test"];;
+let _ = do_list hide_constant ["exps"; "test"];;
 (* HOL4 ancestors outside the port: bag *)
 
 (* HOL4 flat_patternProofScript.sml:14: ML code, not ported *)
@@ -986,7 +985,6 @@ let compile_decs_no_Mat = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["exps";
-   "prog";
    "test"];;
 
 (* and the interface *)

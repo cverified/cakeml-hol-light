@@ -1014,7 +1014,7 @@ let STATE_REFS_EXTEND = prove
 (* Resizable arrays *)
 (* [local] *)
 let ABS_NUM_EQ = prove
- (`num_of_int (abs (&n)) = n`,
+ (`cfFFIType_Num (abs (&n)) = n`,
   CHEAT_TAC);;
 
 (* [local] *)

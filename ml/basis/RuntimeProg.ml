@@ -30,7 +30,7 @@ let fullGC_def = new_definition
 (* HOL4 RuntimeProgScript.sml:19-20: ML code, not ported *)
 
 let fail_def = new_definition
-  `NONE (u:1) = force_unit_type u (force_out_of_memory_error u)`;;
+  `RuntimeProg_fail (u:1) = force_unit_type u (force_out_of_memory_error u)`;;
 
 (* HOL4 RuntimeProgScript.sml:26-27: ML code, not ported *)
 

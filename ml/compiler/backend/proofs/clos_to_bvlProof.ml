@@ -16,7 +16,6 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/proofs/bvl_jumpProof.ml";;
 needs "compiler/backend/proofs/clos_annotateProof.ml";;
 needs "compiler/backend/proofs/clos_callProof.ml";;
@@ -45,7 +44,7 @@ let _ = cake_theory "clos_to_bvlProof"
 
 let _ = do_list hide_constant ["C"; "all"; "app"; "build_const'"; "concl";
        "exps"; "globals_approx_every_Fn_SOME";
-       "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts"; "prog"; "rand";
+       "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts"; "rand";
        "syntax_ok"; "update_tag"; "updates"];;
 
 (* this file reads the name of a record field as a variable and
@@ -3340,7 +3339,6 @@ let _ = do_list unhide_constant
    "globals_approx_every_Fn_vs_NONE";
    "known_co";
    "parts";
-   "prog";
    "rand";
    "syntax_ok";
    "update_tag";

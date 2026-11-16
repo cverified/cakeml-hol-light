@@ -30,7 +30,7 @@ let _ = cake_theory "ml_prog"
    "namespace"; "primSemEnv"; "semanticPrimitives";
    "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["Local"; "id"; "prog"];;
+let _ = do_list hide_constant ["Local"; "id"];;
 (* HOL4 ancestors outside the port: integer *)
 
 (* --- env operators --- *)
@@ -887,8 +887,7 @@ let prog_syntax_ok_semantics = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["Local";
-   "id";
-   "prog"];;
+   "id"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

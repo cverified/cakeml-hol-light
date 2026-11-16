@@ -53,8 +53,6 @@ let _ = cake_theory "x64BootstrapProof"
    "holLightConsistency"; "mlstring"; "replProof"; "semanticsProps";
    "x64Bootstrap"; "x64_configProof"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* with_clos_conf_simp[local] *)
 let x64BootstrapProof_with_clos_conf_simp = prove
  (`(mc_init_ok x64_config (backend_config_bvl_conf_fupd
@@ -325,10 +323,6 @@ let candle_top_level_consistency_hol_light = prove
   CHEAT_TAC);;
 
 (* HOL4 x64BootstrapProofScript.sml:411-416: ML code, not ported *)
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

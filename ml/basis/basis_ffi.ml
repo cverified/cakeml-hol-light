@@ -36,7 +36,7 @@ let _ = cake_theory "basis_ffi"
   ["CommandLineProof"; "RuntimeProof"; "TextIOProg"; "TextIOProof"; "cf";
    "clFFI"; "fsFFI"; "fsFFIProps"; "ml_prog"; "ml_translator"; "runtimeFFI"];;
 
-let _ = do_list hide_constant ["C"; "fv"; "prog"];;
+let _ = do_list hide_constant ["C"; "fv"];;
 
 (*---------------------------------------------------------------------------*)
 (* GENERALISED FFI *)
@@ -558,8 +558,7 @@ let whole_prog_spec_ffidiv_IMP = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
-   "fv";
-   "prog"];;
+   "fv"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

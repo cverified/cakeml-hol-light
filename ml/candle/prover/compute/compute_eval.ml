@@ -303,22 +303,21 @@ let compute_eval_do_arith_def = new_definition
      (compute_syntax_Num m,compute_syntax_Num n) -> st_ex_return
        ((holSyntax_Tyapp (implode "num") []) (opn m n))
    | ((holSyntax_Tyapp (implode "num") []) m,_) -> st_ex_return
-     ((holSyntax_Tyapp (implode "num") []) (opn m (&0)))
+     ((holSyntax_Tyapp (implode "num") []) (opn m 0))
    | (_,(holSyntax_Tyapp (implode "num") []) n) -> st_ex_return
-     ((holSyntax_Tyapp (implode "num") []) (opn (&0) n))
-   | (_,_) -> st_ex_return ((holSyntax_Tyapp (implode "num") []) (&0))`;;
+     ((holSyntax_Tyapp (implode "num") []) (opn 0 n))
+   | (_,_) -> st_ex_return ((holSyntax_Tyapp (implode "num") []) 0)`;;
 
 let do_reln_def = new_definition
   `do_reln opn x2' x3' =
    match (x2',x3') with
      (compute_syntax_Num m,compute_syntax_Num n) -> st_ex_return
-       ((holSyntax_Tyapp (implode "num") []) (if opn m n then SUC (&0) else
-       (&0)))
-   | (_,_) -> st_ex_return ((holSyntax_Tyapp (implode "num") []) (&0))`;;
+       ((holSyntax_Tyapp (implode "num") []) (if opn m n then SUC 0 else 0))
+   | (_,_) -> st_ex_return ((holSyntax_Tyapp (implode "num") []) 0)`;;
 
 let compute_eval_do_eq_def = new_definition
   `compute_eval_do_eq p q = st_ex_return ((holSyntax_Tyapp (implode "num")
-  []) (if p = q then SUC (&0) else (&0)))`;;
+  []) (if p = q then SUC 0 else 0))`;;
 
 let do_binop_def = define_cases
   `(do_binop compute_syntax_Add p q = compute_eval_do_arith (+) p q) /\
@@ -333,20 +332,20 @@ let do_fst_def = new_definition
   `do_fst x1 =
    match x1 with
      compute_syntax_Pair p q -> st_ex_return p
-   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) (&0))`;;
+   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) 0)`;;
 
 let do_snd_def = new_definition
   `do_snd x1' =
    match x1' with
      compute_syntax_Pair p q -> st_ex_return q
-   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) (&0))`;;
+   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) 0)`;;
 
 let do_ispair_def = new_definition
   `do_ispair x1'' =
    match x1'' with
      compute_syntax_Pair p q -> st_ex_return ((holSyntax_Tyapp (implode
-       "num") []) (&1))
-   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) (&0))`;;
+       "num") []) 1)
+   | _ -> st_ex_return ((holSyntax_Tyapp (implode "num") []) 0)`;;
 
 let do_uop_def = define_cases
   `(do_uop Fst p = do_fst p) /\
@@ -460,8 +459,8 @@ let compute_eval_def,compute_eval_ind = define_guess
               exp)))))) /\
    (compute_eval ck ceqs (compute_syntax_If p q r) =
       st_ex_bind (compute_eval ck ceqs p) (\x.
-        match x with (holSyntax_Tyapp (implode "num") []) (&0) ->
-            compute_eval ck ceqs r
+        match x with (holSyntax_Tyapp (implode "num") []) 0 -> compute_eval
+            ck ceqs r
         | (holSyntax_Tyapp (implode "num") []) _ -> compute_eval ck ceqs q
         | compute_syntax_Pair _ _ -> compute_eval ck ceqs r
         | _ -> (raise_Failure (implode "error")))) /\
@@ -508,7 +507,7 @@ let compute_eval_ind_def,compute_eval_ind_ind = define_guess
           compute_eval_ind (ck - 1) ceqs exp))))) /\
    (compute_eval_ind ck ceqs (compute_syntax_If p q r) =
       st_ex_bind (compute_eval_ind ck ceqs p) (\x.
-        match x with (holSyntax_Tyapp (implode "num") []) (&0) ->
+        match x with (holSyntax_Tyapp (implode "num") []) 0 ->
             compute_eval_ind ck ceqs r
         | (holSyntax_Tyapp (implode "num") []) _ -> compute_eval_ind ck
             ceqs q

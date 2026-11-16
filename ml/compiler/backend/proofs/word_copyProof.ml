@@ -24,7 +24,7 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_copyProof"
   ["wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_copy"];;
 
-let _ = do_list hide_constant ["addr"; "db"; "prog"; "val"];;
+let _ = do_list hide_constant ["addr"; "db"; "val"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -694,7 +694,6 @@ let evaluate_copy_prop = prove
 let _ = do_list unhide_constant
   ["addr";
    "db";
-   "prog";
    "val"];;
 
 (* and the interface *)

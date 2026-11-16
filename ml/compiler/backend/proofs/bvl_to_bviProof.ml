@@ -42,7 +42,7 @@ let _ = cake_theory "bvl_to_bviProof"
    "bvl_constProof"; "bvl_handleProof"; "bvl_inlineProof"; "bvl_to_bvi";
    "ffi"];;
 
-let _ = do_list hide_constant ["id"; "parts"; "prog"];;
+let _ = do_list hide_constant ["id"; "parts"];;
 
 let _ = do_list hide_constant ["str"];;
 
@@ -1469,7 +1469,6 @@ let compile_prog_code_labels_domain = prove
 let _ = do_list unhide_constant
   ["id";
    "parts";
-   "prog";
    "str"];;
 
 (* and the interface *)

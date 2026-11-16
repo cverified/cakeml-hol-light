@@ -12,7 +12,6 @@
 needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_names.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
@@ -21,8 +20,6 @@ needs "misc/misc.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "stack_namesProof"
   ["stackProps"; "stackSem"; "stack_names"];;
-
-let _ = do_list hide_constant ["prog"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -357,10 +354,6 @@ let stack_names_call_args = prove
                           (tlookup f 4)
                           (tlookup f 0)) (MAP SND p')`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

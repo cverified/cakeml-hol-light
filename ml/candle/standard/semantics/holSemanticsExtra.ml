@@ -329,7 +329,7 @@ let satisfies_sig = prove
    port cannot state yet: extend_valuation_exists *)
 
 let is_type_valuation_UPDATE_LIST = prove
- (`!t ls. (is_type_valuation0 mem) t /\ ALL ((\s. ?x. mem:'U->'U->bool x s) o
+ (`!t ls. (is_type_valuation0 mem) t /\ ALL ((\s. ?x. (mem:'U->'U->bool) x s) o
   SND) ls ==>
            (is_type_valuation0 mem) (UPDATE_LIST t ls)`,
   CHEAT_TAC);;
@@ -353,7 +353,7 @@ let identity_instance = prove
 
 let interprets_one = prove
  (`i (interprets0 mem) name on [v] as f <=>
-    (!x. (\s. ?x. mem:'U->'U->bool x s) x ==> (i name [x] = f [x]))`,
+    (!x. (\s. ?x. (mem:'U->'U->bool) x s) x ==> (i name [x] = f [x]))`,
   CHEAT_TAC);;
 
 (* for models, reducing the context *)

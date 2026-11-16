@@ -17,7 +17,7 @@ needs "compiler/backend/wordLang.ml";;
 let _ = cake_theory "word_remove"
   ["wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"; "prog"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (*Removes MustTerminate*)
 
@@ -71,8 +71,7 @@ let remove_must_terminate_pmatch = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch";
-   "prog"];;
+  ["pmatch"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

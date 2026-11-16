@@ -11,7 +11,6 @@
 *)
 
 needs "characteristic/cfFFIType.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
 needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
@@ -29,7 +28,7 @@ let _ = cake_theory "source_evalProof"
   ["ast"; "evaluate"; "evaluateProps"; "namespaceProps";
    "semanticPrimitives"; "semanticPrimitivesProps"; "semantics"];;
 
-let _ = do_list hide_constant ["Num"; "compile_decs"; "exps"; "id"; "prog"];;
+let _ = do_list hide_constant ["Num"; "compile_decs"; "exps"; "id"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -1357,8 +1356,7 @@ let _ = do_list unhide_constant
   ["Num";
    "compile_decs";
    "exps";
-   "id";
-   "prog"];;
+   "id"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

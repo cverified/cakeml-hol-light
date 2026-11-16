@@ -30,7 +30,7 @@ needs "semantics/proofs/semanticsProps.ml";;
 let _ = cake_theory "stack_removeProof"
   ["semanticsProps"; "stackLang"; "stackProps"; "stackSem"; "stack_remove"];;
 
-let _ = do_list hide_constant ["C"; "gen_gc"; "num_stubs"; "prog"; "shift"];;
+let _ = do_list hide_constant ["C"; "gen_gc"; "num_stubs"; "shift"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -1539,7 +1539,6 @@ let _ = do_list unhide_constant
   ["C";
    "gen_gc";
    "num_stubs";
-   "prog";
    "shift"];;
 
 (* and the interface *)

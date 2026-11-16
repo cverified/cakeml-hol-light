@@ -30,7 +30,7 @@ let _ = cake_theory "word_cseProof"
   ["reg_alloc"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_cse";
    "word_simp"];;
 
-let _ = do_list hide_constant ["Greater"; "prog"];;
+let _ = do_list hide_constant ["Greater"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* The reads of a stored arith fact, tracked as self-mappings in
@@ -1569,8 +1569,7 @@ let full_inst_ok_less_word_common_subexp_elim = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["Greater";
-   "prog"];;
+  ["Greater"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

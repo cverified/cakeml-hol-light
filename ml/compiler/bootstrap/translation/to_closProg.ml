@@ -128,9 +128,8 @@ let to_closProg_NOT_NIL_AND_LEMMA = prove
 
 (* [local] *)
 let num_abs_intro = prove
- (`!x. (decProg_Tyapp (implode "num") []) x = if (&0) <= x then
-  (decProg_Tyapp (implode "num") []) (abs x) else (decProg_Tyapp (implode
-  "num") []) x`,
+ (`!x. (decProg_Tyapp (implode "num") []) x = if 0 <= x then (decProg_Tyapp
+  (implode "num") []) (abs x) else (decProg_Tyapp (implode "num") []) x`,
   CHEAT_TAC);;
 
 (* HOL4 to_closProgScript.sml:192-194: ML code, not ported *)

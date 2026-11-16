@@ -34,7 +34,7 @@ let run_lexer_def = new_definition
          errs = MAP SND (FILTER (\(peg_tok,locs). peg_tok =
            caml_lex_LexErrorT) toks) in if NULL errs then
        camlPtreeConversion_return toks
-     else NONE errs`;;
+     else camlPtreeConversion_fail errs`;;
 
 (* HOL4 caml_parserScript.sml:27-28: the overload camlpegexec, which the
    port expands *)
@@ -52,7 +52,8 @@ let caml_parser_destResult_def = new_definition
      peg_Failure unknown_loc "Something catastrophic happened"`;;
 
 let caml_parser_peg_def = define_cases
-  `(caml_parser_peg (peg_Failure locn err) = NONE (locn,implode err)) /\
+  `(caml_parser_peg (peg_Failure locn err) = camlPtreeConversion_fail
+    (locn,implode err)) /\
    (caml_parser_peg (peg_Success (_:(caml_lex_token#locs) list) x _) =
     camlPtreeConversion_return x)`;;
 
@@ -65,8 +66,9 @@ let run_parser_def,run_parser_ind = define_guess
          [ptree] ->
            (match ptree_Start ptree with
              sum_INR x -> sum_INR x
-           | sum_INL (loc,err) -> NONE (loc,err))
-       | _ -> NONE (unknown_loc,(implode "Impossible: run_parser")))`;;
+           | sum_INL (loc,err) -> camlPtreeConversion_fail (loc,err))
+       | _ -> camlPtreeConversion_fail (unknown_loc,(implode
+         "Impossible: run_parser")))`;;
 
 let caml_parser_run_def = new_definition
   `caml_parser_run inp =

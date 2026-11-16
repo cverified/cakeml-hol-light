@@ -43,8 +43,7 @@ let _ = cake_theory "source_to_flatProof"
    "namespaceProps"; "semanticPrimitives"; "semanticPrimitivesProps";
    "semantics"; "source_evalProof"; "source_to_flat"];;
 
-let _ = do_list hide_constant ["exps"; "gc"; "id"; "path"; "prog"; "test";
-       "unit"];;
+let _ = do_list hide_constant ["exps"; "gc"; "id"; "path"; "test"; "unit"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2446,7 +2445,6 @@ let _ = do_list unhide_constant
    "gc";
    "id";
    "path";
-   "prog";
    "test";
    "unit"];;
 

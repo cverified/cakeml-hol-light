@@ -50,8 +50,6 @@ let _ = cake_theory "stack_to_labProof"
    "stack_namesProof"; "stack_rawcallProof"; "stack_removeProof";
    "stack_to_lab"; "wordProps"; "wordSem"; "word_to_stackProof"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -1703,10 +1701,6 @@ let stack_to_lab_compile_no_install = prove
      ==>
    labProps_no_install prog'`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

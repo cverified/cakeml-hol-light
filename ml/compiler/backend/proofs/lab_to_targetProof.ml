@@ -37,8 +37,8 @@ let _ = cake_theory "lab_to_targetProof"
    "lab_filterProof"; "lab_to_target"; "stack_removeProof"; "targetProps";
    "targetSem"; "wordSem"];;
 
-let _ = do_list hide_constant ["contain"; "invariant"; "lab_to_target"; "not";
-       "prog"];;
+let _ = do_list hide_constant ["contain"; "invariant"; "lab_to_target";
+  "not"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -4752,8 +4752,7 @@ let _ = do_list unhide_constant
   ["contain";
    "invariant";
    "lab_to_target";
-   "not";
-   "prog"];;
+   "not"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -26,7 +26,7 @@ let _ = cake_theory "bvi_tmcProof"
   ["backend_common"; "bviProps"; "bviSem"; "bvi_tmc"; "bvlSem";
    "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["all"; "parts"; "prog"];;
+let _ = do_list hide_constant ["all"; "parts"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2082,8 +2082,7 @@ let bvi_tmcProof_compile_prog_keeps_names = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["all";
-   "parts";
-   "prog"];;
+   "parts"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

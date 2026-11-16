@@ -32,7 +32,7 @@ let _ = cake_theory "wordConvsProof"
    "word_elim"; "word_inst"; "word_remove"; "word_simp"; "word_to_word";
    "word_unreach"];;
 
-let _ = do_list hide_constant ["C"; "comp"; "dummy"; "prog"];;
+let _ = do_list hide_constant ["C"; "comp"; "dummy"];;
 
 (***
   This theory should serve also as documentation for
@@ -1524,8 +1524,7 @@ let word_good_code_labels_word_to_word = prove
 let _ = do_list unhide_constant
   ["C";
    "comp";
-   "dummy";
-   "prog"];;
+   "dummy"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

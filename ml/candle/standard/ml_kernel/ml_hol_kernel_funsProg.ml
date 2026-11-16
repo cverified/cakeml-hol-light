@@ -340,7 +340,7 @@ let add_constants_alt = prove
 
 let call_new_type_def = new_definition
   `call_new_type ((n:mlstring),(arity:int)) =
-     if (&0) <= arity then new_type (n,num_of_int (abs arity))
+     if (&0) <= arity then new_type (n,cfFFIType_Num (abs arity))
      else raise_Failure (implode "negative arity")`;;
 add_simp call_new_type_def;;
 

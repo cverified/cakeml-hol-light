@@ -33,7 +33,7 @@ let _ = cake_theory "word_allocProof"
    "reg_alloc"; "reg_allocProof"; "wordConvs"; "wordLang"; "wordProps";
    "wordSem"; "word_alloc"];;
 
-let _ = do_list hide_constant ["C"; "not"; "prog"; "sloc"; "unit"; "val"];;
+let _ = do_list hide_constant ["C"; "not"; "sloc"; "unit"; "val"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2870,7 +2870,6 @@ let _ = do_list unhide_constant
   ["C";
    "mem";
    "not";
-   "prog";
    "sloc";
    "unit";
    "val"];;

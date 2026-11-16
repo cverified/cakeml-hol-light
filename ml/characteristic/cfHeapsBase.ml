@@ -49,8 +49,8 @@ let encode_option_11 = prove
   CHEAT_TAC);;
 
 let encode_bool_def = define_cases
-  `(encode_bool F = num_of_int (&0)) /\
-   (encode_bool T = num_of_int (&1))`;;
+  `(encode_bool F = cfFFIType_Num 0) /\
+   (encode_bool T = cfFFIType_Num 1)`;;
 
 let encode_bool_11 = prove
  (`!x y. encode_bool x = encode_bool y <=> x = y`,
@@ -58,8 +58,8 @@ let encode_bool_11 = prove
 add_simp encode_bool_11;;
 
 let encode_int_def = new_definition
-  `encode_int i = cfFFIType_Cons (encode_bool ((&0) <= i)) (num_of_int
-  (num_of_int (abs i)))`;;
+  `encode_int i = cfFFIType_Cons (encode_bool ((&0) <= i)) (cfFFIType_Num
+  (cfFFIType_Num (abs i)))`;;
 
 let encode_int_11 = prove
  (`!x y. encode_int x = encode_int y <=> x = y`,

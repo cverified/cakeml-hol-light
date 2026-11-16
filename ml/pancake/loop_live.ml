@@ -20,8 +20,6 @@ needs "pancake/loop_call.ml";;
 let _ = cake_theory "loop_live"
   ["loopLang"; "loop_call"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 
 (* the clauses in two quotations: x is binop and exp, which one quotation
    cannot typecheck *)
@@ -232,10 +230,6 @@ let loop_live_comp_def = new_definition
 
 let loop_live_optimise_def = new_definition
   `loop_live_optimise prog = (loop_live_comp o FST o loop_call_comp LN) prog`;;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

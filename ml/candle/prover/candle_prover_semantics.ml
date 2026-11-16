@@ -23,7 +23,6 @@ needs "candle/standard/monadic/holKernelProof.ml";;
 needs "candle/standard/syntax/holSyntax.ml";;
 needs "characteristic/cfFFIType.ml";;
 needs "characteristic/cfHeapsBase.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -44,8 +43,6 @@ let _ = cake_theory "candle_prover_semantics"
    "misc"; "ml_hol_kernel_funsProg"; "ml_prog"; "ml_translator";
    "namespaceProps"; "perms"; "semanticPrimitives";
    "semanticPrimitivesProps"; "semantics"];;
-
-let _ = do_list hide_constant ["prog"];;
 
 
 (* HOL4 candle_prover_semanticsScript.sml:16: ML code, not ported *)
@@ -264,10 +261,6 @@ let events_of_semantics_with_eval_state = prove
      ==>
    (!e. e IN events_of res ==> ok_event e)`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

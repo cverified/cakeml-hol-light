@@ -196,10 +196,10 @@ let bool2term_def = define_cases
  * ------------------------------------------------------------------------- *)
 
 let num2term_def,num2term_ind = define_guess
-  `(num2term 0 = (holSyntax_Const (implode "_0") num_of_int)) /\
+  `(num2term 0 = (holSyntax_Const (implode "_0") compute_syntax_Num)) /\
    (num2term (SUC n) = (\tm. holSyntax_Comb (holSyntax_Const (implode
-    "SUC") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) num_of_int
-    num_of_int)) tm) (num2term n))`;;
+    "SUC") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+    compute_syntax_Num compute_syntax_Num)) tm) (num2term n))`;;
 
 (* the termination relation that HOL4 gives is
      (<)
@@ -209,12 +209,12 @@ let num2term_def,num2term_ind = define_guess
    termination *)
 let num2bit_def,num2bit_ind = define_guess
   `num2bit n =
-     if n = 0 then (holSyntax_Const (implode "_0") num_of_int) else
-       holSyntax_Comb (if n MOD 2 = 0 then (holSyntax_Const (implode
-       "BIT0") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) num_of_int
-       num_of_int)) else (holSyntax_Const (implode "BIT1") ((\s t.
-       holSyntax_Tyapp (implode "fun") [s; t]) num_of_int num_of_int)))
-       (num2bit (n DIV 2))`;;
+     if n = 0 then (holSyntax_Const (implode "_0") compute_syntax_Num)
+       else holSyntax_Comb (if n MOD 2 = 0 then (holSyntax_Const (implode
+       "BIT0") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+       compute_syntax_Num compute_syntax_Num)) else (holSyntax_Const
+       (implode "BIT1") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+       compute_syntax_Num compute_syntax_Num))) (num2bit (n DIV 2))`;;
 
 (* -------------------------------------------------------------------------
  * Compute expressions
@@ -240,7 +240,7 @@ let uop_INDUCT,uop_RECURSION = define_datatype
 let compute_exp_INDUCT,compute_exp_RECURSION = define_datatype
   "compute_exp =
      compute_syntax_Pair compute_exp compute_exp
-   | num_of_int num
+   | compute_syntax_Num num
    | compute_syntax_Var mlstring
    | compute_syntax_App mlstring (compute_exp list)
    | compute_syntax_If compute_exp compute_exp compute_exp
@@ -325,10 +325,10 @@ let uop2term_def = define_cases
 let cexp2term_def,cexp2term_ind = define_guess
   `(cexp2term (compute_syntax_Num n) = (\tm. holSyntax_Comb
     (holSyntax_Const (implode "Cexp_num") ((\s t. holSyntax_Tyapp (implode
-    "fun") [s; t]) num_of_int (holSyntax_Tyapp (implode "cval") []))) tm)
-    ((\tm. holSyntax_Comb (holSyntax_Const (implode "NUMERAL") ((\s t.
-    holSyntax_Tyapp (implode "fun") [s; t]) num_of_int num_of_int)) tm)
-    (num2bit n))) /\
+    "fun") [s; t]) compute_syntax_Num (holSyntax_Tyapp (implode "cval")
+    []))) tm) ((\tm. holSyntax_Comb (holSyntax_Const (implode "NUMERAL")
+    ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) compute_syntax_Num
+    compute_syntax_Num)) tm) (num2bit n))) /\
    (cexp2term (compute_syntax_Pair p q) = (\t1 t2. holSyntax_Comb
     (holSyntax_Comb (holSyntax_Const (implode "Cexp_pair") ((\s t.
     holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode

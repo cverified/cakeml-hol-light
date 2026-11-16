@@ -24,7 +24,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvi_inlineProof"
   ["backendProps"; "bviProps"; "bviSem"; "bvi_inline"];;
 
-let _ = do_list hide_constant ["error"; "exps"; "prog"];;
+let _ = do_list hide_constant ["error"; "exps"];;
 
 let inline_exps_LENGTH = prove
  (`!cs es. LENGTH (inline_exps cs es) = LENGTH es`,
@@ -875,8 +875,7 @@ let compile_prog_semantics = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["error";
-   "exps";
-   "prog"];;
+   "exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -47,7 +47,7 @@ let _ = cake_theory "backend"
    "source_to_flat"; "source_to_source"; "stack_to_lab"; "word_to_stack";
    "word_to_word"];;
 
-let _ = do_list hide_constant ["bvl_to_bvi"; "lab_to_target"; "prog"];;
+let _ = do_list hide_constant ["bvl_to_bvi"; "lab_to_target"];;
 
 let backend_config_FIELDS = define_record "backend_config"
   ["source_conf","source_to_flat_config";
@@ -658,8 +658,7 @@ let set_oracle_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["bvl_to_bvi";
-   "lab_to_target";
-   "prog"];;
+   "lab_to_target"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -275,9 +275,9 @@ let ffi_close_def = new_definition
 (* Packaging up the model as an ffi_part *)
 
 let encode_inode_def = define_cases
-  `(encode_inode (UStream s) = cfFFIType_Cons (num_of_int (&0))
+  `(encode_inode (UStream s) = cfFFIType_Cons (cfFFIType_Num 0)
     (cfFFIType_Str s)) /\
-   (encode_inode (File s) = cfFFIType_Cons (num_of_int (&1))
+   (encode_inode (File s) = cfFFIType_Cons (cfFFIType_Num 1)
     (cfFFIType_Str s))`;;
 
 let encode_inode_tbl_def = new_definition
@@ -285,13 +285,13 @@ let encode_inode_tbl_def = new_definition
   (cfFFIType_Str o implode)) tbl`;;
 
 let encode_mode_def = define_cases
-  `(encode_mode ReadMode = num_of_int (&0)) /\
-   (encode_mode WriteMode = num_of_int (&1))`;;
+  `(encode_mode ReadMode = cfFFIType_Num 0) /\
+   (encode_mode WriteMode = cfFFIType_Num 1)`;;
 
 let encode_fds_def = new_definition
   `encode_fds fds =
-      encode_list (encode_pair num_of_int (encode_pair encode_inode
-        (encode_pair encode_mode num_of_int))) fds`;;
+      encode_list (encode_pair cfFFIType_Num (encode_pair encode_inode
+        (encode_pair encode_mode cfFFIType_Num))) fds`;;
 
 let encode_files_def = new_definition
   `encode_files fs = encode_list (encode_pair cfFFIType_Str cfFFIType_Str)
@@ -306,7 +306,7 @@ let fsFFI_encode_def = new_definition
                      (encode_fds (IO_fs_infds fs)))
                    (Stream (IO_fs_numchars fs)))
                   (encode_files (IO_fs_files fs)))
-                (num_of_int (IO_fs_maxFD fs))`;;
+                (cfFFIType_Num (IO_fs_maxFD fs))`;;
 
 let encode_inode_11 = prove
  (`!x y. encode_inode x = encode_inode y <=> x = y`,

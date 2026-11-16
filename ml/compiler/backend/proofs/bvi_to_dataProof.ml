@@ -30,8 +30,7 @@ let _ = cake_theory "bvi_to_dataProof"
   ["bviProps"; "bviSem"; "bvi_to_data"; "dataProps"; "dataSem";
    "data_liveProof"; "data_simpProof"; "data_spaceProof"];;
 
-let _ = do_list hide_constant ["concl"; "isException"; "isResult"; "parts";
-       "prog"];;
+let _ = do_list hide_constant ["concl"; "isException"; "isResult"; "parts"];;
 
 (* value relation *)
 
@@ -657,8 +656,7 @@ let _ = do_list unhide_constant
   ["concl";
    "isException";
    "isResult";
-   "parts";
-   "prog"];;
+   "parts"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

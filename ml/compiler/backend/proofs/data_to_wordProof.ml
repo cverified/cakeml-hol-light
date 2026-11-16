@@ -58,7 +58,7 @@ let _ = cake_theory "data_to_wordProof"
    "wordLang"; "wordProps"; "wordSem"; "word_bignum"; "word_bignumProof";
    "word_to_wordProof"];;
 
-let _ = do_list hide_constant ["all"; "prog"];;
+let _ = do_list hide_constant ["all"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -841,8 +841,7 @@ let data_to_word_good_handlers_incr = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["all";
-   "prog"];;
+  ["all"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

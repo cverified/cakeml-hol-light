@@ -24,7 +24,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvi_tailrecProof"
   ["bviProps"; "bviSem"; "bvi_tailrec"];;
 
-let _ = do_list hide_constant ["all"; "prog"];;
+let _ = do_list hide_constant ["all"];;
 
 (* TODO
 
@@ -871,8 +871,7 @@ let bvi_tailrecProof_compile_prog_good_code_labels = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["all";
-   "prog"];;
+  ["all"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

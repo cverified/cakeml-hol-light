@@ -30,7 +30,7 @@ let _ = cake_theory "cfMain"
   ["cf"; "cfHeaps"; "cfTactics"; "evaluate"; "evaluateProps"; "evaluate_dec";
    "ml_prog"; "ml_translator"; "semanticPrimitives"];;
 
-let _ = do_list hide_constant ["fv"; "prog"];;
+let _ = do_list hide_constant ["fv"];;
 
 (* HOL4 cfMainScript.sml:18: ML code, not ported *)
 (* TODO: don't use the parser so much here? *)
@@ -93,8 +93,7 @@ let FFI_part_hprop_SEP_EXISTS = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["fv";
-   "prog"];;
+  ["fv"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

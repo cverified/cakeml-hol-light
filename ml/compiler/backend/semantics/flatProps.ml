@@ -26,7 +26,7 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "flatProps"
   ["ast"; "evaluateProps"; "flatLang"; "flatSem"; "semanticPrimitivesProps"];;
 
-let _ = do_list hide_constant ["C"; "prog"];;
+let _ = do_list hide_constant ["C"];;
 
 let ctor_same_type_OPTREL = prove
  (`!c1 c2. flatSem_ctor_same_type c1 c2 <=> OPTREL (inv_image (=) SND) c1 c2`,
@@ -830,8 +830,7 @@ let mk_flat_install_conf_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["C";
-   "prog"];;
+  ["C"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -25,7 +25,7 @@ needs "misc/misc.ml";;
 let _ = cake_theory "word_elimProof"
   ["mllist"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_elim"];;
 
-let _ = do_list hide_constant ["addr"; "prog"];;
+let _ = do_list hide_constant ["addr"];;
 
 
 let _ = do_list hide_constant ["mem"];;
@@ -616,8 +616,7 @@ let word_removal_thm = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
-   "mem";
-   "prog"];;
+   "mem"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -362,7 +362,6 @@ compiler/backend/cv_compute/backend_arm8.ml
 cv_translator/backend_arm8_cv.ml
 compiler/backend/cv_compute/backend_x64.ml
 cv_translator/backend_x64_cv.ml
-cv_translator/backend_x64_eval.ml
 candle/prover/perms.ml
 candle/prover/candle_kernel_vals.ml
 candle/prover/candle_prover_inv.ml

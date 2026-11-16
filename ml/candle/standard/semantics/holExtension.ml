@@ -32,7 +32,7 @@ let _ = do_list hide_constant ["mem"];;
 
 let sound_update_def = new_definition
   `sound_update0 (mem':'U->'U->bool) ctxt upd <=>
-     (!i. models0 mem i ((\(ctxt:holSyntax_update list).
+     (!i. models0 mem' i ((\(ctxt:holSyntax_update list).
        ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap ((\ctxt. FLAT
        (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT
        (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ctxt,(\ctxt. set_of_list
@@ -41,7 +41,7 @@ let sound_update_def = new_definition
        (?i'. equal_on ((\(ctxt:holSyntax_update list). ((\ctxt.
          alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
          ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) ctxt) i i' /\ models0 mem i'
+         ctxt)) ctxt)) ctxt) i i' /\ models0 mem' i'
          ((\(ctxt:holSyntax_update list). ((\(ctxt:holSyntax_update list).
          ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
          ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd

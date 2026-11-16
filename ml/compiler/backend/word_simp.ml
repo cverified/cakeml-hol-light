@@ -19,7 +19,7 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_simp"
   ["asm"; "wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"; "prog"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (* function that makes all Seq associate to the left *)
 
@@ -504,8 +504,7 @@ let word_simp_compile_exp_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch";
-   "prog"];;
+  ["pmatch"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

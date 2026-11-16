@@ -885,15 +885,15 @@ let app_aalloc_def = new_definition
   `app_aalloc (n:int) v H Q =
      (!a.
         n >= (&0) /\
-        (SEP_IMP (H * ARRAY a (REPLICATE (num_of_int n) v)) (Q
+        (SEP_IMP (H * ARRAY a (REPLICATE (cfFFIType_Num n) v)) (Q
           (cfHeapsBase_Val a))))`;;
 
 let app_asub_def = new_definition
   `app_asub a (i:int) H Q =
      (?vs F'.
-        (&0) <= i /\ (num_of_int i) < LENGTH vs /\
+        (&0) <= i /\ (cfFFIType_Num i) < LENGTH vs /\
         (SEP_IMP H (F' * ARRAY a vs)) /\
-        (SEP_IMP H (Q (cfHeapsBase_Val (EL (num_of_int i) vs)))))`;;
+        (SEP_IMP H (Q (cfHeapsBase_Val (EL (cfFFIType_Num i) vs)))))`;;
 
 let app_alength_def = new_definition
   `app_alength a H Q =
@@ -905,25 +905,25 @@ let app_alength_def = new_definition
 let app_aupdate_def = new_definition
   `app_aupdate a (i:int) v H Q =
      (?vs F'.
-        (&0) <= i /\ (num_of_int i) < LENGTH vs /\
+        (&0) <= i /\ (cfFFIType_Num i) < LENGTH vs /\
         (SEP_IMP H (F' * ARRAY a vs)) /\
-        (SEP_IMP (F' * ARRAY a (LUPDATE v (num_of_int i) vs)) (Q
+        (SEP_IMP (F' * ARRAY a (LUPDATE v (cfFFIType_Num i) vs)) (Q
           (cfHeapsBase_Val (semanticPrimitives_Conv NONE [])))))`;;
 
 let app_aw8alloc_def = new_definition
   `app_aw8alloc (n:int) w H Q =
      (!a.
         n >= (&0) /\
-        (SEP_IMP (H * W8ARRAY a (REPLICATE (num_of_int n) w)) (Q
+        (SEP_IMP (H * W8ARRAY a (REPLICATE (cfFFIType_Num n) w)) (Q
           (cfHeapsBase_Val a))))`;;
 
 let app_aw8sub_def = new_definition
   `app_aw8sub a (i:int) H Q =
      (?ws F'.
-        (&0) <= i /\ (num_of_int i) < LENGTH ws /\
+        (&0) <= i /\ (cfFFIType_Num i) < LENGTH ws /\
         (SEP_IMP H (F' * W8ARRAY a ws)) /\
         (SEP_IMP H (Q (cfHeapsBase_Val (semanticPrimitives_Litv
-          (ast_Word8 (EL (num_of_int i) ws)))))))`;;
+          (ast_Word8 (EL (cfFFIType_Num i) ws)))))))`;;
 
 let app_aw8length_def = new_definition
   `app_aw8length a H Q =
@@ -935,52 +935,53 @@ let app_aw8length_def = new_definition
 let app_aw8update_def = new_definition
   `app_aw8update a (i:int) w H Q =
      (?ws F'.
-        (&0) <= i /\ (num_of_int i) < LENGTH ws /\
+        (&0) <= i /\ (cfFFIType_Num i) < LENGTH ws /\
         (SEP_IMP H (F' * W8ARRAY a ws)) /\
-        (SEP_IMP (F' * W8ARRAY a (LUPDATE w (num_of_int i) ws)) (Q
+        (SEP_IMP (F' * W8ARRAY a (LUPDATE w (cfFFIType_Num i) ws)) (Q
           (cfHeapsBase_Val (semanticPrimitives_Conv NONE [])))))`;;
 
 let app_copyaw8aw8_def = new_definition
   `app_copyaw8aw8 s so l d do' H Q =
      (?ws wd F'.
         (&0) <= do' /\ (&0) <= so /\ (&0) <= l /\
-        (num_of_int do' + num_of_int l) <= LENGTH wd /\ (num_of_int so +
-          num_of_int l) <= LENGTH ws /\
+        (cfFFIType_Num do' + cfFFIType_Num l) <= LENGTH wd /\ (cfFFIType_Num
+          so + cfFFIType_Num l) <= LENGTH ws /\
         (SEP_IMP H (F' * W8ARRAY s ws * W8ARRAY d wd)) /\
         (
          SEP_IMP (F' * W8ARRAY s ws *
-             W8ARRAY d (APPEND (APPEND (TAKE (num_of_int do') wd)
-                        (TAKE (num_of_int l) (DROP (num_of_int so) ws)))
-                        (DROP (num_of_int do' + num_of_int l) wd))) (Q
-                          (cfHeapsBase_Val (semanticPrimitives_Conv NONE
+             W8ARRAY d (APPEND (APPEND (TAKE (cfFFIType_Num do') wd)
+                        (TAKE (cfFFIType_Num l) (DROP (cfFFIType_Num so)
+                          ws)))
+                        (DROP (cfFFIType_Num do' + cfFFIType_Num l) wd)))
+                          (Q (cfHeapsBase_Val (semanticPrimitives_Conv NONE
                           [])))))`;;
 
 let app_copystraw8_def = new_definition
   `app_copystraw8 s so l d do' H Q =
      (?wd F'.
         (&0) <= do' /\ (&0) <= so /\ (&0) <= l /\
-        (num_of_int do' + num_of_int l) <= LENGTH wd /\ (num_of_int so +
-          num_of_int l) <= strlen s /\
+        (cfFFIType_Num do' + cfFFIType_Num l) <= LENGTH wd /\ (cfFFIType_Num
+          so + cfFFIType_Num l) <= strlen s /\
         (SEP_IMP H (F' * W8ARRAY d wd)) /\
         (
-             SEP_IMP (F' * W8ARRAY d (APPEND (APPEND (TAKE (num_of_int do')
-               wd)
-                        (MAP (n2w o ORD) (TAKE (num_of_int l) (DROP
-                          (num_of_int so) (explode s)))))
-                        (DROP (num_of_int do' + num_of_int l) wd))) (Q
-                          (cfHeapsBase_Val (semanticPrimitives_Conv NONE
+             SEP_IMP (F' * W8ARRAY d (APPEND (APPEND (TAKE (cfFFIType_Num
+               do') wd)
+                        (MAP (n2w o ORD) (TAKE (cfFFIType_Num l) (DROP
+                          (cfFFIType_Num so) (explode s)))))
+                        (DROP (cfFFIType_Num do' + cfFFIType_Num l) wd)))
+                          (Q (cfHeapsBase_Val (semanticPrimitives_Conv NONE
                           [])))))`;;
 
 let app_copyaw8str_def = new_definition
   `app_copyaw8str s so l H Q =
      (?ws F'.
         (&0) <= so /\ (&0) <= l /\
-        (num_of_int so + num_of_int l) <= LENGTH ws /\
+        (cfFFIType_Num so + cfFFIType_Num l) <= LENGTH ws /\
         (SEP_IMP H (F' * W8ARRAY s ws)) /\
         (
          SEP_IMP (F' * W8ARRAY s ws) (Q (cfHeapsBase_Val
            (semanticPrimitives_Litv (ast_StrLit (implode (MAP (CHR o w2n)
-           (TAKE (num_of_int l) (DROP (num_of_int so) ws))))))))))`;;
+           (TAKE (cfFFIType_Num l) (DROP (cfFFIType_Num so) ws))))))))))`;;
 
 let app_xoraw8str_def = new_definition
   `app_xoraw8str s d H Q =

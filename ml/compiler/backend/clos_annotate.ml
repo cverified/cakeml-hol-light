@@ -22,8 +22,6 @@ needs "misc/misc.ml";;
 let _ = cake_theory "clos_annotate"
   ["closLang"; "db_vars"; "misc"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* alt_free calculates free variable annotations, and replaces unused lets with dummies *)
 
 let const_0_def = new_definition
@@ -417,10 +415,6 @@ let compile_inc_eq = prove
  (`clos_annotate_compile_inc (e,aux) = (annotate_list 0
   e,clos_annotate_compile aux)`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

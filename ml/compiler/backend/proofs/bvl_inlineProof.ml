@@ -25,8 +25,6 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "bvl_inlineProof"
   ["backendProps"; "bvlProps"; "bvlSem"; "bvl_handleProof"; "bvl_inline"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* removal of ticks *)
 
 let bvl_inlineProof_state_rel_def = new_definition
@@ -711,10 +709,6 @@ let compile_prog_get_code_labels = prove
      SUBSET
    UNIONS (set_of_list (MAP (bvlProps_get_code_labels o SND o SND) p))`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

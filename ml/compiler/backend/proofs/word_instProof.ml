@@ -24,7 +24,7 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "word_instProof"
   ["asm"; "wordConvs"; "wordLang"; "wordProps"; "wordSem"; "word_inst"];;
 
-let _ = do_list hide_constant ["C"; "prog"];;
+let _ = do_list hide_constant ["C"];;
 
 (* resolve ambiguity between semanticsPrimitives$result and wordSem$result
    in latter's favour
@@ -392,8 +392,7 @@ let evaluate_three_to_two_reg_prog = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["C";
-   "prog"];;
+  ["C"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

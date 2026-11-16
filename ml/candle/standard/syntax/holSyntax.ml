@@ -147,8 +147,8 @@ let type_cmp_def = new_definition
   `type_cmp = TO_of_LinearOrder type_lt`;;
 
 let ordav_def,ordav_ind = define_guess
-  `(ordav [] x1 x2 <=> term_cmp x1 x2) /\
-   (ordav (CONS (t1,t2) env) x1 x2 <=>
+  `(ordav [] x1 x2 = term_cmp x1 x2) /\
+   (ordav (CONS (t1,t2) env) x1 x2 =
         (if x1 = t1 then
           if x2 = t2 then EQUAL
           else LESS

@@ -32,8 +32,7 @@ let _ = cake_theory "stack_allocProof"
   ["stackLang"; "stackProps"; "stackSem"; "stack_alloc"; "wordSem";
    "word_gcFunctions"];;
 
-let _ = do_list hide_constant ["concl"; "not"; "prog"; "shift";
-  "stack_alloc"];;
+let _ = do_list hide_constant ["concl"; "not"; "shift"; "stack_alloc"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -2651,7 +2650,6 @@ add_simp compile_has_fp_ops;;
 let _ = do_list unhide_constant
   ["concl";
    "not";
-   "prog";
    "shift";
    "stack_alloc"];;
 

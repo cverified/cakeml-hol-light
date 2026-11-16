@@ -9,7 +9,6 @@
   Theorems about the top-level semantics, including totality and determinism.
 *)
 
-needs "compiler/backend/dataLang.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
@@ -21,8 +20,6 @@ needs "semantics/semantics.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "semanticsProps"
   ["evaluate"; "evaluateProps"; "semantics"; "typeSound"];;
-
-let _ = do_list hide_constant ["prog"];;
 
 let evaluate_prog_events_determ = prove
  (`!st env k p k'.
@@ -168,10 +165,6 @@ let extend_with_resource_limit'_SUBSET = prove
  (`extend_with_resource_limit' b s SUBSET
    extend_with_resource_limit s`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

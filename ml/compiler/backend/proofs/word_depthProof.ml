@@ -21,8 +21,6 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_depthProof"
   ["backendProps"; "wordLang"; "wordProps"; "wordSem"; "word_depth"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* [local] *)
 let option_le_X_MAX_X = prove
  (`option_le x (OPTION_MAP2 MAX m x) /\
@@ -157,10 +155,6 @@ let max_depth_Call_NONE = prove
          (max_depth (wordSem_state_stack_size s) (full_call_graph dest
            funs))))`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

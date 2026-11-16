@@ -20,8 +20,6 @@ needs "semantics/typeSystem.ml";;
 let _ = cake_theory "word_removeProof"
   ["wordConvs"; "wordProps"; "wordSem"; "word_remove"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -347,10 +345,6 @@ let word_remove_correct = prove
 (* HOL4 word_removeProofScript.sml:401-428: a proof *)
 
 (* HOL4 word_removeProofScript.sml:430: a proof *)
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

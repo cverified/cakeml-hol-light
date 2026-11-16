@@ -23,7 +23,7 @@ needs "semantics/ast.ml";;
 let _ = cake_theory "stackProps"
   ["backendProps"; "stackSem"; "stack_names"];;
 
-let _ = do_list hide_constant ["exps"; "prog"];;
+let _ = do_list hide_constant ["exps"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -1160,8 +1160,7 @@ let no_shmemop_def,no_shmemop_ind = define_wf
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["exps";
-   "prog"];;
+  ["exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

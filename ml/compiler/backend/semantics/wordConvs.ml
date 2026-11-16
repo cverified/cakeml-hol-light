@@ -20,7 +20,7 @@ needs "semantics/ast.ml";;
 let _ = cake_theory "wordConvs"
   ["asm"; "reg_alloc"; "wordLang"];;
 
-let _ = do_list hide_constant ["inst"; "prog"];;
+let _ = do_list hide_constant ["inst"];;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
 let every_var_inst_mono = prove
  (`!P inst Q.
@@ -590,8 +590,7 @@ let no_share_inst_subprogs_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["inst";
-   "prog"];;
+  ["inst"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

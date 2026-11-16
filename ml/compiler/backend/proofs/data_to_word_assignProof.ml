@@ -56,7 +56,7 @@ let _ = cake_theory "data_to_word_assignProof"
    "gen_gc_partial"; "semanticsProps"; "wordLang"; "wordProps"; "wordSem";
    "word_bignum"; "word_bignumProof"; "word_gcFunctions"];;
 
-let _ = do_list hide_constant ["ABS"; "Num"; "parts"; "prog"; "test"];;
+let _ = do_list hide_constant ["ABS"; "Num"; "parts"; "test"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -4510,7 +4510,6 @@ let _ = do_list unhide_constant
    "Num";
    "free";
    "parts";
-   "prog";
    "test"];;
 
 (* and the interface *)

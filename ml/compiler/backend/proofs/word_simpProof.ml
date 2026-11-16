@@ -25,7 +25,7 @@ needs "lib/sptree.ml";;
 let _ = cake_theory "word_simpProof"
   ["mllist"; "wordLang"; "wordProps"; "wordSem"; "word_simp"];;
 
-let _ = do_list hide_constant ["addr"; "dummy"; "prog"];;
+let _ = do_list hide_constant ["addr"; "dummy"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the definitions
@@ -589,8 +589,7 @@ let compile_exp_thm = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["addr";
-   "dummy";
-   "prog"];;
+   "dummy"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -12,7 +12,6 @@
 needs "characteristic/cfFFIType.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
@@ -26,8 +25,6 @@ needs "semantics/semanticPrimitives.ml";;
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "clos_annotateProof"
   ["backendProps"; "closProps"; "closSem"; "clos_annotate"; "db_vars"];;
-
-let _ = do_list hide_constant ["prog"];;
 
 
 (* HOL4 clos_annotateProofScript.sml:11-12: an overload that the source
@@ -632,10 +629,6 @@ let every_Fn_SOME_ann = prove
       every_Fn_SOME (MAP (SND o SND) xs) ==>
       every_Fn_SOME (MAP (SND o SND) (clos_annotate_compile xs))`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

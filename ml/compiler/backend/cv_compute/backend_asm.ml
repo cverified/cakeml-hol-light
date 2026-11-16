@@ -42,8 +42,6 @@ let _ = cake_theory "backend_asm"
   ["backend"; "backend_enc_dec"; "backend_passes"; "evaluate_dec";
    "lab_to_target"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
    pairs come out of the interface *)
@@ -448,10 +446,6 @@ let compile_cake_explore_def = new_definition
 let exists_oracle = prove
  (`P x ==> (?oracle'. P oracle')`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -33,7 +33,7 @@ let _ = cake_theory "word_bignumProof"
   ["ast"; "backend_common"; "mllist"; "wordLang"; "wordProps"; "wordSem";
    "word_bignum"];;
 
-let _ = do_list hide_constant ["prog"; "shift"];;
+let _ = do_list hide_constant ["shift"];;
 
 (* HOL4 word_bignumProofScript.sml:11-12: ML code, not ported *)
 
@@ -1211,8 +1211,7 @@ let word_bignumProof_code_subset_refl = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["prog";
-   "shift"];;
+  ["shift"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -86,7 +86,7 @@ let _ = cake_theory "backendProof"
    "source_to_flatProof"; "source_to_sourceProof"; "stack_to_labProof";
    "word_to_stack"; "word_to_stackProof"];;
 
-let _ = do_list hide_constant ["cf"; "done"; "exps"; "prog"];;
+let _ = do_list hide_constant ["cf"; "done"; "exps"];;
 
 (* TODO: move/rephrase *)
 
@@ -1789,8 +1789,7 @@ let compile_correct_eval = prove
 let _ = do_list unhide_constant
   ["cf";
    "done";
-   "exps";
-   "prog"];;
+   "exps"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -22,8 +22,6 @@ let _ = cake_theory "stack_rawcallProof"
   ["labProps"; "stackLang"; "stackProps"; "stackSem"; "stack_rawcall";
    "wordSem"];;
 
-let _ = do_list hide_constant ["prog"];;
-
 
 (* HOL4 stack_rawcallProofScript.sml:12: ML code, not ported *)
 
@@ -221,10 +219,6 @@ let stack_get_handler_labels_comp = prove
      stack_get_handler_labels k (comp_top i p) =
      stack_get_handler_labels k p`,
   CHEAT_TAC);;
-
-(* and the names it reads as variables are constants again *)
-let _ = do_list unhide_constant
-  ["prog"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

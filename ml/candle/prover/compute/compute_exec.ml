@@ -52,7 +52,7 @@ let _ = cake_theory "compute_exec"
 
 let cv_INDUCT,cv_RECURSION = define_datatype
   "cv =
-     num_of_int num
+     compute_exec_Num num
    | compute_exec_Pair cv cv";;
 
 let ce_INDUCT,ce_RECURSION = define_datatype
@@ -66,7 +66,7 @@ let ce_INDUCT,ce_RECURSION = define_datatype
    | compute_exec_Let ce ce";;
 
 let env_lookup_def,env_lookup_ind = define_guess
-  `(env_lookup n [] = num_of_int (&0)) /\
+  `(env_lookup n [] = compute_exec_Num 0) /\
    (env_lookup n (CONS x xs) =
       if n = 0 then x else env_lookup (n - 1) xs)`;;
 
@@ -87,7 +87,7 @@ let get_code_def = new_definition
    termination *)
 let exec_def,exec_ind = define_guess
   `(exec funs env ck (compute_exec_Const n) =
-      st_ex_return (num_of_int n)) /\
+      st_ex_return (compute_exec_Num n)) /\
    (exec funs env ck (compute_exec_Var n) =
       st_ex_return (env_lookup n env)) /\
    (exec funs env ck (compute_exec_Monop m x) =
@@ -107,8 +107,8 @@ let exec_def,exec_ind = define_guess
         exec funs (CONS v env) (ck - 1) y))) /\
    (exec funs env ck (compute_exec_If x y z) =
       st_ex_bind (exec funs env ck x) (\v.
-        exec funs env ck (match v with num_of_int n -> if n = 0 then z else
-            y
+        exec funs env ck (match v with compute_exec_Num n -> if n = 0 then
+            z else y
                           | compute_exec_Pair _ _ -> z))) /\
    (exec_list funs env ck [] acc =
       st_ex_return acc) /\
@@ -118,15 +118,15 @@ let exec_def,exec_ind = define_guess
 
 let monop_fst_def = new_definition
   `monop_fst = (\x. match x with compute_exec_Pair y z -> y | _ ->
-  num_of_int (&0))`;;
+  compute_exec_Num 0)`;;
 
 let monop_snd_def = new_definition
   `monop_snd = (\x. match x with compute_exec_Pair y z -> z | _ ->
-  num_of_int (&0))`;;
+  compute_exec_Num 0)`;;
 
 let monop_ispair_def = new_definition
-  `monop_ispair = (\x. match x with compute_exec_Pair y z -> num_of_int (&1)
-  | _ -> num_of_int (&0))`;;
+  `monop_ispair = (\x. match x with compute_exec_Pair y z ->
+  compute_exec_Num 1 | _ -> compute_exec_Num 0)`;;
 
 let monop_def = new_definition
   `monop IsPair =
@@ -137,31 +137,31 @@ let monop_def = new_definition
 
 let to_num_def = define_cases
   `(to_num (compute_exec_Pair _ _) = 0) /\
-   (to_num ((num_of_int n):cv) = n)`;;
+   (to_num ((compute_exec_Num n):cv) = n)`;;
 add_simp to_num_def;;
 
 let cv_T_def = new_definition
-  `cv_T = (num_of_int (&1):cv)`;;
+  `cv_T = (compute_exec_Num 1:cv)`;;
 
 let cv_F_def = new_definition
-  `cv_F = (num_of_int (&0):cv)`;;
+  `cv_F = (compute_exec_Num 0:cv)`;;
 
 let binop_add_def = new_definition
-  `binop_add = (\x y. num_of_int (to_num x + to_num y))`;;
+  `binop_add = (\x y. compute_exec_Num (to_num x + to_num y))`;;
 
 let binop_sub_def = new_definition
-  `binop_sub = (\x y. num_of_int (to_num x - to_num y))`;;
+  `binop_sub = (\x y. compute_exec_Num (to_num x - to_num y))`;;
 
 let binop_mul_def = new_definition
-  `binop_mul = (\x y. num_of_int (to_num x * to_num y))`;;
+  `binop_mul = (\x y. compute_exec_Num (to_num x * to_num y))`;;
 
 let binop_div_def = new_definition
-  `binop_div = (\x y. num_of_int (let k = to_num y in if k = (&0) then (&0)
+  `binop_div = (\x y. compute_exec_Num (let k = to_num y in if k = 0 then 0
   else to_num x DIV k))`;;
 
 let binop_mod_def = new_definition
   `binop_mod =
-     (\x y. num_of_int (let k = to_num y in if k = (&0) then to_num x
+     (\x y. compute_exec_Num (let k = to_num y in if k = 0 then to_num x
        else to_num x MOD k))`;;
 
 let binop_eq_def = new_definition
@@ -170,8 +170,10 @@ let binop_eq_def = new_definition
 let binop_less_def = new_definition
   `binop_less =
      (\x y. match x with compute_exec_Pair _ _ -> cv_F
-           | num_of_int n -> (match y with compute_exec_Pair _ _ -> cv_F
-                         | num_of_int m -> if n < m then cv_T else cv_F))`;;
+           | compute_exec_Num n -> (match y with compute_exec_Pair _ _ ->
+             cv_F
+                         | compute_exec_Num m -> if n < m then cv_T else
+                           cv_F))`;;
 
 let binop_def = new_definition
   `compute_exec_binop op =
@@ -223,12 +225,12 @@ let build_funs_def = new_definition
   `build_funs eqs = Vector ((MAP (compile_to_ce eqs) eqs):ce list)`;;
 
 let cv2term_def,cv2term_ind = define_guess
-  `(cv2term ((num_of_int n):cv) = (\tm. holSyntax_Comb (holSyntax_Const
-    (implode "Cexp_num") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
-    num_of_int (holSyntax_Tyapp (implode "cval") []))) tm) ((\tm.
-    holSyntax_Comb (holSyntax_Const (implode "NUMERAL") ((\s t.
-    holSyntax_Tyapp (implode "fun") [s; t]) num_of_int num_of_int)) tm)
-    (num2bit n))) /\
+  `(cv2term ((compute_exec_Num n):cv) = (\tm. holSyntax_Comb
+    (holSyntax_Const (implode "Cexp_num") ((\s t. holSyntax_Tyapp (implode
+    "fun") [s; t]) compute_exec_Num (holSyntax_Tyapp (implode "cval") [])))
+    tm) ((\tm. holSyntax_Comb (holSyntax_Const (implode "NUMERAL") ((\s t.
+    holSyntax_Tyapp (implode "fun") [s; t]) compute_exec_Num
+    compute_exec_Num)) tm) (num2bit n))) /\
    (cv2term (compute_exec_Pair p q) = (\t1 t2. holSyntax_Comb
     (holSyntax_Comb (holSyntax_Const (implode "Cexp_pair") ((\s t.
     holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode

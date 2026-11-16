@@ -29,7 +29,7 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 let _ = cake_theory "word_alloc"
   ["asm"; "linear_scan"; "misc"; "mllist"; "reg_alloc"; "wordLang"];;
 
-let _ = do_list hide_constant ["inst"; "prog"];;
+let _ = do_list hide_constant ["inst"];;
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port expands *)
 (* HOL4 word_allocScript.sml:20: the overload Move1, which the port expands *)
@@ -1889,8 +1889,7 @@ let full_ssa_cc_trans_def = new_definition
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["inst";
-   "mem";
-   "prog"];;
+   "mem"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -18,7 +18,7 @@ needs "pancake/panLang.ml";;
 let _ = cake_theory "pan_simp"
   ["backend_common"; "panLang"];;
 
-let _ = do_list hide_constant ["pmatch"; "prog"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 let pan_simp_SmartSeq_def = new_definition
   `pan_simp_SmartSeq p q =
@@ -151,8 +151,7 @@ let compile_prog_pmatch = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch";
-   "prog"];;
+  ["pmatch"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -19,7 +19,7 @@ needs "lib/sorting.ml";;
 let _ = cake_theory "word_inst"
   ["stackLang"; "wordLang"];;
 
-let _ = do_list hide_constant ["pmatch"; "prog"];;
+let _ = do_list hide_constant ["pmatch"];;
 
 (* HOL4 word_instScript.sml:11-12: an overload that the source brings to the
    front: Shift, written out as word_Shift *)
@@ -585,8 +585,7 @@ let three_to_two_reg_prog_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["pmatch";
-   "prog"];;
+  ["pmatch"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

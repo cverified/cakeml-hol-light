@@ -42,8 +42,7 @@ let _ = cake_theory "word_to_stackProof"
   ["backend_common"; "mllist"; "semanticsProps"; "stackLang"; "stackProps";
    "stackSem"; "wordProps"; "wordSem"; "word_to_stack"];;
 
-let _ = do_list hide_constant ["GC"; "cf"; "concl"; "every"; "fv"; "prog";
-       "rand"];;
+let _ = do_list hide_constant ["GC"; "cf"; "concl"; "every"; "fv"; "rand"];;
 
 (* this file reads the name of a record field as a variable and
    needs the accessors of that field as well, so only these
@@ -3716,7 +3715,6 @@ let _ = do_list unhide_constant
    "concl";
    "every";
    "fv";
-   "prog";
    "rand"];;
 
 (* and the interface *)

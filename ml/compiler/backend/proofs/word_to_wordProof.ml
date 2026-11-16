@@ -38,7 +38,7 @@ let _ = cake_theory "word_to_wordProof"
    "word_instProof"; "word_removeProof"; "word_simpProof"; "word_to_word";
    "word_unreach"; "word_unreachProof"];;
 
-let _ = do_list hide_constant ["first_name"; "prog"];;
+let _ = do_list hide_constant ["first_name"];;
 
 (* HOL4 word_to_wordProofScript.sml:17: an overload that the source brings
    to the front: Call, written out as word_Call *)
@@ -519,8 +519,7 @@ let word_to_word_compile_semantics = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["first_name";
-   "prog"];;
+  ["first_name"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;
