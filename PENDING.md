@@ -173,6 +173,40 @@ each.
   `tools/nohol4.py` checks that every pointer points at what it
   says.
 
+# The Silver machine model
+
+`tools/excluded.txt` leaves `ag32` and `ag32_target` out, because
+`ag32Script.sml` is a file that L3 generated: it builds its types
+and its definitions by calling the ML of HOL4's `Import` library,
+which a source level port cannot follow (`ISSUES.md`).  That was
+written for the encoder, and the encoder is indeed only reached
+through `ag32_config`, which the port declares.
+
+But **seven files of the load order use the model itself** and
+cannot load without it:
+
+    compiler/backend/ag32/ag32_memory.ml
+    compiler/backend/ag32/proofs/ag32_prog.ml
+    compiler/backend/ag32/proofs/ag32_machine_config.ml
+    compiler/backend/ag32/proofs/ag32_memoryProof.ml
+    compiler/backend/ag32/proofs/ag32_basis_ffiProof.ml
+    compiler/bootstrap/compilation/ag32/32/proofs/ag32BootstrapProof.ml
+    compiler/encoders/ag32/proofs/ag32_targetProof.ml
+
+They report what the port makes of a name it does not have:
+`ag32_memory` says `, has type A->B->A#B, it cannot be used with
+type ?->?->lab`, because `Jump (fSnd,0w,Reg 0w)` is ag32's `Jump`
+of one triple and the port wrote labLang's `Jump` of one label;
+the proofs say `unknown type ag32_state`.
+
+What those files use of the model is **data and four names**, not
+the 29 definitions: the datatypes `funcT`, `shiftT`, `reg_immT`
+and `instruction` (`ag32Script.sml:6-38`), the record
+`ag32_state` (`:40-45`), and `Encode`, `Decode`, `Run` and `Next`,
+whose values are the generated ML and which are declared without
+one, as the six encoders are.  (`incPC`, the fifth name they
+write, is only in a tactic.)
+
 # Statements that the port cannot read yet
 
 **None.**  Of the 10,122 statements of the port the run of 15:18
