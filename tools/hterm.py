@@ -247,6 +247,11 @@ def tokenize(s):
             if not d: break
           k += 1
         nm = s[i+2:k].strip()
+        # the text of an ML expression runs over several lines of
+        # the source, and how it is broken is no part of it: a key
+        # of overrides.ANTIQUOTE is one line and matches either way
+        if nm not in ANTIQ and ' '.join(nm.split()) in ANTIQ:
+          nm = ' '.join(nm.split())
         if nm in ANTIQ:
           toks.append(Tok('sym', '(', start, nl, icol))
           toks += [x for x in tokenize(ANTIQ[nm]) if x.kind != 'eof']
