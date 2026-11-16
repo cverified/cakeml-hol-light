@@ -1951,9 +1951,14 @@ def eta_contract(txt):
 def as_function(nm):
   """a name that stands where a function stands, with the
      brackets round it only where HOL Light would otherwise read
-     it as an infix or a binder: (APPEND) is noise, (o) is not"""
+     it as an infix or a binder: (APPEND) is noise, (o) is not.
+     A name that carries its type needs them too: setSpec
+     overloads its infix <: with the variable mem:'U->'U->bool,
+     and without the brackets the type would be read as the type
+     of the application and not of the variable"""
   if (nm in HL_INFIX or nm in HL_WORD_INFIX or nm in BINDERS
-      or not re.match(r"^[A-Za-z_]", nm)):
+      or not re.match(r"^[A-Za-z_]", nm)
+      or re.match(r"^[A-Za-z_][A-Za-z0-9_']*\s*:", nm)):
     return '(' + nm + ')'
   return nm
 
@@ -2282,6 +2287,15 @@ class Printer:
     return e.kind in ('cond', 'case', 'do', 'let', 'quant', 'resq',
                       'reclit', 'recupd', 'setabs')
 
+  def rename_vars(self, text):
+    """the text of a name or of an overload, with the variables
+       that this statement renames renamed in it"""
+    if not self.ctx.vars: return text
+    return re.sub(r"(?<![A-Za-z0-9_'])([A-Za-z_][A-Za-z0-9_]*)"
+                  r"(?![A-Za-z0-9_'])",
+                  lambda m: self.ctx.vars.get(m.group(1), m.group(1)),
+                  text)
+
   def pr0(self, e, prec):
     k = e.kind
     if k == 'id':
@@ -2292,6 +2306,12 @@ class Printer:
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
         c = eta_contract(self.ctx.overloads[n])
+        # a variable that this statement renames is renamed in the
+        # text of an overload as well.  setSpec hides the constant
+        # mem, writes ^mem for the variable of the theory and
+        # overloads its <: with that same variable, so the
+        # definition of apply binds mem' and its body said mem
+        c = self.rename_vars(c)
         # a variable with its type on it is parenthesised already
         # (source_evalProof antiquotes (ci:'cfg compiler_instance))
         if re.match(r"^\([A-Za-z_][A-Za-z0-9_']*:[^()]*\)$", c):
@@ -2570,6 +2590,11 @@ class Printer:
           fn = as_function(eta_contract(fn))
         else:
           fn = as_function(self.ctx.name(hop))
+        # the name may be a variable of the theory that this
+        # statement renames, which the text of it has to say:
+        # setSpec hides the constant mem and overloads <: with the
+        # variable, so a definition that binds mem' means that one
+        fn = self.rename_vars(fn)
         return self.paren(fn + ' ' + sameline(self.pr(e.l, APP)) +
                           ' ' + self.pr(e.r, APP), PRE_APP, prec)
       old = self.numctx
