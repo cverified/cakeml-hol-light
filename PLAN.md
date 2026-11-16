@@ -20,6 +20,31 @@ upstream introduces a name that two theories share, and widening
 the scope to 445 theories produced nineteen such failures in one
 pass.
 
+## The port writes one name; a working session shows the other
+
+**What was decided.**  The files of `ml/` carry the
+**disambiguated** name -- `bvl_Var`, `bvi_Var`, `clos_Var` -- as
+they do now, and a session you are *working* in declares the
+overloads, so that goals print `Var` and you may type `Var` and
+have the typechecker pick.  Both halves are needed and neither is
+optional:
+
+- **the file is explicit** because that is what makes a load fast
+  (nothing to resolve), a proof nameable (a tactic names a
+  constant), and a change carryable back to HOL4 (drop the
+  prefix);
+- **the session is overloaded** because that is the vocabulary
+  CakeML is written in, and reading a HOL4 proof script against a
+  port goal is only reasonable if the two say `Var`.
+
+This is **not a hybrid**, which Freek does not want.  There is one
+mechanism: every name in `ml/` is resolved the same way, by the
+typechecker.  The overloads in a session are a *view* onto that
+file, exactly as HOL Light's own `reverse_interface_mapping`
+already shows `+` for `real_add`.  Measured: a term built from
+`bvi_Var` prints as `Var 7` with the interface on, and
+`reverse_interface_mapping := false` shows the constant itself.
+
 ## Names are to be resolved by typechecking, at conversion time
 
 HOL4 resolves an overloaded name **by the type that makes the term

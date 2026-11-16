@@ -267,6 +267,18 @@ stands on as an abstract, the file itself for real.
 
 ## What an abstract may do, and what it may not
 
+**The standing goal, beside the `/goal` itself: an abstract is to
+be as fast as possible while being as compatible as possible.  The
+only difference in side effect it may have from a real load is in
+kernel lists that the port never looks at.**  (Freek, 2026-11-16.)
+
+Those two pull against each other and the order matters:
+compatibility is the constraint, speed is what is maximised inside
+it.  A faster abstract that diverges is worth nothing, because the
+abstract *is* the measurement -- the loop reads its report and
+believes it.  So no speed-up goes in until the same tree has been
+loaded both ways and the two reports diffed.
+
 **An abstract reproduces every side effect of a real load, with
 the same statements, and proves nothing.**  Freek, 2026-11-16:
 "the side effects should (apart from the state of some kernel

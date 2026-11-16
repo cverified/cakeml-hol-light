@@ -36,11 +36,18 @@ def records(lines):
       elif l.startswith('DISTINCT ') or l.startswith('INJECT '):
         kind, ty = l.split()[0], l.split()[1]
         i += 1
+        # a header with no statement after it is a lookup that
+        # raised: the type has no such theorem, and the record
+        # must not swallow what follows
         body = []
-        while i < n and lines[i] != 'ENDTHM':
+        while (i < n and lines[i] not in ('ENDTHM', 'END')
+               and not lines[i].startswith('DISTINCT ')
+               and not lines[i].startswith('INJECT ')):
           body.append(lines[i]); i += 1
-        i += 1
-        (dis if kind == 'DISTINCT' else inj).append((ty, ' '.join(body)))
+        if i < n and lines[i] == 'ENDTHM': i += 1
+        if body:
+          (dis if kind == 'DISTINCT' else inj).append((ty,
+                                                       ' '.join(body)))
       elif l in ('INDUCT', 'RECURSION'):
         kind = l; i += 1
         body = []

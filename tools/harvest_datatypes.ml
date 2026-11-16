@@ -63,14 +63,17 @@ let define_datatype spec =
      statement of the port asks for by the name of the type.  An
      abstract states them and proves neither, so their statements
      are recorded here like the other two *)
+  (* the statement is made before the header is written: a type
+     of one constructor has no distinctness theorem, and a type
+     whose constructors take no arguments has no injectivity, so
+     the lookup raises and a header already on the file would
+     leave a record that no reader can take apart *)
   do_list (fun (n, _) ->
-             (try p ("DISTINCT " ^ n);
-                  p (string_of_term (concl (distinctness n)));
-                  p "ENDTHM"
+             (try let st = string_of_term (concl (distinctness n)) in
+                  p ("DISTINCT " ^ n); p st; p "ENDTHM"
               with Failure _ -> ());
-             (try p ("INJECT " ^ n);
-                  p (string_of_term (concl (injectivity n)));
-                  p "ENDTHM"
+             (try let st = string_of_term (concl (injectivity n)) in
+                  p ("INJECT " ^ n); p st; p "ENDTHM"
               with Failure _ -> ()))
           (cake_dt_types spec);
   p "END";
