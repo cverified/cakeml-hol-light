@@ -5365,12 +5365,18 @@ def patch_text(text, patches, what='DEF_PATCH'):
      patch is about what the port says and not about where the
      lines of it break), and a line that the patch makes too long
      is broken again.  A patch that does not apply is an error and
-     not a silence"""
+     not a silence -- except in a resolution round, where the port
+     writes an overloaded name as the source writes it and a patch
+     that names the constant the port resolved it to cannot match.
+     There the block goes out unpatched, which is enough to read
+     what its names resolve to, and the round is not about what
+     the block says"""
   for was, now in patches:
     ws = was.split()
     pat = re.compile(r'\s+'.join(re.escape(w) for w in ws))
     m = pat.search(text)
     if m is None:
+      if RESOLVE: continue
       raise SyntaxError('%s does not apply: %s%s'
                         % (what, ' '.join(ws)[:40], near(text, ws)))
     text = text[:m.start()] + ' '.join(now.split()) + text[m.end():]

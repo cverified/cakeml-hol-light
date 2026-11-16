@@ -1,0 +1,45 @@
+#!/bin/sh
+# absfast : the abstract of the whole port in one session load.
+#
+# The same thing tools/bin/abstractall does and the same two
+# reports (tmp/abs.out, tmp/abs-unstated.txt), but the files are
+# written once by tools/mkdriver.py and loaded by one `loadt'
+# instead of a tmux round trip and two python processes each.
+# Measured: 2850s the file at a time against 2564s in one go, and
+# 2011s of that is HOL Light reading the statements.
+#
+# The driver puts back what a file that died did not (the
+# interface, the constants it hid), so the report is the report
+# of the file-at-a-time loop and not one failure looking like
+# fifty.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C || exit 1
+. tools/holenv.sh > /dev/null 2>&1
+s=${CAKE_ABS_SESSION:-abs}
+python3 -I tools/loadorder.py > tools/load.txt
+CAKE_UNSTATED=abs-unstated.txt CAKE_MARK=abs-mark.txt \
+  python3 -I tools/mkdriver.py tmp/drvabs
+: > tmp/abs-unstated.txt
+: > tmp/abs-mark.txt
+t0=$(date +%s)
+repl-kill $s > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
+repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
+  echo "absfast: cannot clone the template"; exit 1; }
+repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
+# a file to load over the abstract before the port
+[ -n "$CAKE_EXTRA" ] && repl-step $s "loadt \"$CAKE_EXTRA\";;" \
+  > /dev/null 2>&1
+TIMEOUT=${TIMEOUT:-7200} repl-step $s \
+  "loadt \"$C/tmp/drvabs/driver.ml\";;" > tmp/abs-raw.out 2>&1
+t1=$(date +%s)
+sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' tmp/abs-raw.out |
+  python3 -I tools/absreport.py > tmp/abs.out
+n=$(grep -c . tools/load.txt)
+f=$(grep -c . tmp/abs.out)
+u=$(grep -c . tmp/abs-unstated.txt)
+echo "absfast: $n files, $f with a failure, $u unread statements,"\
+     "$((t1-t0))s"
+[ "$f" = 0 ] || { echo '--- the files that failed:';
+  cut -c1-120 tmp/abs.out; }

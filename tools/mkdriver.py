@@ -14,7 +14,7 @@ talking to tmux.
 This writes every copy in one python and one file that loads them
 in order, so that the shell waits once.
 """
-import os, sys, io
+import os, re, sys, io
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 sys.path.insert(0, T)
@@ -31,6 +31,22 @@ let cake_file s =
 
 TAIL = '''Printf.printf "DRIVER %.1fs\\n%!" (Sys.time() -. cake_t0);;
 '''
+
+
+def unhidden(path):
+  """the constants a file hides from the parser, as a phrase that
+     unhides them again: a file that dies leaves them hidden and
+     the files after it read the names as variables"""
+  try:
+    text = open(path, encoding='utf-8').read()
+  except OSError:
+    return ''
+  ns = []
+  for m in re.finditer(r'hide_constant\s*\[([^]]*)\]', text):
+    ns += re.findall(r'"([^"]+)"', m.group(1))
+  if not ns: return ''
+  return ('do_list unhide_constant [%s];;'
+          % '; '.join('"%s"' % n for n in sorted(set(ns))))
 
 
 def main():
@@ -55,6 +71,15 @@ def main():
     real = REAL + f
     drv.append('cake_file "%s";;' % f)
     drv.append('loadt "%s";;' % cp)
+    # a file that dies never reaches its own unhide_overloads, so
+    # the interface stays cut down to the scope of that file and
+    # every file after it is read in a scope that no report
+    # describes: one failure then looks like fifty.  This is what
+    # tools/bin/abstract does between two files, and the driver
+    # has to do it too or it is not the same abstract
+    drv.append('unhide_overloads ();;')
+    u = unhidden(ML + f)
+    if u: drv.append(u)
     drv.append('loaded_files := (Filename.basename "%s",'
                ' Digest.file "%s") :: !loaded_files;;' % (real, real))
   drv.append(TAIL)
