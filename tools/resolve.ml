@@ -17,6 +17,22 @@
 (*  tools/resolved.txt.                                                 *)
 (* ==================================================================== *)
 
+(* The port writes every constant under a name of its own
+   (bvl_Var, clos_Var), and nothing of a datatype or a definition
+   goes into the interface under the name the HOL4 source writes:
+   a file names the constant it means and there is nothing to
+   resolve while it loads.  A resolution round is the one place
+   that wants the other arrangement, so the files of a round
+   register each constant under its HOL4 name as they define it,
+   which is what HOL4 does, and cake_theory cuts the interface
+   down to the scope of each file as before.
+
+   A block that the port could not write leaves its constant
+   undefined, so a registration of it is let go. *)
+
+let cake_ovl l =
+  do_list (fun (n,c) -> try hol4_overload n c with _ -> ()) l;;
+
 let cake_res_dir =
   try Sys.getenv "CAKE_RESDIR" with Not_found ->
   "/home/freek/claude/hol-light/cakeml/tmp/res/";;

@@ -158,6 +158,20 @@ def lay(pre, words, width=75):
   return lines
 
 
+def fill_pairs(pairs):
+  """the pairs of a cake_ovl, over as few lines of 79 characters as
+     they go in: a resolution round writes one of these after every
+     block that defines a constant"""
+  out, cur = [], 'cake_ovl ['
+  for i, (a, b) in enumerate(pairs):
+    t = '"%s","%s"' % (a, b) + (';' if i + 1 < len(pairs) else '];;')
+    if len(cur) + len(t) > 79 and cur.strip() != 'cake_ovl [':
+      out.append(cur.rstrip()); cur = '  '
+    cur += t
+  out.append(cur.rstrip())
+  return '\n'.join(out)
+
+
 def fill(pre, words, width=77, tight=False):
   """lay out the words in lines of at most width characters, the
      first line starting with pre and the others indented by 3.
@@ -1557,9 +1571,13 @@ class Porter:
         # the resolution round says where each term stands, so
         # that the constants the session resolves them to can be
         # read back against the block that wrote them
-        if RESOLVE and b.name:
+        if RESOLVE:
+          # a block of no name (a datatype, a comment) has the
+          # marker all the same, or the terms of it would be
+          # logged under the block before it
           new = ['cake_at "%s" "%s";;'
-                 % (self.thy, b.name.replace('"', '')) ] + new
+                 % (self.thy, (b.name or '').replace('"', ''))] \
+                + new + self.resolve_overloads(b)
         # the needs of the port start a paragraph of their own
         blanks = max(1, b.blanks) if b.kind == 'Ancestors' else b.blanks
         chunks.append((blanks, '\n'.join(new)))
@@ -1705,6 +1723,35 @@ class Porter:
       if i not in self.filepatched:
         self.warn.append('FILE_PATCH matches nothing: %s' % was)
     return text.replace(NEEDS, head)
+
+  def resolve_overloads(self, b):
+    """in a resolution round, the overloads that HOL4 has when a
+       block defines its constants.  The port writes every
+       constant under a name of its own and registers none of
+       them, because a file of the port names the constant it
+       means; a round writes the name the source writes instead,
+       and then the typechecker needs the candidates in the
+       interface to resolve it against.  Only the names that HOL4
+       itself writes without a theory in front of them are
+       registered (db.overloaded)"""
+    k = b.kind
+    names = []
+    if k == 'Datatype':
+      for ty, cons, flds in hol4.datatype_names(b.body):
+        names += cons
+    elif k in ('Definition', 'Inductive', 'CoInductive'):
+      names = dbmod.definition_names(b.body) or dbmod.rule_names(b.body)
+    else:
+      return []
+    over = self.db.overloaded()
+    out = []
+    for nm in names:
+      new = self.db.rename.get((self.thy, nm))
+      if not new or new == nm or nm not in over: continue
+      if (nm, new) in out: continue
+      out.append((nm, new))
+    if not out: return []
+    return [fill_pairs(out)]
 
   def wanted(self, b):
     """of a HOL4 library theory only the needed definitions are ported"""
