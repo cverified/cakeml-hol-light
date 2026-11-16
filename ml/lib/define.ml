@@ -2629,14 +2629,32 @@ let cheat_why = ref "";;
    a cheat.  PENDING.md names every one of them and says what the
    value is that the port cannot say yet. *)
 
+(* A file that declares a constant may be loaded after one that
+   gave it a value: the port writes the declaration where the
+   source of a file uses a name whose value it cannot say, and
+   another file of the port may say it all the same (compiler's
+   basis is basisProg's, which loads before it).  Then there is
+   nothing to declare, and a second new_constant of the name
+   would stop the file. *)
+
 let cake_declare name ty =
-  let v = mk_var("x",ty) in
-  ignore(new_specification [name]
-           (prove(mk_exists(v,`T`),REWRITE_TAC[])));
-  the_cheats := name :: !the_cheats;
-  the_cheat_why := (name,"declared (no value)") :: !the_cheat_why;
-  print_string ("\ncake_declare " ^ name ^ " (no value)\n");
-  flush stdout;;
+  match (try Some (get_const_type name) with Failure _ -> None) with
+    Some ty' when ty' = ty ->
+      print_string ("\ncake_declare " ^ name ^ ": it has a value"
+                    ^ " already\n");
+      flush stdout
+  | Some _ ->
+      failwith ("cake_declare: " ^ name ^ " has a value of another"
+                ^ " type already")
+  | None ->
+      let v = mk_var("x",ty) in
+      ignore(new_specification [name]
+               (prove(mk_exists(v,`T`),REWRITE_TAC[])));
+      the_cheats := name :: !the_cheats;
+      the_cheat_why :=
+        (name,"declared (no value)") :: !the_cheat_why;
+      print_string ("\ncake_declare " ^ name ^ " (no value)\n");
+      flush stdout;;
 
 (* the free variables of a definition that are not the functions it
    defines: those are the constants that the port does not have

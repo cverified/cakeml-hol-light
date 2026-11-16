@@ -14497,6 +14497,19 @@ THM_PATCH = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # HOL4's record literal <| hash_tab_32 := (n,[]) |> is of the
+  # type that run_ienc_state_32 takes, which is the record of an
+  # initial state, ienc_state_32.  Both records have a field of
+  # that name -- enc_state_32's holds the array and
+  # ienc_state_32's its length and its initial value -- and HOL4
+  # resolves the literal by the type that the application needs,
+  # where the port takes the record that defined the field first
+  ('monadic_enc32', 'enc_secs_32_aux_def'): [
+    ('mk_enc_state_32 (n,[])', 'mk_ienc_state_32 (n,[])'),
+  ],
+  ('monadic_enc64', 'enc_secs_64_aux_def'): [
+    ('mk_enc_state_64 (n,[])', 'mk_ienc_state_64 (n,[])'),
+  ],
   # HOL4 writes the 2 of threshold_def as 2r and the two of this
   # one plainly, and lets the type of pow make them real; HOL
   # Light reads a numeral as a num unless the file says otherwise,
