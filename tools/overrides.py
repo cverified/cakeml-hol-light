@@ -1065,6 +1065,11 @@ LOCAL_NAMES = {
   # HOL term is the value of a piece of CakeML -- and ast has the
   # Eval that is an operation of the source language
   ('ml_translator', 'Eval'): 'ml_translator_Eval',
+  # and its And, which combines a precondition with the relation
+  # between a HOL value and a CakeML one; asm and ast both have an
+  # And of their own and theirs are constructors, which is what
+  # the name alone resolves to
+  ('ml_translator', 'And'): 'ml_translator_And',
   ('word_cse', 'Less'): 'LESS',
   ('word_cse', 'Equal'): 'EQUAL',
   ('word_cse', 'Greater'): 'GREATER',
