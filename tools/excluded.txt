@@ -5,3 +5,4 @@ arm8_target	compiler/encoders/arm8/arm8_targetScript.sml
 mips_target	compiler/encoders/mips/mips_targetScript.sml
 riscv_target	compiler/encoders/riscv/riscv_targetScript.sml
 x64_target	compiler/encoders/x64/x64_targetScript.sml
+backend_x64_eval	cv_translator/backend_x64_evalScript.sml

@@ -276,7 +276,6 @@ backend_arm8	compiler/backend/cv_compute/backend_arm8Script.sml
 backend_arm8_cv	cv_translator/backend_arm8_cvScript.sml
 backend_x64	compiler/backend/cv_compute/backend_x64Script.sml
 backend_x64_cv	cv_translator/backend_x64_cvScript.sml
-backend_x64_eval	cv_translator/backend_x64_evalScript.sml
 perms	candle/prover/permsScript.sml
 candle_kernel_vals	candle/prover/candle_kernel_valsScript.sml
 candle_prover_inv	candle/prover/candle_prover_invScript.sml
