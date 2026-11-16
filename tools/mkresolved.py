@@ -32,18 +32,22 @@ import db as dbmod
 
 def candidates(db):
   """for every theory, the constants that each of its overloaded
-     names could mean"""
+     names could mean: the ones that the theories in its scope
+     define under that name, and the one that the hand written
+     library layer provides under it"""
   out = {}
   tykinds = ('type', 'tyabbrev')
   for thy, path, kind in dbmod.load_order():
     anc = db.scope(thy) | {thy}
+    lib = db.lib_ambiguous(thy)
     d = {}
-    for nm in db.overloaded_for(thy):
+    for nm in set(db.overloaded_for(thy)) | set(lib):
       cs = []
       for t, k in db.defs.get(nm, []):
         if t not in anc or k in tykinds: continue
         new = db.rename.get((t, nm), nm)
         if new not in cs: cs.append(new)
+      if nm in lib and lib[nm] not in cs: cs.append(lib[nm])
       if len(cs) > 1: d[nm] = cs
     out[thy] = d
   return out
@@ -62,7 +66,14 @@ def main():
       for v in d.values(): cs |= set(v)
     with open(out + 'consts.txt', 'w') as f:
       for c in sorted(cs): f.write(c + '\n')
-    print('%d constants to log, in %sconsts.txt' % (len(cs), out))
+    # and the overloads of the library layer that the round has to
+    # register itself: the port's own files register what they
+    # define (cake_ovl), and ml/lib registers only four of these
+    lib = db.lib_candidates()
+    with open(out + 'baseovl.txt', 'w') as f:
+      for nm in sorted(lib): f.write('%s\t%s\n' % (nm, lib[nm]))
+    print('%d constants to log, in %sconsts.txt; %d overloads of'
+          ' the library layer' % (len(cs), out, len(lib)))
     return 0
   if what != 'table':
     print(__doc__); return 1

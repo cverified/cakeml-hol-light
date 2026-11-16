@@ -66,6 +66,9 @@ def hl_idents():
 
 
 # the hand written files of the library layer
+# a name that HOL Light would read as one identifier
+IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
+
 HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml',
                'path.ml']
 
@@ -736,6 +739,34 @@ class Db:
       ts = set(t for t, k in self.defs.get(nm, [])
                if t in anc and k not in tykinds)
       if len(ts) > 1: out.add(nm)
+    return out
+
+  def lib_candidates(self):
+    """the constant of the hand written library layer that a name
+       means where no ported theory claims it: llist's fromList is
+       what a bare fromList means outside sptree's scope, and
+       integer's Num is num_of_int.  Only the names that a ported
+       theory has as well are in here, because those are the ones
+       that HOL4 resolves by the type and the port decides
+       statically"""
+    out = {}
+    for nm, c in overrides.NAME_MAP.items():
+      if nm in self.defs and IDENT.match(nm): out[nm] = c
+    for nm in self.provided:
+      if nm in self.defs and IDENT.match(nm): out.setdefault(nm, nm)
+    return out
+
+  def lib_ambiguous(self, thy):
+    """those of them that a theory in the scope of this one defines
+       as a constant of its own, so that the name has two meanings
+       here and only the type says which"""
+    anc = self.scope(thy) | {thy}
+    tykinds = ('type', 'tyabbrev')
+    out = {}
+    for nm, c in self.lib_candidates().items():
+      if any(t in anc and k not in tykinds
+             for t, k in self.defs.get(nm, [])):
+        out[nm] = c
     return out
 
   def hidden_for(self, thy, blocks):

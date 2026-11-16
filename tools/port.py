@@ -380,6 +380,14 @@ class Porter:
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
+    # a resolution round counts a name that the hand written
+    # library layer provides as well as ambiguous -- integer's Num
+    # against cfFFIType's, llist's fromList against sptree's --
+    # and tools/resolve.ml registers the library's constant beside
+    # the port's, so that the typechecker has both to choose from
+    if RESOLVE:
+      self.ctx.overloaded = (set(self.ctx.overloaded) |
+                             set(db.lib_ambiguous(thy)))
     self.ctx.arm_thys = self.arm_thys
     self.ctx.body_pr = self.pr_body
     # HOL4's auxiliary size functions of a datatype family

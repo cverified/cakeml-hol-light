@@ -42,6 +42,29 @@ let cake_res_dir =
    scope has as well.  Everything else says nothing about a
    resolution, and the port has 60,000 constants *)
 
+(* the overloads of the hand written library layer that the port
+   itself does not register: ml/lib has four of them and a round
+   needs every name that a ported theory claims as well, or a
+   bare Num has only cfFFIType's to resolve to and never
+   integer's.  They are of no theory, as the library layer's are,
+   so they are in the scope of every file. *)
+
+let cake_base_ovl () =
+  try
+    let ch = open_in (cake_res_dir ^ "baseovl.txt") in
+    (try while true do
+           let l = input_line ch in
+           (try
+              let i = String.index l '\t' in
+              let n = String.sub l 0 i in
+              let c = String.sub l (i + 1) (String.length l - i - 1) in
+              (try hol4_overload n c with _ -> ())
+            with Not_found -> ())
+         done
+     with End_of_file -> ());
+    close_in ch
+  with Sys_error _ -> ();;
+
 let cake_res_want = Hashtbl.create 20000;;
 
 let cake_res_read_wanted () =
@@ -89,5 +112,7 @@ let cake_res_parse_term = parse_term;;
 let parse_term s =
   let tm = cake_res_parse_term s in
   (try cake_res_note tm with _ -> ()); tm;;
+
+cake_base_ovl ();;
 
 print_string "*** the resolution round is logging constants ***\n";;
