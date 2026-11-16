@@ -3363,6 +3363,15 @@ ANTIQUOTE = {
 }
 
 NOT_YET = {
+  # the inverse of a rational, which HOL4 defines through the
+  # fractions its rationals are a quotient of (abs_rat, frac_minv,
+  # rep_rat); the port has no fractions, so rat_minv is one of the
+  # operations that the head of the file declares
+  ('rat', 'rat_minv_def'):
+    "HOL4's fractions, which its rationals are a quotient of"
+    '\n(abs_rat, frac_minv, rep_rat); rat_minv is declared in the'
+    '\nhead of this file instead',
+
   # the two command line drivers of the compiler binary: they read
   # the input and write the output of the binary, so their type is
   # the file system of the basis library (fsFFI's IO_fs), which
@@ -12857,6 +12866,36 @@ let unify_def = new_definition
 }
 
 EXTRA_HEAD = {
+  # HOL4 builds a rational as a quotient of fracTheory's fractions,
+  # which are a quotient of pairs of integers, and the port has
+  # neither theory: nothing of CakeML reaches into a rational, and
+  # what it says about one it says through the operations.  So the
+  # type and the operations are declared here and the statements of
+  # mlrat and RatProg are read against these.  PENDING.md says what
+  # it would take to define them instead -- the rationals carved
+  # out of HOL Light's reals, with the operations lifted through
+  # the bijection, which is a type definition and six proofs
+  'rat': r"""
+new_type("rat",0);;
+
+cake_declare "rat_of_num" `:num->rat`;;
+cake_declare "rat_add" `:rat->rat->rat`;;
+cake_declare "rat_sub" `:rat->rat->rat`;;
+cake_declare "rat_mul" `:rat->rat->rat`;;
+cake_declare "rat_div" `:rat->rat->rat`;;
+cake_declare "rat_ainv" `:rat->rat`;;
+cake_declare "rat_minv" `:rat->rat`;;
+cake_declare "rat_les" `:rat->rat->bool`;;
+cake_declare "rat_leq" `:rat->rat->bool`;;
+
+(* the operations go at the back of the resolution order, so that
+   the + of two numbers is still the one of numbers *)
+let _ = do_list (fun (t,c) -> hol4_overload_last t c)
+  ["+","rat_add"; "-","rat_sub"; "*","rat_mul"; "/","rat_div";
+   "--","rat_ainv"; "<","rat_les"; "<=","rat_leq"];;
+""",
+
+
   # the routines of the bignum library are defined from their step
   # function by ML code of HOL4 (mc_tailrecLib), which the port
   # has in OCaml
@@ -14390,6 +14429,21 @@ THM_PATCH = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # HOL4 writes the 2 of threshold_def as 2r and the two of this
+  # one plainly, and lets the type of pow make them real; HOL
+  # Light reads a numeral as a num unless the file says otherwise,
+  # so the port writes what threshold_def's source says
+  # HOL4's add_numeral_form makes a numeral of the type of the
+  # rationals; HOL Light reads a numeral as a num and reaches the
+  # type through the injection that hol4_numeral_form declares
+  ('rat', 'rat_expn_def'): [
+    ('(1:rat)', '(&1:rat)'),
+  ],
+  ('binary_ieee', 'ULP_def'): [
+    ('2 pow (if e', '(&2:real) pow (if e'),
+    ('2 pow (INT_MAX', '(&2:real) pow (INT_MAX'),
+  ],
+
   # full_make_init calls the make_init of four theories, and two
   # of them take four arguments: stack_namesProof's, whose first
   # argument is the reg_names of the configuration, and

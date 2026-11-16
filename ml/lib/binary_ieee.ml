@@ -156,7 +156,8 @@ let threshold_def = new_definition
 
 let ULP_def = new_definition
   `ULP ((e:'w word),(:'t)) =
-   2 pow (if e = (n2w 0) then 1 else w2n e) / 2 pow (INT_MAX (:'w) +
+   (&2:real) pow (if e = (n2w 0) then 1 else w2n e) / (&2:real) pow (INT_MAX
+     (:'w) +
      dimindex (:'t))`;;
 
 let ulp_def = new_definition
