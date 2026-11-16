@@ -511,14 +511,14 @@ infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_d
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV
 infer	derive constrain_op_expand: no constrain_op_case_def
-infer	line 150 is 124 characters
-infer	line 159 is 85 characters
-infer	line 887 is 86 characters
-infer	line 920 is 87 characters
-infer	line 923 is 87 characters
-infer	line 928 is 86 characters
-infer	line 1078 is 87 characters
-infer	line 1103 is 82 characters
+infer	line 149 is 124 characters
+infer	line 158 is 85 characters
+infer	line 886 is 86 characters
+infer	line 919 is 87 characters
+infer	line 922 is 87 characters
+infer	line 927 is 86 characters
+infer	line 1077 is 87 characters
+infer	line 1102 is 82 characters
 lexer_fun	ML code skipped: val listeq = CaseEq "list" val optioneq = CaseEq "option"
 lexer_fun	line 368 is 80 characters
 lexer_impl	ML code skipped: val tac =  full_simp_tac (srw_ss()) [char_le_def, char_lt_de
@@ -1488,7 +1488,7 @@ wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 wordSem	line 1219 is 86 characters
 targetSem	line 62 is 86 characters
-targetSem	line 557 is 83 characters
+targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 51 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
@@ -4871,11 +4871,27 @@ holSemantics	Definition is_std_interpretation_def: unparsed input at 137: '\\'
 holSemantics	Overload is_std_interpretation
 holSemantics	Overload is_structure
 holSemanticsExtra	ML code skipped: val mem = ``mem:'U->'U->bool``
+holSemanticsExtra	Theorem typesem_inhabited: binder expected at 36: "'d"
+holSemanticsExtra	Theorem typesem_Fun: binder expected at 5: "'d"
+holSemanticsExtra	Theorem typesem_Bool: binder expected at 5: "'d"
+holSemanticsExtra	Theorem typesem_TYPE_SUBST: binder expected at 13: "'d"
+holSemanticsExtra	Theorem typesem_tyvars: binder expected at 5: "'d"
+holSemanticsExtra	Theorem typesem_consts: binder expected at 5: "'d"
+holSemanticsExtra	Theorem termsem_typesem: binder expected at 41: "'d"
+holSemanticsExtra	Theorem termsem_typesem_matchable: binder expected at 42: "'d"
 holSemanticsExtra	ML code skipped: val Equalsem =   is_std_interpretation_def   |> SPEC_ALL |> 
 holSemanticsExtra	Theorem termsem_Equal: the ML value ^Equalsem, which the port does not have
+holSemanticsExtra	Theorem typesem_frees: binder expected at 14: "'d"
+holSemanticsExtra	Theorem is_valuation_reduce: binder expected at 18: "'d"
+holSemanticsExtra	Theorem typesem_sig: binder expected at 10: "'d"
+holSemanticsExtra	Theorem term_valuation_exists: binder expected at 36: "'d"
+holSemanticsExtra	Theorem valuation_exists: binder expected at 36: "'d"
+holSemanticsExtra	Theorem extend_valuation_exists: binder expected at 36: "'d"
 holSemanticsExtra	ML code skipped: val rwt = MATCH_MP (PROVE[]``P x ⇒ ((∀x. P x ⇒ Q) ⇔ Q)``) is
 holSemanticsExtra	derive interprets_nil: '++listSimps.'
-holSemanticsExtra	line 349 is 80 characters
+holSemanticsExtra	Theorem is_type_assignment_reduce: binder expected at 18: "'d"
+holSemanticsExtra	Theorem is_term_assignment_reduce: binder expected at 18: "'d"
+holSemanticsExtra	line 293 is 80 characters
 holBool	ML code skipped: val mem = ``mem:'U->'U->bool``
 holBool	Overload p
 holBool	Overload FAp
@@ -5215,7 +5231,7 @@ bvi_tmcProof	ML code skipped: >> first_assum $ qspecl_then [‘[exp]’, ‘dec_
 bvi_tmcProof	ML code skipped: >> qmatch_asmsub_rename_tac                ‘evaluate ([body'
 bvi_tmcProof	ML code skipped: Resume evaluate_rewrite_tmc[return]:   gvs [evaluate_def]   
 bvi_tmcProof	ML code skipped: Finalise evaluate_rewrite_tmc;
-bvi_tmcProof	line 1886 is 82 characters
+bvi_tmcProof	line 1885 is 82 characters
 bvl_handleProof	derive evaluate_GENLIST: '++ETA_ss)[TA'
 bvl_handleProof	derive ALOOKUP_MAPi_SWAP: '\\\\ fs [o_DEF'
 bvl_handleProof	derive ALOOKUP_MAPi_APPEND2: '\\\\ fs [o_DEF'

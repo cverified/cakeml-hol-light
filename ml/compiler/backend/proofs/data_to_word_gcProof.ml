@@ -3857,8 +3857,8 @@ let state_rel_IMP_Number_arg = prove
   CHEAT_TAC);;
 
 let state_rel_cut_IMP = prove
- (`data_to_word_gcProof_state_rel c l1 l2 s (t:(alpha,gamma,'ffi)wordSem_state)
-  NONE locs /\
+ (`data_to_word_gcProof_state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE
+  locs /\
    dataSem_cut_state_opt names_opt s = SOME x ==>
    data_to_word_gcProof_state_rel c l1 l2 x t NONE locs`,
   CHEAT_TAC);;

@@ -43,10 +43,7 @@ GREEK_NAME = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
                        'rho', 'sigma', 'sigma', 'tau', 'upsilon',
                        'phi', 'chi', 'psi', 'omega']))
 
-# a type that is parsed on its own (tools/hterm.py's
-# parse_type_text) has no colon in front of it, so the letters of
-# it are type variables whatever they would be in a term
-IN_TYPE = [False]
+
 
 KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
             'do', 'od', 'with', 'otherwise', 'some']
@@ -77,6 +74,10 @@ class Tok:
     self.nl = nl         # number of newlines before this token
     self.indent = indent # the column of this token
     self.comments = ()   # the comments of the source before it
+    self.greek = None    # the ASCII name, for a Greek letter: the
+                         # type parser reads such a token as the
+                         # type variable and the term parser as a
+                         # variable of that name
 
   def __repr__(self):
     return f'{self.kind}:{self.text}'
@@ -299,15 +300,10 @@ def tokenize(s):
       toks.append(Tok('id', GREEK_VAR[c] + s[i+1:j], start, nl, icol))
       i = j; col += j - i; nl = 0; continue
     if c in GREEK:
-      # the colon of a type annotation (or of a type quotation) is
-      # what says that this letter is a type variable
-      if IN_TYPE[0] or (toks and toks[-1].text == ':'):
-        toks.append(Tok('tyvar', GREEK[c], start, nl, icol))
-        i += 1; col += 1; nl = 0; continue
-      j = i + 1
-      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
-      toks.append(Tok('id', GREEK_NAME[c] + s[i+1:j], start, nl, icol))
-      i = j; col += j - i; nl = 0; continue
+      t = Tok('tyvar', GREEK[c], start, nl, icol)
+      t.greek = GREEK_NAME[c]
+      toks.append(t)
+      i += 1; col += 1; nl = 0; continue
     if c == '𝕌':
       toks.append(Tok('sym', '𝕌', start, nl, icol))
       i += 1; col += 1; nl = 0; continue
@@ -832,7 +828,13 @@ class Parser:
                     body=self.parse(0))
       return Node('id', tok=t, name=t.text)
     if t.kind == 'tyvar':
-      return Node('id', tok=t, name=t.text)
+      # a Greek letter in the place of a term is a variable of the
+      # source and not the type variable that HOL4 prints with the
+      # same letter (Candle writes the type assignment of an
+      # interpretation as γ and a type variable of the same
+      # statement as α); in the place of a type the type parser
+      # reads the same token as the type variable
+      return Node('id', tok=t, name=t.greek or t.text)
     if t.kind == 'key':
       if t.text == 'if':
         # the branches of a conditional of HOL4 stop at a comma:
@@ -3133,12 +3135,7 @@ class TypeParser:
 
 
 def parse_type_text(s):
-  IN_TYPE[0] = True
-  try:
-    toks = tokenize(s)[:-1]
-  finally:
-    IN_TYPE[0] = False
-  return TypeParser(toks).parse()
+  return TypeParser(tokenize(s)[:-1]).parse()
 
 
 def type_subst(ty, sub):

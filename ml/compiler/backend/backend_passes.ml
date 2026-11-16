@@ -52,9 +52,9 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
    | backend_passes_Bvl ((num#num#bvl_exp) list) (mlstring spt)
    | backend_passes_Bvi ((num#num#bvi_exp) list) (mlstring spt)
    | backend_passes_Data ((num#num#data_prog) list) (mlstring spt)
-   | backend_passes_Word ((num#num#alpha word_prog) list) (mlstring spt)
-   | backend_passes_Stack ((num#alpha stack_prog) list) (mlstring spt)
-   | backend_passes_Lab ((alpha sec) list) (mlstring spt)";;
+   | backend_passes_Word ((num#num#'a word_prog) list) (mlstring spt)
+   | backend_passes_Stack ((num#'a stack_prog) list) (mlstring spt)
+   | backend_passes_Lab (('a sec) list) (mlstring spt)";;
 
 let to_flat_all_def = new_definition
   `to_flat_all (c:backend_config) p =

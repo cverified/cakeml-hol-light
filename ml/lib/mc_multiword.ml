@@ -29,9 +29,9 @@ let mc_cmp_def,mc_cmp_pre_def =
           else if r8 <+ r9 then (let r10 = (n2w 0x1) in (INR
             (l,r10,xs,ys),cond'))
           else (let r10 = (n2w 0x2) in (INR
-            (l,r10,xs,ys),cond')))):num#alpha word#(alpha word) list#(alpha
-            word) list->(num#alpha word#(alpha word) list#(alpha word)
-            list+num#alpha word#(alpha word) list#(alpha word) list)#bool`;;
+            (l,r10,xs,ys),cond')))):num#'a word#('a word) list#('a word)
+            list->(num#'a word#('a word) list#('a word) list+num#'a word#('a
+            word) list#('a word) list)#bool`;;
 
 let mc_compare_def,mc_compare_pre_def =
   tailrec_define "mc_compare"
@@ -40,10 +40,9 @@ let mc_compare_def,mc_compare_pre_def =
      else if r11 <+ r10 then (let r10 = (n2w 0x2) in (INR (l,r10,xs,ys),T))
      else (let cond' = (mc_cmp_pre (l - 1,r10,xs,ys) /\ ~(l = 0)) in
         let (l,r10,xs,ys) = mc_cmp (l - 1,r10,xs,ys) in
-          (INR (l,r10,xs,ys),cond'))):num#alpha word#alpha word#(alpha
-            word) list#(alpha word) list->(num#alpha word#alpha word#(alpha
-            word) list#(alpha word) list+num#alpha word#(alpha word)
-            list#(alpha word) list)#bool`;;
+          (INR (l,r10,xs,ys),cond'))):num#'a word#'a word#('a word)
+            list#('a word) list->(num#'a word#'a word#('a word) list#('a
+            word) list+num#'a word#('a word) list#('a word) list)#bool`;;
 
 let mc_header_def = new_definition
   `mc_header (s,(xs:('a word) list)) = n2w (LENGTH xs * 2) + (if s then (n2w
@@ -68,10 +67,9 @@ let mc_icompare_def,mc_icompare_pre_def =
         let (l,r10,xs,ys) = mc_compare (l,r10,r11,xs,ys) in
           if r10 = (n2w 0x0) then (INR (l,r10,xs,ys),cond')
           else (let r10 = r10 ?? (n2w 0x3) in (INR
-            (l,r10,xs,ys),cond')))):num#alpha word#alpha word#(alpha word)
-            list#(alpha word) list->(num#alpha word#alpha word#(alpha word)
-            list#(alpha word) list+num#alpha word#(alpha word) list#(alpha
-            word) list)#bool`;;
+            (l,r10,xs,ys),cond')))):num#'a word#'a word#('a word) list#('a
+            word) list->(num#'a word#'a word#('a word) list#('a word)
+            list+num#'a word#('a word) list#('a word) list)#bool`;;
 
 let single_add_word_def = new_definition
   `single_add_word w1 w2 c =
@@ -407,8 +405,7 @@ let mc_imul1_def,mc_imul1_pre_def =
   `(\((r10:'a word),(r11:'a word)).
      if r10 = r11 then let r13 = ((n2w 0):'a word) in (INR (r10,r11,r13),T)
      else let r13 = ((n2w 1):'a word) in (INR (r10,r11,r13),T)):'a
-       word#alpha word->(alpha word#alpha word+alpha word#alpha word#alpha
-       word)#bool`;;
+       word#'a word->('a word#'a word+'a word#'a word#'a word)#bool`;;
 
 let mc_imul_def,mc_imul_pre_def =
   tailrec_define "mc_imul"
@@ -945,13 +942,11 @@ let mc_div2_def,mc_div2_pre_def =
              let (l,zs) = mc_copy_down (l - 1,r8,r10,r11,zs) in
              let r0 = r7 in
                (INR (l,r0,r3,r6,xs,ys,zs),cond'))
-          else (let r0 = r9 in (INR
-            (l,r0,r3,r6,xs,ys,zs),cond'))):num#alpha word#alpha word#alpha
-            word#alpha word#alpha word#(alpha word) list#(alpha word)
-            list#(alpha word) list->(num#alpha word#alpha word#alpha
-            word#alpha word#alpha word#(alpha word) list#(alpha word)
-            list#(alpha word) list+num#alpha word#alpha word#alpha
-            word#(alpha word) list#(alpha word) list#(alpha word) list)#bool`;;
+          else (let r0 = r9 in (INR (l,r0,r3,r6,xs,ys,zs),cond'))):num#'a
+            word#'a word#'a word#'a word#'a word#('a word) list#('a word)
+            list#('a word) list->(num#'a word#'a word#'a word#'a word#'a
+            word#('a word) list#('a word) list#('a word) list+num#'a word#'a
+            word#'a word#('a word) list#('a word) list#('a word) list)#bool`;;
 
 let mc_div3_def,mc_div3_pre_def =
   tailrec_define "mc_div3"
@@ -994,12 +989,11 @@ let mc_div3_def,mc_div3_pre_def =
         let cond' = (cond' /\ mc_div2_pre (l,r7,r8,r10,r11,r18,xs,ys,zs)) in
         let (l,r0,r3,r6,xs,ys,zs) = mc_div2 (l,r7,r8,r10,r11,r18,xs,ys,zs)
           in
-          (INR (l,r0,r3,r6,xs,ys,zs),cond')):num#alpha word#alpha
-            word#alpha word#alpha word#alpha word#(alpha word) list#(alpha
-            word) list#(alpha word) list->(num#alpha word#alpha word#alpha
-            word#alpha word#alpha word#(alpha word) list#(alpha word)
-            list#(alpha word) list+num#alpha word#alpha word#alpha
-            word#(alpha word) list#(alpha word) list#(alpha word) list)#bool`;;
+          (INR (l,r0,r3,r6,xs,ys,zs),cond')):num#'a word#'a word#'a
+            word#'a word#'a word#('a word) list#('a word) list#('a word)
+            list->(num#'a word#'a word#'a word#'a word#'a word#('a word)
+            list#('a word) list#('a word) list+num#'a word#'a word#'a
+            word#('a word) list#('a word) list#('a word) list)#bool`;;
 
 let mc_div_def,mc_div_pre_def =
   tailrec_define "mc_div"
@@ -1162,13 +1156,11 @@ let mc_idiv0_def,mc_idiv0_pre_def =
            let (l,r6,ys,zs) = mc_div_sub_call (l,r1,r2,r6,ys,zs) in
            let r6 = mc_idiv_mod_header (r6,r11) in
            let r11 = r6 in
-             (INR (l,r11,xs,ys,zs),cond'))):num#alpha word#alpha
-               word#alpha word#alpha word#alpha word#(alpha word)
-               list#(alpha word) list#(alpha word) list->(num#alpha
-               word#alpha word#alpha word#alpha word#alpha word#(alpha word)
-               list#(alpha word) list#(alpha word) list+num#alpha
-               word#(alpha word) list#(alpha word) list#(alpha word)
-               list)#bool`;;
+             (INR (l,r11,xs,ys,zs),cond'))):num#'a word#'a word#'a
+               word#'a word#'a word#('a word) list#('a word) list#('a word)
+               list->(num#'a word#'a word#'a word#'a word#'a word#('a word)
+               list#('a word) list#('a word) list+num#'a word#('a word)
+               list#('a word) list#('a word) list)#bool`;;
 
 let mc_idiv_def,mc_idiv_pre_def =
   tailrec_define "mc_idiv"
@@ -1281,16 +1273,16 @@ let mc_fac_init_def,mc_fac_init_pre_def =
         let r2 = r1 - (n2w 1) in
         let r3 = r1 - (n2w 2) in
         let cond' = T in
-          (INR (l,r0,r1,r2,r3),cond'))):num#alpha word->(num#alpha
-            word+num#alpha word#alpha word#alpha word#alpha word)#bool`;;
+          (INR (l,r0,r1,r2,r3),cond'))):num#'a word->(num#'a word+num#'a
+            word#'a word#'a word#'a word)#bool`;;
 
 let mc_fac_final_def,mc_fac_final_pre_def =
   tailrec_define "mc_fac_final"
   `(\((l:num),r1,r2).
       let r1 = r1 + r2 in
       let cond' = T in
-        (INR (l,r1),cond')):num#alpha word#alpha word->(num#alpha
-          word#alpha word+num#alpha word)#bool`;;
+        (INR (l,r1),cond')):num#'a word#'a word->(num#'a word#'a
+          word+num#'a word)#bool`;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -1343,5 +1335,4 @@ let mc_use_fac_def,mc_use_fac_pre_def =
       let cond' = (mc_fac_pre (l - 1,r1) /\ ~(l = 0)) in
       let (l,r1) = mc_fac (l - 1,r1) in
       let r0 = r1 in
-        (INR (l,r0),cond')):num#alpha word->(num#alpha word+num#alpha
-          word)#bool`;;
+        (INR (l,r0),cond')):num#'a word->(num#'a word+num#'a word)#bool`;;

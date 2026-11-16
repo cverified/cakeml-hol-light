@@ -407,7 +407,7 @@ let PopHandler_def = new_definition
    prog))`;;
 
 let chunk_to_bits_def,chunk_to_bits_ind = define_rec
-  `(chunk_to_bits ([]:(bool#alpha word) list) = ((n2w 1):'a word)) /\
+  `(chunk_to_bits ([]:(bool#'a word) list) = ((n2w 1):'a word)) /\
    (chunk_to_bits (CONS (b,w) ws) =
       ((let res = (chunk_to_bits ws) << 1 in
         if b then res + (n2w 1) else res):'a word))`;;
@@ -419,7 +419,7 @@ let chunk_to_bitmap_def = new_definition
    what the port found for it *)
 let const_words_to_bitmap_def,const_words_to_bitmap_ind = define_wf
   `MEASURE (\(x0,x1). (\n. n) x1)`
-  `const_words_to_bitmap (ws:(bool#alpha word) list) (ws_len:num) =
+  `const_words_to_bitmap (ws:(bool#'a word) list) (ws_len:num) =
      if ws_len < (dimindex (:'a) - 1) \/ (dimindex (:'a) - 1) = 0 then
        chunk_to_bitmap ws
      else let h = TAKE (dimindex (:'a) - 1) ws in

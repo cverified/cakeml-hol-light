@@ -5627,7 +5627,7 @@ let get_lowerbits_shift_length = prove
 (* [local] *)
 let shift_shift = prove
  (`n1 * (2 EXP l) < dimword (:'a) ==>
-     n2w n1 << l >>> l = (n2w n1:alpha word)`,
+     n2w n1 << l >>> l = (n2w n1:'a word)`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -6974,11 +6974,11 @@ let data_to_word_memoryProof_isSomeDataElement_heap_lookup = prove
 let isSomeDataElement_heap_lookup_eq = prove
  (`!ls n p k1 k2 conf.
     isSomeDataElement (heap_lookup n
-      ((list_to_BlockReps conf p k2 ls):((alpha
-        word_loc,data_to_word_memoryProof_tag#beta list)heap_element) list))
-        ==> isSomeDataElement (heap_lookup n
-      ((list_to_BlockReps conf p k1 ls):((alpha
-        word_loc,data_to_word_memoryProof_tag#beta list)heap_element) list))`,
+      ((list_to_BlockReps conf p k2 ls):(('a
+        word_loc,data_to_word_memoryProof_tag#'b list)heap_element) list)) ==>
+        isSomeDataElement (heap_lookup n
+      ((list_to_BlockReps conf p k1 ls):(('a
+        word_loc,data_to_word_memoryProof_tag#'b list)heap_element) list))`,
   CHEAT_TAC);;
 
 let bind_each_isSomeDataElement = prove

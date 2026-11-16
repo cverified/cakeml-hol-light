@@ -1686,7 +1686,7 @@ let MAP_o_THE_FILTER_IS_SOME = prove
   CHEAT_TAC);;
 
 let MAP_OPTION_MAP_FILTER_IS_SOME = prove
- (`MAP (OPTION_MAP (f:'a->alpha)) (FILTER IS_SOME ls) =
+ (`MAP (OPTION_MAP (f:'a->'a)) (FILTER IS_SOME ls) =
    FILTER IS_SOME (MAP (OPTION_MAP f) ls)`,
   CHEAT_TAC);;
 
@@ -2991,7 +2991,7 @@ let comp_Call = prove
        wordSem_evaluate (word_Call NONE (SOME start') [0] NONE,s) =
          (res,s1) /\ ~(res = SOME wordSem_Error)
          /\ word_to_stackProof_state_rel ac k 0 0 s t lens 0 ==>
-       (?ck (t1:(alpha,'c,'ffi)stackSem_state) res1.
+       (?ck (t1:('a,'c,'ffi)stackSem_state) res1.
          stackSem_evaluate (stack_Call NONE (INL start')
            NONE,stackSem_state_clock_fupd (K (stackSem_state_clock t + ck)) t)
            =
@@ -3034,15 +3034,15 @@ let stack_Call_NONE_not_Break_Continue = prove
   CHEAT_TAC);;
 
 let state_rel_IMP_semantics = prove
- (`word_to_stackProof_state_rel ac k 0 0
-  ((s:(alpha,num#gamma,'ffi)wordSem_state)) ((t:(alpha,'c,'ffi)stackSem_state))
-  lens 0 /\ ~(wordSem_semantics s (start:num) = ffi_Fail) ==>
+ (`word_to_stackProof_state_rel ac k 0 0 ((s:('a,num#'c,'ffi)wordSem_state))
+  ((t:('a,'c,'ffi)stackSem_state)) lens 0 /\ ~(wordSem_semantics s (start:num)
+    = ffi_Fail) ==>
    stackSem_semantics start t IN extend_with_resource_limit
      {wordSem_semantics s start}`,
   CHEAT_TAC);;
 
 let init_state_ok_def = new_definition
-  `init_state_ok ac k (t:(alpha,'c,'ffi)stackSem_state) coracle <=>
+  `init_state_ok ac k (t:('a,'c,'ffi)stackSem_state) coracle <=>
      4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a)
        /\ stackSem_state_use_stack
      t /\ stackSem_state_use_store t /\ stackSem_state_use_alloc t
@@ -3073,7 +3073,7 @@ let init_state_ok_def = new_definition
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
 let word_to_stackProof_make_init_def = new_definition
-  `word_to_stackProof_make_init ac k (t:(alpha,'c,'ffi)stackSem_state) code
+  `word_to_stackProof_make_init ac k (t:('a,'c,'ffi)stackSem_state) code
   coracle =
      mk_wordSem_state (sptree_insert 0 (word_Loc 1 0) LN) (SOME 0)
        (stackSem_state_fp_regs t) (stackSem_state_store t \\ Handler) []
@@ -3120,11 +3120,10 @@ let init_state_ok_IMP_state_rel = prove
 (* HOL4 word_to_stackProofScript.sml:10467-10471: ML code, not ported *)
 
 let state_rel_IMP_semantics' = prove
- (`word_to_stackProof_state_rel ac k 0 0
-  ((s:(alpha,num#gamma,'ffi)wordSem_state)) ((t:(alpha,'c,'ffi)stackSem_state))
-  lens 0 /\ ~(wordSem_semantics s (start:num) = ffi_Fail) /\
-   word_lang_safe_for_space ((s:(alpha,num#gamma,'ffi)wordSem_state)) start
-     ==>
+ (`word_to_stackProof_state_rel ac k 0 0 ((s:('a,num#'c,'ffi)wordSem_state))
+  ((t:('a,'c,'ffi)stackSem_state)) lens 0 /\ ~(wordSem_semantics s (start:num)
+    = ffi_Fail) /\
+   word_lang_safe_for_space ((s:('a,num#'c,'ffi)wordSem_state)) start ==>
    stackSem_semantics start t = wordSem_semantics s start`,
   CHEAT_TAC);;
 
@@ -3136,7 +3135,7 @@ let state_rel_IMP_semantics' = prove
 let word_to_stackProof_compile_semantics = prove
  (cake_as_vars (fun () ->
     `stackSem_state_code
-         ((t:(alpha,'c,'ffi)stackSem_state)) = fromAList (SND (SND (SND
+         ((t:('a,'c,'ffi)stackSem_state)) = fromAList (SND (SND (SND
            (word_to_stack_compile asm_conf F code)))) /\
          k = (asm_config_reg_count asm_conf - (5 + LENGTH
            (asm_config_avoid_regs asm_conf))) /\

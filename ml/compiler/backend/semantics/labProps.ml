@@ -589,14 +589,14 @@ add_simp share_mem_op_align_dm_simp;;
 
 let evaluate_align_dm = prove
  (`good_dimindex (:'a) ==>
-   (!(s:(alpha,'c,'ffi)labSem_state).
+   (!(s:('a,'c,'ffi)labSem_state).
       labSem_evaluate (align_dm s) =
       (let (r,s') = labSem_evaluate s in (r,align_dm s')))`,
   CHEAT_TAC);;
 
 let implements_align_dm = prove
  (`good_dimindex (:'a) ==>
-   implements' T {labSem_semantics (s:(alpha,'c,'ffi)labSem_state)}
+   implements' T {labSem_semantics (s:('a,'c,'ffi)labSem_state)}
      {labSem_semantics (align_dm s)}`,
   CHEAT_TAC);;
 
@@ -800,14 +800,14 @@ add_simp share_mem_op_align_sdm_simp;;
 
 let evaluate_align_sdm = prove
  (`good_dimindex (:'a) ==>
-   (!(s:(alpha,'c,'ffi)labSem_state).
+   (!(s:('a,'c,'ffi)labSem_state).
       labSem_evaluate (align_sdm s) =
       (let (r,s') = labSem_evaluate s in (r,align_sdm s')))`,
   CHEAT_TAC);;
 
 let implements_align_sdm = prove
  (`good_dimindex (:'a) ==>
-   implements' T {labSem_semantics (s:(alpha,'c,'ffi)labSem_state)}
+   implements' T {labSem_semantics (s:('a,'c,'ffi)labSem_state)}
      {labSem_semantics (align_sdm s)}`,
   CHEAT_TAC);;
 

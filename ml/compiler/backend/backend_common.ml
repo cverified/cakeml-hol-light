@@ -160,7 +160,7 @@ let upper_w2w_def = new_definition
      if dimindex (:'a) = 32 then w2w w << 32 else (w2w w):word64`;;
 
 let word_add_carry_def = new_definition
-  `(word_add_carry (l:'a word) (r:'a word) (c:'a word):alpha word#alpha word) =
+  `(word_add_carry (l:'a word) (r:'a word) (c:'a word):'a word#'a word) =
    let
      res = w2n l + w2n r + (if c = (n2w 0) then 0 else 1) in
      (n2w res,(if dimword (:'a) <= res then (n2w 1) else (n2w 0)))`;;

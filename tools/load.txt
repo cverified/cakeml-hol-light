@@ -232,11 +232,6 @@ basis/MarshallingProg.ml
 basis/TextIOProg.ml
 basis/fsFFI.ml
 basis/fsFFIProps.ml
-candle/standard/monadic/holKernel.ml
-candle/standard/monadic/holKernelProof.ml
-candle/prover/compute/compute_syntax.ml
-candle/prover/compute/compute_eval.ml
-candle/prover/compute/compute_exec.ml
 characteristic/cfLetAuto.ml
 characteristic/cfMain.ml
 translator/ml_pmatch.ml
@@ -294,10 +289,15 @@ compiler/backend/serialiser/num_list_enc_dec.ml
 compiler/backend/serialiser/num_tree_enc_dec.ml
 compiler/backend/serialiser/backend_enc_dec.ml
 candle/prover/ast_extras.ml
+candle/standard/monadic/holKernel.ml
 candle/standard/monadic/holKernelPmatch.ml
 translator/monadic/ml_monadStore.ml
 candle/standard/ml_kernel/runtime_check.ml
 candle/standard/ml_kernel/ml_hol_kernel_funsProg.ml
+candle/standard/monadic/holKernelProof.ml
+candle/prover/compute/compute_syntax.ml
+candle/prover/compute/compute_eval.ml
+candle/prover/compute/compute_exec.ml
 candle/prover/compute/compute.ml
 candle/prover/candle_kernelProg.ml
 compiler/repl/repl_moduleProg.ml

@@ -728,8 +728,8 @@ let evaluate_LoadBignum = prove
   vars) /\
    ~(small_int (:'a) i) /\ good_dimindex (:'a) /\ shift_length c < dimindex
      (:'a) /\
-   wordSem_get_var src (t:(alpha,'c,'ffi)wordSem_state) = SOME v /\ ~(header
-     = w1) ==>
+   wordSem_get_var src (t:('a,'c,'ffi)wordSem_state) = SOME v /\ ~(header =
+     w1) ==>
    (?h junk.
    wordSem_evaluate (LoadBignum c header w1 src,t) =
      (NONE,wordSem_set_vars [w1; header; w1]

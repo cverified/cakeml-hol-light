@@ -699,14 +699,14 @@ let flatten_correct = prove
 let flatten_call_correct = prove
  (`stackSem_evaluate (stack_Call NONE (sum_INL (start:num)) NONE,s1) = (res,s2)
   /\
-   stack_to_labProof_state_rel (s1:(alpha,'c,'ffi)stackSem_state) t1 /\
+   stack_to_labProof_state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
    loc_to_pc start 0 (labSem_state_code t1) = SOME (labSem_state_pc t1)
      /\ ~(res = SOME stackSem_Error) /\
    (~(res = SOME stackSem_TimeOut) ==>
      (?w. res = SOME (stackSem_Halt (word_Word w))) \/
      (?f. res = SOME (stackSem_FinalFFI f)) \/
      (?n. res = SOME (stackSem_Result (word_Loc n 0)) /\
-       (!(s:(alpha,'c,'ffi)stackSem_state). subspt (stackSem_state_code s1)
+       (!(s:('a,'c,'ffi)stackSem_state). subspt (stackSem_state_code s1)
          (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0) ==>
            (?t. stackSem_evaluate (stack_Call NONE (sum_INL n) NONE,s) =
              (SOME (stackSem_Halt (word_Word (n2w 0))),t)
@@ -733,7 +733,7 @@ let flatten_call_correct = prove
 
 let halt_assum_def = new_definition
   `halt_assum (:'ffi#'c) code <=>
-    (!(s:(alpha,'c,'ffi)stackSem_state).
+    (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0)
         ==>
       (?t. stackSem_evaluate (stack_Call NONE (sum_INL 1) NONE,s) = (SOME
@@ -742,8 +742,8 @@ let halt_assum_def = new_definition
             stackSem_state_clock s - 1))`;;
 
 let flatten_semantics = prove
- (`halt_assum (:'ffi#'c) (stackSem_state_code
-  (s1:(alpha,'c,'ffi)stackSem_state)) /\
+ (`halt_assum (:'ffi#'c) (stackSem_state_code (s1:('a,'c,'ffi)stackSem_state))
+  /\
    stack_to_labProof_state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
    loc_to_pc (start:num) 0 (labSem_state_code s2) = SOME (labSem_state_pc
      s2) /\ ~(stackSem_semantics start s1 = ffi_Fail) ==>
@@ -759,7 +759,7 @@ let stack_to_labProof_make_init_def = new_definition
        (\c p. labSem_state_compile s c (MAP prog_to_section p)) coracle
        (labSem_state_code_buffer s) ARB ARB F F F (labSem_state_clock s)
        code (labSem_state_ffi s) save_regs (labSem_state_be
-       s):(alpha,'c,'ffi)stackSem_state)`;;
+       s):('a,'c,'ffi)stackSem_state)`;;
 
 (* HOL4 stack_to_labProofScript.sml:3047-3049: ML code, not ported *)
 

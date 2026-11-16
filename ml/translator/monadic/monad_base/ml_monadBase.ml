@@ -10,7 +10,6 @@
   proof-producing monadic translator.
 *)
 
-needs "lib/balanced_map.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -37,16 +36,16 @@ let liftM_def = new_definition
 (* Definitions using monadic syntax *)
 
 let st_ex_bind_def = new_definition
-  `(st_ex_bind:(alpha->(beta,gamma)exc#alpha)->(beta->alpha->(delta,gamma)exc
-  #alpha)->alpha->(delta,gamma)exc#alpha) x f =
+  `(st_ex_bind:('a->('b,'c)exc#'a)->('b->'a->('d,'c)exc#'a)->'a->('d,'c)exc#'a)
+  x f =
      (\s.
        match x s with
          (M_success y,s) -> f y s
        | (M_failure x,s) -> (M_failure x,s))`;;
 
 let st_ex_ignore_bind_def = new_definition
-  `(st_ex_ignore_bind:(alpha->(beta,gamma)exc#alpha)->(alpha->(delta,gamma)exc
-  #alpha)->alpha->(delta,gamma)exc#alpha) x f =
+  `(st_ex_ignore_bind:('a->('b,'c)exc#'a)->('a->('d,'c)exc#'a)->'a->('d,'c)exc
+  #'a) x f =
      (\s.
        match x s with
          (M_success y,s) -> f s
