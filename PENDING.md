@@ -193,19 +193,31 @@ cannot load without it:
     compiler/bootstrap/compilation/ag32/32/proofs/ag32BootstrapProof.ml
     compiler/encoders/ag32/proofs/ag32_targetProof.ml
 
-They report what the port makes of a name it does not have:
-`ag32_memory` says `, has type A->B->A#B, it cannot be used with
-type ?->?->lab`, because `Jump (fSnd,0w,Reg 0w)` is ag32's `Jump`
-of one triple and the port wrote labLang's `Jump` of one label;
-the proofs say `unknown type ag32_state`.
+They used to report what the port makes of a name it does not
+have: `ag32_memory` said `, has type A->B->A#B, it cannot be used
+with type ?->?->lab`, because `Jump (fSnd,0w,Reg 0w)` is ag32's
+`Jump` of one triple and the port wrote labLang's `Jump` of one
+label; the proofs said `unknown type ag32_state`.
 
-What those files use of the model is **data and four names**, not
-the 29 definitions: the datatypes `funcT`, `shiftT`, `reg_immT`
-and `instruction` (`ag32Script.sml:6-38`), the record
-`ag32_state` (`:40-45`), and `Encode`, `Decode`, `Run` and `Next`,
-whose values are the generated ML and which are declared without
-one, as the six encoders are.  (`incPC`, the fifth name they
+What those files use of the model is **data and nineteen names**,
+not the 29 definitions, and `ml/lib/ag32.ml` now has that much of
+it by hand: the datatypes `funcT`, `shiftT`, `reg_immT` and
+`instruction` (`ag32Script.sml:6-38`), the record `ag32_state`
+(`:40-45`), the fifteen `dfn'…` step functions that the proofs of
+the memory layout state theorems about, and `Encode`, `Decode`,
+`Run` and `Next`.  The nineteen are **declared without a value**,
+because their value is the generated ML -- which is what keeps
+them on this page.  (`incPC`, the twentieth name those files
 write, is only in a tactic.)
+
+The names are the ones `db.mapping()` gives the theory once its
+datatypes are in `overrides.EXTRA_DATATYPES` (and its record in
+`EXTRA_RECORDS`), so that what the port writes and what the file
+makes are the same constants.  Adding them moves no other
+theory's name, but it does give `asm`'s `Imm` and `Reg` their
+prefix in eighty files: the port has one namespace, and once
+`ag32` has an `Imm` of its own, `asm`'s cannot keep the bare
+name.
 
 # Statements that the port cannot read yet
 
