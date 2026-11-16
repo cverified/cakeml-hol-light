@@ -40,7 +40,14 @@ let fast_constant v =
 let fast_definition tm =
   let fs = definition_heads tm in
   let sub = map (fun v -> fast_constant v,v) fs in
-  let th = mk_thm([],subst (filter (fun (c,v) -> c <> v) sub) tm) in
+  (* every clause is closed over its own variables, which is what
+     a real load gives (close_clause, ml/lib/define.ml): a source
+     that states a theorem as the value of an ML expression
+     specializes the equations of a definition, and an assumed
+     form without the quantifiers fails in dest_forall *)
+  let cls = map (close_clause fs) (conjuncts(snd(strip_forall tm))) in
+  let th = mk_thm([],subst (filter (fun (c,v) -> c <> v) sub)
+                           (list_mk_conj cls)) in
   cake_note_def th; th;;
 
 let fast_clauses cls = fast_definition (definition_of_clauses cls);;
