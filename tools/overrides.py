@@ -107,6 +107,40 @@ NAME_MAP = {
 }
 
 # HOL4 type names of types that HOL Light has under another name
+# THY_FILE: the source of a theory whose name more than one
+# source of the distribution declares.  Twenty-seven names are
+# declared twice, because Candle has two developments of its
+# kernel side by side (candle/standard and candle/overloading) and
+# the tutorial has a solution beside every problem; for all but
+# one of them at most one source is in the scope, so nothing has
+# to be said.  HOL4 resolves such a name the way Holmake does,
+# which is the source in the directory of the theory that needs
+# it, and tools/deps.py reports every name it cannot resolve that
+# way.
+THY_FILE = {
+  # seven of the eight in-scope theories that need candle_kernelProg
+  # are in candle/prover, which has a candle_kernelProg of its own
+  # (the one that adds the compute primitive), and the eighth is
+  # compiler/repl's repl_moduleProg, which needs that one too.  The
+  # one of candle/overloading/ml_kernel is needed by nothing in the
+  # scope.  The other names of Candle keep the candle/standard
+  # source, which is the development the prover is built against:
+  # of the twenty in-scope theories that need holSyntax, twelve are
+  # in candle/standard
+  'candle_kernelProg': 'candle/prover/candle_kernelProgScript.sml',
+}
+
+# the directories whose source of a doubly declared name is the
+# one not to take.  Candle develops its kernel twice over, once in
+# candle/standard and once in candle/overloading, and thirteen
+# theory names are declared in both; the port takes
+# candle/standard, which is the development candle/prover is built
+# against -- of the twenty in-scope theories that need holSyntax,
+# twelve are in candle/standard and none in candle/overloading
+THY_DIR_LAST = [
+  'candle/overloading/',
+]
+
 TYPE_MAP = {
   # HOL4's one (and its abbreviation unit) is the type with one
   # element, which HOL Light calls 1 (its element is one, as in
@@ -13604,13 +13638,12 @@ THM_PATCH = {
   ('clos_to_bvlProof', 'v_rel_IMP_v_to_words'): [
     ('bvlSem_v_to_words x', 'closSem_v_to_words x'),
   ],
+  # compile_exps takes the closLang expressions es1 and the
+  # auxiliary closLang functions aux1 to the bvl es2 and aux2, so
+  # the labels of the two on the left of the inclusion are bvl's
+  # and the two on the right stay closLang's, which is what an
+  # unqualified get_code_labels resolves to
   ('clos_to_bvlProof', 'compile_exps_code_labels'): [
-    ('MAP (closProps_get_code_labels o SND o SND) aux1',
-     'MAP (bvlProps_get_code_labels o SND o SND) aux1'),
-    ('MAP (closProps_get_code_labels o SND o SND) aux1',
-     'MAP (bvlProps_get_code_labels o SND o SND) aux1'),
-    ('MAP (closProps_get_code_labels o SND o SND) aux1',
-     'MAP (bvlProps_get_code_labels o SND o SND) aux1'),
     ('MAP closProps_get_code_labels es2',
      'MAP bvlProps_get_code_labels es2'),
     ('MAP (closProps_get_code_labels o SND o SND) aux2',
@@ -14331,9 +14364,6 @@ THM_PATCH = {
   ('lab_to_targetProof', 'IMP_bytes_in_memory_JumpCmp_1'): [
     ('lab_LabAsm (asm_JumpCmp cmp rr ri jtarget)',
      'lab_LabAsm (lab_JumpCmp cmp rr ri jtarget)'),
-  ],
-  ('lab_to_targetProof', 'IMP_bytes_in_memory_Call'): [
-    ('lab_LabAsm (asm_Call ww)', 'lab_LabAsm (lab_Call ww)'),
   ],
   # the second conjunct is about an asm_state, so its arith_upd
   # and its fp_regs are asmSem's and not labSem's

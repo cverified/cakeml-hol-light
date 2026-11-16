@@ -1,4 +1,6 @@
 import os, re, sys, json
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import overrides
 root = '/home/freek/claude/hol-light/cakeml/cakeml-src'
 files = []
 for dp, dn, fn in os.walk(root):
@@ -6,6 +8,7 @@ for dp, dn, fn in os.walk(root):
   for f in fn:
     if f.endswith('Script.sml'): files.append(os.path.join(dp,f))
 thy2file = {}
+cands = {}
 deps = {}
 nogram = {}
 for path in files:
@@ -18,6 +21,7 @@ for path in files:
   if m: thy = m.group(1)
   else:
     thy = os.path.basename(path)[:-10]
+  cands.setdefault(thy, []).append(path)
   thy2file[thy] = path
   anc = []
   # a source may have more than one Ancestors block (the second one
@@ -60,6 +64,42 @@ for path in files:
     body = re.sub(r'\(\*.*?\*\)', '', body, flags=re.S)
     ng += body.split()
   nogram[thy] = sorted(set(ng))
+# a theory name that more than one source declares: HOL4 resolves
+# it the way Holmake does, which is the source in the directory of
+# the theory that needs it.  Where that says nothing,
+# overrides.THY_FILE does, and what neither settles is reported --
+# os.walk's order is no answer
+for thy, cs in sorted(cands.items()):
+  if len(cs) < 2: continue
+  want = overrides.THY_FILE.get(thy)
+  if want:
+    hit = [c for c in cs if os.path.relpath(c, root) == want]
+    if not hit:
+      print('THY_FILE names no source of %s: %s' % (thy, want))
+    else:
+      thy2file[thy] = hit[0]
+      continue
+  # a source of a directory that THY_DIR_LAST names is the one
+  # not to take while another one is there
+  left = [c for c in cs
+          if not any(os.path.relpath(c, root).startswith(d)
+                     for d in overrides.THY_DIR_LAST)]
+  if len(left) == 1:
+    thy2file[thy] = left[0]
+    continue
+  cs = left or cs
+  # the directories that hold a theory needing this name: a
+  # source of one of them is the one Holmake would resolve to
+  users = {os.path.dirname(thy2file[t]) for t, a in deps.items()
+           if thy in a}
+  own = {c for c in cs if os.path.dirname(c) in users}
+  if len(own) == 1:
+    thy2file[thy] = own.pop()
+  else:
+    print('%s is declared by %d sources and nothing says which: %s'
+          % (thy, len(cs),
+             ' '.join(os.path.relpath(c, root) for c in cs)))
+
 json.dump({'thy2file': thy2file, 'deps': deps, 'nogram': nogram},
           open('/home/freek/claude/hol-light/cakeml/tools/deps.json',
                'w'), indent=1)

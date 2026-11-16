@@ -42,9 +42,9 @@ basis/pure/mlsexpScript.sml
 basis/pure/mlstringScript.sml
 basis/pure/mlvectorScript.sml
 basis/runtimeFFIScript.sml
-candle/overloading/ml_kernel/candle_kernelProgScript.sml
 candle/prover/ast_extrasScript.sml
 candle/prover/candle_basis_evaluateScript.sml
+candle/prover/candle_kernelProgScript.sml
 candle/prover/candle_kernel_funsScript.sml
 candle/prover/candle_kernel_permsScript.sml
 candle/prover/candle_kernel_valsScript.sml

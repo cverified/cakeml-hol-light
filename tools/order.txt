@@ -213,7 +213,7 @@ holKernelPmatch	candle/standard/monadic/holKernelPmatchScript.sml
 ml_monadStore	translator/monadic/ml_monadStoreScript.sml
 runtime_check	candle/standard/ml_kernel/runtime_checkScript.sml
 ml_hol_kernel_funsProg	candle/standard/ml_kernel/ml_hol_kernel_funsProgScript.sml
-candle_kernelProg	candle/overloading/ml_kernel/candle_kernelProgScript.sml
+candle_kernelProg	candle/prover/candle_kernelProgScript.sml
 repl_moduleProg	compiler/repl/repl_moduleProgScript.sml
 repl_init_envProg	compiler/repl/repl_init_envProgScript.sml
 decProg	compiler/bootstrap/translation/decProgScript.sml

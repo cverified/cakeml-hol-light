@@ -1932,9 +1932,21 @@ class Porter:
         if not mm: break
         pre_cs.append(hterm.comment_text(mm.group(1)))
         part = part[mm.end():]
-      m = re.match(r"\s*([A-Za-z][A-Za-z0-9_']*)\s*=\s*(.*)$", part, re.S)
+      m = re.match(r"\s*([A-Za-z][A-Za-z0-9_']*)\s*", part, re.S)
       if not m: raise SyntaxError('datatype: ' + part[:40])
-      ty, rhs = m.group(1), m.group(2).strip()
+      ty, rest = m.group(1), part[m.end():]
+      # a comment between the name of the type and the = is about
+      # the first alternative, as one before the name is
+      # (holSyntax's update says there what a ConstSpec is,
+      # caml_lex's token that the first group are the keywords)
+      while True:
+        mm = re.match(r"\s*(\(\*.*?\*\))\s*", rest, re.S)
+        if not mm: break
+        pre_cs.append(hterm.comment_text(mm.group(1)))
+        rest = rest[mm.end():]
+      if not rest.startswith('='):
+        raise SyntaxError('datatype: ' + part[:40])
+      rhs = rest[1:].strip()
       if rhs.startswith('<|'):
         self.record(ty, rhs)
         continue
