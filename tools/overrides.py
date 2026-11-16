@@ -3317,6 +3317,18 @@ def proof_only(text):
 
 
 ANTIQUOTE = {
+  # the smallest positive subnormal and the positive zero of the
+  # double format, which HOL4 writes as the value of its EVAL of
+  # fp64_to_float: that splits a 64 bit word into the sign (bit
+  # 63), the exponent (bits 62 to 52) and the significand (bits 51
+  # to 0), so 1w is a significand of one with everything else zero
+  # and 0w is all three zero.  The record the port writes is the
+  # mk_float of the three, as the neginf64 above them is
+  ('DoubleProg', 'rhs $ concl $ EVAL \u201cfp64_to_float 1w\u201d'):
+    '<| Sign := 0w; Exponent := 0w; Significand := 1w |>',
+  ('DoubleProg', 'rhs $ concl $ EVAL \u201cfp64_to_float 0w\u201d'):
+    '<| Sign := 0w; Exponent := 0w; Significand := 0w |>',
+
   # exp_tm is rhs (concl (EVAL ``10n ** exp_for_dec_enc``))
   ('mlint', 'exp_tm'): '10 EXP exp_for_dec_enc',
   # the state variables that ML code makes with a type that it
