@@ -92,6 +92,36 @@ stand in eleven files, each as a pointer at the HOL4 source
   `DoubleProg`'s `posmin64` and `poszero64` antiquote a term that
   the ML writes with HOL4's Unicode quotation marks.
 
+# Overloads that HOL4 resolves by type
+
+HOL4 may declare one name as several overloads, each at a type of
+its own, and its parser picks the one that typechecks.  The port
+keeps one value per overload and writes it everywhere, so where a
+source leans on that resolution the port says the wrong thing.
+
+Two families of the scope do:
+
+- **Candle's signatures.**  `holSyntax` declares `tysof`, `tmsof`,
+  `sigof` and `axsof` more than once -- `FST` of a signature, the
+  same after `sigof` for a theory, and a fold over a context.
+  Which one a place means is what it is applied to, and
+  `overrides.HOLSYNTAX_SIGS` says so for the three shapes that a
+  bare variable takes (`sig`, `thy`, `ctxt`).  What is left is the
+  shape where one of them is applied to *another* of them --
+  `term_ok (sigof (thyof ctxt)) tm` -- which the patterns do not
+  reach.  Six statements of `holSyntaxExtra` and a handful
+  elsewhere.
+
+- **setSpec's comma.**  `Overload "," = ``pair ^mem``` makes the
+  comma the pair of the set theory where both sides are elements
+  of `'U`, and the tuple of HOL otherwise.  One definition of the
+  file needed saying (`is_model`); the theorems write the triple
+  themselves.
+
+The general answer to both is to resolve an overload by the type,
+which is what HOL4 does and what the port's one-value-per-name
+tables cannot.  Short of that, each shape is a pattern.
+
 # HOL4's rationals
 
 `ml/lib/rat.ml` has the type `rat` and nine operations on it
