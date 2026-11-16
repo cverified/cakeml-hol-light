@@ -84,7 +84,8 @@ let arrow_def = new_definition
   `Arrow a b =
      (\f v. !x. AppReturns (a x) v (b (f x)))`;;
 
-(* HOL4 ml_translatorScript.sml:61: the overload -->, which the port expands *)
+(* HOL4 ml_translatorScript.sml:61: the overload -->, which the port writes
+   as an application of Arrow *)
 
 let eq_def = new_definition
   `ml_translator_Eq (abs':'a->semanticPrimitives_v->bool) x =
@@ -190,13 +191,13 @@ let evaluate_empty_state_IMP = prove
   (semanticPrimitives_state_refs s)) ml_translator_empty_state) env exp
   (semanticPrimitives_state_refs_fupd (K (APPEND (semanticPrimitives_state_refs
   s) refs')) ml_translator_empty_state) x ==>
-   eval_rel (s:'ffi ml_translator_state) env exp
+   eval_rel (s:('ffi)semanticPrimitives_state) env exp
      (semanticPrimitives_state_refs_fupd (K (APPEND
      (semanticPrimitives_state_refs s) refs')) s) x`,
   CHEAT_TAC);;
 
 let Eval_Arrow = prove
- (`ml_translator_Eval env x1 ((a (Arrow) b) f) ==>
+ (`ml_translator_Eval env x1 ((Arrow a b) f) ==>
    ml_translator_Eval env x2 (a x) ==>
    ml_translator_Eval env (ast_App ast_Opapp [x1; x2]) (b (f x))`,
   CHEAT_TAC);;
@@ -204,32 +205,32 @@ let Eval_Arrow = prove
 let Eval_Fun = prove
  (`(!v x. a x v ==> ml_translator_Eval (ml_prog_write name v env) body (b
   ((f:'a->'b) x))) ==>
-    ml_translator_Eval env (ast_Fun name body) ((a (Arrow) b) f)`,
+    ml_translator_Eval env (ast_Fun name body) ((Arrow a b) f)`,
   CHEAT_TAC);;
 
 let Eval_Fun_Eq = prove
  (`(!v. a x v ==> ml_translator_Eval (ml_prog_write name v env) body (b (f x)))
   ==>
-    ml_translator_Eval env (ast_Fun name body) ((ml_translator_Eq a x
-      (Arrow) b) f)`,
+    ml_translator_Eval env (ast_Fun name body) ((Arrow (ml_translator_Eq a
+      x) b) f)`,
   CHEAT_TAC);;
 
 let And_IMP_Eq = prove
- (`ml_translator_Eval env exp ((ast_And a P (Arrow) b) f) ==>
-    (P x ==> ml_translator_Eval env exp ((ml_translator_Eq a x (Arrow) b)
+ (`ml_translator_Eval env exp ((Arrow (ast_And a P) b) f) ==>
+    (P x ==> ml_translator_Eval env exp ((Arrow (ml_translator_Eq a x) b)
       f))`,
   CHEAT_TAC);;
 
 let Eq_IMP_And = prove
- (`(!x. P x ==> ml_translator_Eval env (ast_Fun name exp) ((ml_translator_Eq a
-  x (Arrow) b) f)) ==>
-    ml_translator_Eval env (ast_Fun name exp) ((ast_And a P (Arrow) b) f)`,
+ (`(!x. P x ==> ml_translator_Eval env (ast_Fun name exp) ((Arrow
+  (ml_translator_Eq a x) b) f)) ==>
+    ml_translator_Eval env (ast_Fun name exp) ((Arrow (ast_And a P) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Fun_And = prove
  (`(!v x. P x ==> a x v ==> ml_translator_Eval (ml_prog_write name v env) body
   (b (f x))) ==>
-    ml_translator_Eval env (ast_Fun name body) ((ast_And a P (Arrow) b) f)`,
+    ml_translator_Eval env (ast_Fun name body) ((Arrow (ast_And a P) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Let = prove
@@ -619,11 +620,11 @@ let Eval_FUN_FORALL_EQ = prove
   CHEAT_TAC);;
 
 let FUN_FORALL_PUSH1 = prove
- (`(FUN_FORALL (\x. a (Arrow) (b x))) = (a (Arrow) (FUN_FORALL (\x. b x)))`,
+ (`(FUN_FORALL (\x. Arrow a (b x))) = (Arrow a (FUN_FORALL (\x. b x)))`,
   CHEAT_TAC);;
 
 let FUN_FORALL_PUSH2 = prove
- (`(FUN_FORALL (\x. (a x) (Arrow) b)) = ((FUN_EXISTS (\x. a x)) (Arrow) b)`,
+ (`(FUN_FORALL (\x. Arrow (a x) b)) = (Arrow (FUN_EXISTS (\x. a x)) b)`,
   CHEAT_TAC);;
 
 let FUN_EXISTS_Eq = prove
@@ -642,8 +643,8 @@ let Eval_Recclosure_ALT = prove
       LOOKUP_VAR fname env (semanticPrimitives_Recclosure env2 funs fname)
         ==>
       (find_recfun fname funs = SOME (name,body)) ==>
-      ml_translator_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a
-        n (Arrow) b) f)`,
+      ml_translator_Eval env (ast_Var (Short fname)) ((Arrow
+        (ml_translator_Eq a n) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Recclosure = prove
@@ -653,8 +654,8 @@ let Eval_Recclosure = prove
               body (b (f n))) ==>
     LOOKUP_VAR fname env (semanticPrimitives_Recclosure env2
       [(fname,name,body)] fname) ==>
-    ml_translator_Eval env (ast_Var (Short fname)) ((ml_translator_Eq a n
-      (Arrow) b) f)`,
+    ml_translator_Eval env (ast_Var (Short fname)) ((Arrow
+      (ml_translator_Eq a n) b) f)`,
   CHEAT_TAC);;
 
 let SafeVar_def = new_definition
@@ -801,14 +802,14 @@ let eval_int_of_num = prove
 
 (* Eval_int_of_num_o *)
 let eval_int_of_num_o = prove
- (`ml_translator_Eval env x1 ((A (Arrow) NUM) f) ==>
-   ml_translator_Eval env x1 ((A (Arrow) INT) (int_of_num o f))`,
+ (`ml_translator_Eval env x1 ((Arrow A NUM) f) ==>
+   ml_translator_Eval env x1 ((Arrow A INT) (int_of_num o f))`,
   CHEAT_TAC);;
 
 (* Eval_o_int_of_num *)
 let eval_o_int_of_num = prove
- (`ml_translator_Eval env x1 ((INT (Arrow) A) f) ==>
-   ml_translator_Eval env x1 ((NUM (Arrow) A) (f o int_of_num))`,
+ (`ml_translator_Eval env x1 ((Arrow INT A) f) ==>
+   ml_translator_Eval env x1 ((Arrow NUM A) (f o int_of_num))`,
   CHEAT_TAC);;
 
 (* Eval_int_negate *)
@@ -2128,11 +2129,11 @@ let no_change_refs_def,no_change_refs_ind = define_guess
    | _ -> F`;;
 
 let evaluate_no_change_refs = prove
- (`(!(s:'ffi ml_translator_state) env es s1 vs.
+ (`(!(s:('ffi)semanticPrimitives_state) env es s1 vs.
       evaluate s env es = (s1,Rval vs) /\ ALL no_change_refs es ==>
         semanticPrimitives_state_refs
       s1 = semanticPrimitives_state_refs s) /\
-   (!(s:'ffi ml_translator_state) env v pes errv s1 vs.
+   (!(s:('ffi)semanticPrimitives_state) env v pes errv s1 vs.
       evaluate_evaluate_match s env v pes errv = (s1,Rval vs) /\ ALL
         no_change_refs (MAP SND pes) ==> semanticPrimitives_state_refs
       s1 = semanticPrimitives_state_refs s)`,
@@ -2287,7 +2288,7 @@ let evaluate_match_MAP = prove
          good_cons_env full_ps env /\ set_of_list l1 SUBSET set_of_list
            full_ps /\
          ~(MEM t1 (MAP (SND o SND o SND) l1)) ==>
-         evaluate_evaluate_match (s:'ffi ml_translator_state) env
+         evaluate_evaluate_match (s:('ffi)semanticPrimitives_state) env
            (semanticPrimitives_Conv (SOME t1) vals)
            (APPEND (MAP (\(name,vars',x,t). (ast_Pcon (SOME name)
               (MAP ast_Pvar vars'),x)) l1) xs) err =

@@ -86,7 +86,7 @@ let findi_spec_NONE_rev = prove
 let w8array_find_aux_spec = prove
  (`!arr arrv f fv' av n nv old p.
      Word8ArrayProof_findi f old = NONE /\
-     ((WORD:word8->semanticPrimitives_v->bool) (Arrow) BOOL) f fv' /\ NUM
+     (Arrow (WORD:word8->semanticPrimitives_v->bool) BOOL) f fv' /\ NUM
        (LENGTH arr + LENGTH old) av /\ NUM (LENGTH old) nv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -101,7 +101,7 @@ let w8array_find_aux_spec = prove
 
 let w8array_find_spec = prove
  (`!f fv' arr arrv.
-     ((WORD:word8->semanticPrimitives_v->bool) (Arrow) BOOL) f fv' ==>
+     (Arrow (WORD:word8->semanticPrimitives_v->bool) BOOL) f fv' ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        Word8Array_findi_v [fv'; arrv]

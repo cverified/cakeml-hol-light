@@ -93,51 +93,53 @@ let MAP_TYPE_empty_IMP_FMAP_TYPE = prove
 
 (* [local] *)
 let IMP_FMAP_TYPE_FLOOKUP = prove
- (`(MAP_TYPE b a (Arrow) b (Arrow) OPTION_TYPE a) mlmap_lookup v ==>
-   (MapProg_FMAP_TYPE cmp b a (Arrow) b (Arrow) OPTION_TYPE a) FLOOKUP v`,
+ (`(Arrow (MAP_TYPE b a) (Arrow b (OPTION_TYPE a))) mlmap_lookup v ==>
+   (Arrow (MapProg_FMAP_TYPE cmp b a) (Arrow b (OPTION_TYPE a))) FLOOKUP v`,
   CHEAT_TAC);;
 
 (* [local] *)
 let IMP_FMAP_TYPE_FUPDATE = prove
- (`(MAP_TYPE b a (Arrow) (b:'a->semanticPrimitives_v->bool) (Arrow) a (Arrow)
-  MAP_TYPE b a) mlmap_insert v ==>
-   (MapProg_FMAP_TYPE cmp b a (Arrow) b (Arrow) a (Arrow)
-     MapProg_FMAP_TYPE cmp b a) fmap_update v`,
+ (`(Arrow (MAP_TYPE b a) (Arrow (b:'a->semanticPrimitives_v->bool) (Arrow a
+  (MAP_TYPE b a)))) mlmap_insert v ==>
+   (Arrow (MapProg_FMAP_TYPE cmp b a) (Arrow b (Arrow a (MapProg_FMAP_TYPE
+     cmp b a)))) fmap_update v`,
   CHEAT_TAC);;
 
 (* [local] *)
 let IMP_FMAP_TYPE_DOMSUB = prove
- (`(MAP_TYPE b a (Arrow) (b:'a->semanticPrimitives_v->bool) (Arrow) MAP_TYPE b
-  a) mlmap_delete v ==>
-   (MapProg_FMAP_TYPE cmp b a (Arrow) b (Arrow) MapProg_FMAP_TYPE cmp b a)
-     (\\) v`,
+ (`(Arrow (MAP_TYPE b a) (Arrow (b:'a->semanticPrimitives_v->bool) (MAP_TYPE b
+  a))) mlmap_delete v ==>
+   (Arrow (MapProg_FMAP_TYPE cmp b a) (Arrow b (MapProg_FMAP_TYPE cmp b
+     a))) (\\) v`,
   CHEAT_TAC);;
 
 (* [local] *)
 let IMP_FMAP_TYPE_FUNION = prove
- (`(MAP_TYPE b a (Arrow) MAP_TYPE b a (Arrow) MAP_TYPE b a) mlmap_union v ==>
-   (MapProg_FMAP_TYPE cmp b a (Arrow) MapProg_FMAP_TYPE cmp b a (Arrow)
-     MapProg_FMAP_TYPE cmp b a) FUNION v`,
+ (`(Arrow (MAP_TYPE b a) (Arrow (MAP_TYPE b a) (MAP_TYPE b a))) mlmap_union v
+  ==>
+   (Arrow (MapProg_FMAP_TYPE cmp b a) (Arrow (MapProg_FMAP_TYPE cmp b a)
+     (MapProg_FMAP_TYPE cmp b a))) FUNION v`,
   CHEAT_TAC);;
 
 let IMP_FMAP_TYPE_ops = prove
  (`MAP_TYPE (key:'k->semanticPrimitives_v->bool)
   (a:'a->semanticPrimitives_v->bool) (mlmap_empty cmp) v /\ TotOrd cmp ==>
    MapProg_FMAP_TYPE cmp key a FEMPTY v /\
-   ((MAP_TYPE key a (Arrow) key (Arrow) OPTION_TYPE a) mlmap_lookup v1 ==>
-    (MapProg_FMAP_TYPE cmp key a (Arrow) key (Arrow) OPTION_TYPE a) FLOOKUP
-      v1) /\
-   ((MAP_TYPE key a (Arrow) key (Arrow) a (Arrow) MAP_TYPE key a)
+   ((Arrow (MAP_TYPE key a) (Arrow key (OPTION_TYPE a))) mlmap_lookup v1 ==>
+    (Arrow (MapProg_FMAP_TYPE cmp key a) (Arrow key (OPTION_TYPE a)))
+      FLOOKUP v1) /\
+   ((Arrow (MAP_TYPE key a) (Arrow key (Arrow a (MAP_TYPE key a))))
      mlmap_insert v1 ==>
-    (MapProg_FMAP_TYPE cmp key a (Arrow) key (Arrow) a (Arrow)
-      MapProg_FMAP_TYPE cmp key a) fmap_update v1) /\
-   ((MAP_TYPE key a (Arrow) key (Arrow) MAP_TYPE key a) mlmap_delete v1 ==>
-    (MapProg_FMAP_TYPE cmp key a (Arrow) key (Arrow) MapProg_FMAP_TYPE cmp
-      key a) (\\) v1) /\
-   ((MAP_TYPE key a (Arrow) MAP_TYPE key a (Arrow) MAP_TYPE key a)
+    (Arrow (MapProg_FMAP_TYPE cmp key a) (Arrow key (Arrow a
+      (MapProg_FMAP_TYPE cmp key a)))) fmap_update v1) /\
+   ((Arrow (MAP_TYPE key a) (Arrow key (MAP_TYPE key a))) mlmap_delete v1
+     ==>
+    (Arrow (MapProg_FMAP_TYPE cmp key a) (Arrow key (MapProg_FMAP_TYPE cmp
+      key a))) (\\) v1) /\
+   ((Arrow (MAP_TYPE key a) (Arrow (MAP_TYPE key a) (MAP_TYPE key a)))
      mlmap_union v1 ==>
-    (MapProg_FMAP_TYPE cmp key a (Arrow) MapProg_FMAP_TYPE cmp key a
-      (Arrow) MapProg_FMAP_TYPE cmp key a) FUNION v1)`,
+    (Arrow (MapProg_FMAP_TYPE cmp key a) (Arrow (MapProg_FMAP_TYPE cmp key
+      a) (MapProg_FMAP_TYPE cmp key a))) FUNION v1)`,
   CHEAT_TAC);;
 
 (* HOL4 MapProgScript.sml:285-289: a theorem that HOL4 states as the value

@@ -533,7 +533,6 @@ ml_prog	ML code skipped: end
 ml_translator	ML code skipped: infix \\ val op \\ = op THEN;
 ml_translator	Overload True_ast
 ml_translator	Overload False_ast
-ml_translator	Overload -->
 ml_translator	ML code skipped: val Eval2_tac =   first_x_assum (qspec_then `refs` strip_ass
 ml_translator	ML code skipped: local
 ml_translator	ML code skipped: val th0 = Q.SPEC `0` Eval_Val_INT val th_sub = MATCH_MP (MAT
@@ -567,7 +566,7 @@ ml_translator	ML code skipped: val tac2 =   rw[Eval_rw,CHAR_def,NUM_def,INT_def]
 ml_translator	ML code skipped: val str_cmp_tac =   Cases_on ‘s1’ \\ Cases_on ‘s2’   \\ simp
 ml_translator	ML code skipped: val two_pow_64 = EVAL ``2i**64`` |> concl |> rand
 ml_translator	Theorem v1_size: the auxiliary size function v1_size
-ml_translator	line 354 is 83 characters
+ml_translator	line 355 is 83 characters
 cfFFIType	derive ffi_distinct: '\\\\ fs [Num_d'
 cfFFIType	ML code skipped: val destNum_def_name = "destNum_def"; val destNum_def = new_
 cfFFIType	ML code skipped: val destStr_def_name = "destStr_def" val destStr_def = new_s

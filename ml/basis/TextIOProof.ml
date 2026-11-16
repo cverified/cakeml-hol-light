@@ -2799,8 +2799,8 @@ let inputLineWith_spec_STR = prove
 (* [local] *)
 let inputLineTokens_spec_STR = prove
  (`CHAR c0 c0v /\
-   (CHAR (Arrow) BOOL) f fv /\
-   (STRING_TYPE (Arrow) (a:'a->semanticPrimitives_v->bool)) g gv /\
+   (Arrow CHAR BOOL) f fv /\
+   (Arrow STRING_TYPE (a:'a->semanticPrimitives_v->bool)) g gv /\
    ALL (\c. ~(c = c0)) to_read /\
    (~(text = "") ==> HD text = c0) /\
    f c0 ==>
@@ -2819,7 +2819,7 @@ let inputLineTokens_spec_STR = prove
 
 let inputLineTokens_spec_lines = prove
  (`CHAR c0 c0v /\
-   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+   (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
      (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -2836,7 +2836,7 @@ let inputLineTokens_spec_lines = prove
 let inputAllTokens_aux_spec = prove
  (`!lines acc accv fs.
      CHAR c0 c0v /\
-     (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+     (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
        (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 /\
      LIST_TYPE (LIST_TYPE a) acc accv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
@@ -2855,7 +2855,7 @@ let inputAllTokens_aux_spec = prove
 
 let inputAllTokens_spec = prove
  (`CHAR c0 c0v /\
-   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+   (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
      (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -2872,7 +2872,7 @@ let inputAllTokensFile_spec = prove
  (`CHAR c0 c0v /\
    FILENAME fname fnamev /\ CARD (set_of_list (MAP FST (IO_fs_infds fs))) <
      MIN (IO_fs_maxFD fs) (256 EXP 8) /\
-   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+   (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
      (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -2975,7 +2975,7 @@ let inputAllTokensFrom_SOME = prove
  (`CHAR c0 c0v /\
    OPTION_TYPE FILENAME (SOME fname) fnamev /\ CARD (set_of_list (MAP FST
      (IO_fs_infds fs))) < MIN (IO_fs_maxFD fs) (256 EXP 8) /\
-   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+   (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
      (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -3006,7 +3006,7 @@ let STDIO_INSTREAM_STR_fastForwardFD_forwardFD = prove
 let inputAllTokensFrom_NONE = prove
  (`CHAR c0 c0v /\
    OPTION_TYPE FILENAME NONE fnamev /\ stdin_content fs = SOME text /\
-   (CHAR (Arrow) BOOL) f fv /\ (STRING_TYPE (Arrow)
+   (Arrow CHAR BOOL) f fv /\ (Arrow STRING_TYPE
      (a:'a->semanticPrimitives_v->bool)) g gv /\ f c0 ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
      list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
@@ -3218,7 +3218,7 @@ let inputAllFrom_NONE_spec = prove
 
 let fold_chars_loop_thm = prove
  (`!is a f fv' s y yv fs fd.
-     (CHAR (Arrow) a (Arrow) a) f fv' /\ a y yv ==>
+     (Arrow CHAR (Arrow a a)) f fv' /\ a y yv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_fold_chars_loop_v [fv'; is; yv]
@@ -3232,7 +3232,7 @@ let fold_chars_loop_thm = prove
 let fold_lines_loop_thm = prove
  (`!is a f fv' s y yv fs fd c0 c0v.
      CHAR c0 c0v /\
-     (STRING_TYPE (Arrow) a (Arrow) a) f fv' /\ a y yv ==>
+     (Arrow STRING_TYPE (Arrow a a)) f fv' /\ a y yv ==>
      app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
        list->word8 list->ffi->(ffi cfHeapsBase_ffi_result) option)) list)
        TextIO_fold_lines_loop_v [c0v; fv'; is; yv]
@@ -3244,7 +3244,7 @@ let fold_lines_loop_thm = prove
   CHEAT_TAC);;
 
 let foldChars_SOME = prove
- (`(CHAR (Arrow) a (Arrow) a) f fv /\ a x xv /\
+ (`(Arrow CHAR (Arrow a a)) f fv /\ a x xv /\
    OPTION_TYPE FILENAME (SOME s) fnv /\ CARD (set_of_list (MAP FST
      (IO_fs_infds fs))) < MIN (IO_fs_maxFD fs) (256 EXP 8) ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
@@ -3258,7 +3258,7 @@ let foldChars_SOME = prove
   CHEAT_TAC);;
 
 let foldChars_NONE = prove
- (`(CHAR (Arrow) a (Arrow) a) f fv /\ a x xv /\
+ (`(Arrow CHAR (Arrow a a)) f fv /\ a x xv /\
    OPTION_TYPE FILENAME NONE fnv /\
    stdin_content fs = SOME text ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
@@ -3271,7 +3271,7 @@ let foldChars_NONE = prove
 
 let foldLines_SOME = prove
  (`CHAR c0 c0v /\
-   (STRING_TYPE (Arrow) a (Arrow) a) f fv /\ a x xv /\
+   (Arrow STRING_TYPE (Arrow a a)) f fv /\ a x xv /\
    OPTION_TYPE FILENAME (SOME s) fnv /\ CARD (set_of_list (MAP FST
      (IO_fs_infds fs))) < MIN (IO_fs_maxFD fs) (256 EXP 8) ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8
@@ -3287,7 +3287,7 @@ let foldLines_SOME = prove
 
 let foldLines_NONE = prove
  (`CHAR c0 c0v /\
-   (STRING_TYPE (Arrow) a (Arrow) a) f fv /\ a x xv /\
+   (Arrow STRING_TYPE (Arrow a a)) f fv /\ a x xv /\
    OPTION_TYPE FILENAME NONE fnv /\
    stdin_content fs = SOME text ==>
    app (p:('ffi->(mlstring,ffi)fmap)#(mlstring list#(mlstring->word8

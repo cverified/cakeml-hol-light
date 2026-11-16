@@ -70,36 +70,36 @@ let REAL_TYPE_def = new_definition
 (* [local] *)
 let RAT_RAT = prove
  (`(!r1. real_of_rat (f1 r1) = f2 (real_of_rat r1)) ==>
-    (!v. (RAT_TYPE (Arrow) RAT_TYPE) f1 v ==>
-        (REAL_TYPE (Arrow) REAL_TYPE) f2 v)`,
+    (!v. (Arrow RAT_TYPE RAT_TYPE) f1 v ==>
+        (Arrow REAL_TYPE REAL_TYPE) f2 v)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let RAT_RAT_RAT = prove
  (`(!r1 r2. real_of_rat (f1 r1 r2) = f2 (real_of_rat r1) (real_of_rat r2)) ==>
-    (!v. (RAT_TYPE (Arrow) RAT_TYPE (Arrow) RAT_TYPE) f1 v ==>
-        (REAL_TYPE (Arrow) REAL_TYPE (Arrow) REAL_TYPE) f2 v)`,
+    (!v. (Arrow RAT_TYPE (Arrow RAT_TYPE RAT_TYPE)) f1 v ==>
+        (Arrow REAL_TYPE (Arrow REAL_TYPE REAL_TYPE)) f2 v)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let RAT_RAT_BOOL = prove
  (`(!r1 r2. f1 r1 r2 <=> f2 (real_of_rat r1) (real_of_rat r2)) ==>
-    (!v. (RAT_TYPE (Arrow) RAT_TYPE (Arrow) BOOL) f1 v ==>
-        (REAL_TYPE (Arrow) REAL_TYPE (Arrow) BOOL) f2 v)`,
+    (!v. (Arrow RAT_TYPE (Arrow RAT_TYPE BOOL)) f1 v ==>
+        (Arrow REAL_TYPE (Arrow REAL_TYPE BOOL)) f2 v)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let RAT_BOOL = prove
  (`(!r1. (f1 r1) = f2 (real_of_rat r1)) ==>
-    (!v. (RAT_TYPE (Arrow) BOOL) f1 v ==>
-        (REAL_TYPE (Arrow) BOOL) f2 v)`,
+    (!v. (Arrow RAT_TYPE BOOL) f1 v ==>
+        (Arrow REAL_TYPE BOOL) f2 v)`,
   CHEAT_TAC);;
 
 (* [local] *)
 let RAT_INT = prove
  (`(!r1. (f1 r1) = f2 (real_of_rat r1)) ==>
-    (!v. (RAT_TYPE (Arrow) INT) f1 v ==>
-        (REAL_TYPE (Arrow) INT) f2 v)`,
+    (!v. (Arrow RAT_TYPE INT) f1 v ==>
+        (Arrow REAL_TYPE INT) f2 v)`,
   CHEAT_TAC);;
 
 
@@ -278,10 +278,10 @@ let real_of_rat_eq_0 = prove
 (* [local] *)
 let Eval_REAL_DIV_lemma = prove
  (`!v. (!v1 v2. PRECONDITION (rat_div_side v1 v2) ==>
-                (ml_translator_Eq RAT_TYPE v1 (Arrow) ml_translator_Eq
-                  RAT_TYPE v2 (Arrow) RAT_TYPE) (/) v) ==>
-       PRECONDITION (~(r = 0)) ==> (REAL_TYPE (Arrow) ml_translator_Eq
-         REAL_TYPE r (Arrow) REAL_TYPE) (/) v`,
+                (Arrow (ml_translator_Eq RAT_TYPE v1) (Arrow
+                  (ml_translator_Eq RAT_TYPE v2) RAT_TYPE)) (/) v) ==>
+       PRECONDITION (~(r = 0)) ==> (Arrow REAL_TYPE (Arrow
+         (ml_translator_Eq REAL_TYPE r) REAL_TYPE)) (/) v`,
   CHEAT_TAC);;
 
 (* HOL4 RatProgScript.sml:677-680: ML code, not ported *)
@@ -290,8 +290,8 @@ let Eval_REAL_DIV_lemma = prove
 
 (* [local] *)
 let real_to_str_lemma = prove
- (`(RATIONAL_TYPE (Arrow) STRING_TYPE) mlrat_toString v ==>
-   (REAL_TYPE (Arrow) STRING_TYPE) real_to_str v`,
+ (`(Arrow RATIONAL_TYPE STRING_TYPE) mlrat_toString v ==>
+   (Arrow REAL_TYPE STRING_TYPE) real_to_str v`,
   CHEAT_TAC);;
 
 (* HOL4 RatProgScript.sml:705-707: a theorem that HOL4 states as the value

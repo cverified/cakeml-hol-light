@@ -159,7 +159,7 @@ let evaluate_Eval = prove
 
 let Arrow_IMP = prove
  (`!x v (s:'ffi semanticPrimitives_state).
-     (a (Arrow) b) (f:'a->'b) vv /\ a x v ==>
+     (Arrow a b) (f:'a->'b) vv /\ a x v ==>
      (?env exp junk u ck s1 res.
        semanticPrimitives_do_opapp [vv; v] = SOME (env,exp) /\ b (f x) u /\
        evaluate s env [exp] = (s1,res) /\
@@ -319,7 +319,7 @@ let evaluate_repl = prove
       (PAIR_TYPE ADDPRINTVALS_TYPE_NAMES_TYPE (PAIR_TYPE INFER_INF_ENV_TYPE
         NUM)) types' types_v /\
       STRING_TYPE input_str input_str_v /\
-      (STRING_TYPE (Arrow) SUM_TYPE STRING_TYPE (LIST_TYPE AST_DEC_TYPE))
+      (Arrow STRING_TYPE (SUM_TYPE STRING_TYPE (LIST_TYPE AST_DEC_TYPE)))
         parse' parse_v /\
       env_v = flatSem_Conv NONE [dataSem_Env env1 (env_id,0); flatSem_Litv
         (ast_IntLit (&env_id))] /\

@@ -48,7 +48,7 @@ let _ = do_list hide_constant ["C"; "abort"; "fv"];;
 
 (* Arrow1 *)
 let arrow1 = prove
- (`(A (Arrow) B) f fv /\
+ (`(Arrow A B) f fv /\
    semanticPrimitives_do_opapp [fv; av] = SOME (env,exp) /\
    evaluate (s:'ffi semanticPrimitives_state) env [exp] = (s',res) /\
    A a av /\
@@ -68,7 +68,7 @@ let arrow1 = prove
 
 (* Arrow2 *)
 let arrow2 = prove
- (`(A (Arrow) B (Arrow) C) f fv /\
+ (`(Arrow A (Arrow B C)) f fv /\
    do_partial_app fv av = SOME gv /\
    semanticPrimitives_do_opapp [gv; bv] = SOME (env,exp) /\
    evaluate (s:'ffi semanticPrimitives_state) env [exp] = (s',res) /\
