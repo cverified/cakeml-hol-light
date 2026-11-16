@@ -368,15 +368,6 @@ def tokenize(s):
 #    hol4 name : (hol4 prec, assoc, hol light name, hol light prec)
 
 INFIX = {
-  # HOL4 has --> as an infix of its own grammar and CakeML's
-  # translator overloads it with its Arrow, the relation between a
-  # HOL function and a piece of CakeML that computes it.  Nothing
-  # of the port declares the fixity, so `Eq a x --> b` parsed as
-  # an application of four things and came out as
-  # `Eq a x (Arrow) b`.  The name is the token, so the overload of
-  # the file that uses it says what it is applied to: 24 theories
-  # use it, 253 times, and every one of them is the translator's
-  '-->':   (450, 'r', '-->',  None),
   ',':     (50,  'r', ',',      14),
   '<=>':   (100, 'r', '<=>',     2),
   '==>':   (200, 'r', '==>',     4),
@@ -1902,6 +1893,17 @@ def enable_pmatch(on):
   PMATCH[0] = on
 
 
+# an infix of HOL4's own grammar that HOL Light has not, so that
+# the port writes it as an application of whatever the file
+# overloads it with -- which is what OWN_INFIX is for, except that
+# no source declares these and every file has them.  --> is the
+# Arrow of CakeML's translator, the relation between a HOL
+# function and a piece of CakeML that computes it; without the
+# fixity `(Eq a x --> b) f` parsed as an application of four
+# things.  24 theories of the scope use it, 253 times
+HOL4_INFIX = {'-->': (450, 'r')}
+
+
 def reset_grammar():
   """the term grammar of a fresh HOL4 theory: the infixes that a
      CakeML source adds itself do not reach the other files"""
@@ -1911,6 +1913,9 @@ def reset_grammar():
   ANTIQ.clear()
   SYMS[:] = BASE_SYMS
   PMATCH[0] = False
+  # after SYMS, which add_infix adds the token to
+  for tok, (prec, assoc) in HOL4_INFIX.items():
+    add_infix(tok, prec, assoc)
 
 
 def add_infix(tok, prec, assoc):
