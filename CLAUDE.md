@@ -338,6 +338,11 @@ reports differ in nothing but HOL Light's type variable counter
 the lists the port never looks at.  So `ml/lib/datatypes.txt` is
 checked, and it is worth 11% of an abstract.
 
+`tools/bin/absfast` is the loop with all of that in it: the whole
+port as one `loadt`, the datatypes assumed, and the same two
+reports as `tools/bin/abstractall`.  Measured end to end,
+2026-11-17: **36 minutes**, against the 47.5 of a file at a time.
+
 97% of an abstract is HOL Light parsing and typechecking the
 15,000 statements and making the assumed definitions.  The shell
 is 2.5%; `tools/mkdriver.py` writes all 492 instrumented copies in
