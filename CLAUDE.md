@@ -328,14 +328,15 @@ construction, and diff the statements each reports.
 | file at a time, as `tools/bin/abstract` ran it | ~2850 s | |
 | one `loadt` of a generated driver, datatypes real | 2564 s | 364 |
 | the same, datatypes assumed, the stores left empty | 2011 s | 374 |
-| the same, with the stores filled | to measure | must be 364 |
+| the same, with the stores filled | 2212 s | **364, the same list** |
 
-The third row is what the two broken fakes above cost; the fourth
-is the one that has to be run before the table is trusted, and it
-has not been (the machine was rebooted under it).  Until then
-`ml/lib/datatypes.txt` is a speed-up that no whole-port comparison
-has checked -- the ten-file comparison over `ternaryComparisons`,
-`toto` and `sptree` is all there is.
+The third row is what the two broken fakes above cost.  The fourth
+is the comparison that the table had to pass and now has (2026-11-16,
+492 files each way): not the count but the **list**, and the two
+reports differ in nothing but HOL Light's type variable counter
+(`?210600` against `?210035`), which is a kernel counter and one of
+the lists the port never looks at.  So `ml/lib/datatypes.txt` is
+checked, and it is worth 11% of an abstract.
 
 97% of an abstract is HOL Light parsing and typechecking the
 15,000 statements and making the assumed definitions.  The shell
