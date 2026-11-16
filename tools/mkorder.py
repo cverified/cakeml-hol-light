@@ -69,9 +69,11 @@ for name in ('order.txt', 'order1b.txt'):
   if s == old:
     print('%-13s unchanged, %d theories' % (name, len(order)))
   else:
-    moved = [t for i, t in enumerate(was[name])
-             if order.index(t) != i - sum(1 for u in order[:order.index(t)]
-                                          if u in set(want))]
+    # an old theory keeps its place when its place among the old
+    # ones is the one it had: the new ones in between shift every
+    # absolute index and are not a move
+    oldonly = [t for t in order if t in set(was[name])]
+    moved = [t for i, t in enumerate(was[name]) if oldonly[i] != t]
     print('%-13s %d -> %d theories, %d added%s'
           % (name, len(was[name]), len(order), len(want),
              ', %d of the old moved' % len(moved) if moved else ''))

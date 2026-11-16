@@ -40,3 +40,16 @@ collapse	examples/algorithms/unification/triangular/first-order/collapseScript.s
 fmsp	src/transfer/examples/fmspScript.sml
 rmfmap	examples/algorithms/unification/triangular/first-order/compilation/rmfmapScript.sml
 tcallUnif	examples/algorithms/unification/triangular/first-order/compilation/tcallUnifScript.sml
+alist_tree	src/finite_maps/alist_treeScript.sml
+binary_ieeeProps	src/floating-point/binary_ieeePropsScript.sml
+sum	src/coretypes/sumScript.sml
+cardinal	src/pred_set/src/cardinalScript.sml
+rat	src/rational/ratScript.sml
+cv_type	src/num/theories/cv_compute/automation/cv_typeScript.sml
+cv_std	src/num/theories/cv_compute/automation/cv_stdScript.sml
+errorLogMonad	src/monad/more_monads/errorLogMonadScript.sml
+int_arith	src/integer/int_arithScript.sml
+patternMatches	src/pattern_matches/patternMatchesScript.sml
+precparser	examples/formal-languages/context-free/precparserScript.sml
+prog	examples/machine-code/hoare-triple/progScript.sml
+temporal_state	examples/l3-machine-code/common/temporal_stateScript.sml
