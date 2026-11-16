@@ -90,6 +90,10 @@ def provided_thys():
   for f in HANDWRITTEN:
     for nm in file_names(T + '../ml/lib/' + f):
       out.setdefault(nm, HANDWRITTEN_THY.get(f))
+  # a file of the layer may hold what the port needs of more than
+  # one HOL4 theory (ml/lib/words4.ml has words, bitstring and
+  # integer_word), and then the file does not say which
+  out.update(overrides.PROVIDED_THY)
   return out
 
 
@@ -444,7 +448,15 @@ class Db:
       for thy, kind in v:
         if (thy, nm) in self.rename: continue
         if kind in ('con', 'type'): continue
-        if self.kind_of_thy.get(thy) == 'lib' and nm in self.provided:
+        # a name that the library layer provides keeps its name,
+        # but only in the theory the layer provides it for:
+        # llist's fromList is llist's, and balanced_map's is a
+        # constant of its own that has to be renamed, or the two
+        # would be one
+        if (self.kind_of_thy.get(thy) == 'lib' and
+            nm in self.provided and
+            (self.provided_thy.get(nm) in (None, thy) or
+             not IDENT.match(nm))):
           continue
         if nm in multi or nm in self.hl:
           self.rename[(thy, nm)] = prefix(thy, nm)
@@ -568,8 +580,16 @@ class Db:
   def is_needed(self, thy, names):
     if any((thy, nm) in overrides.ALSO_NEEDED for nm in names):
       return True
+    # a name that the hand written library layer provides is not
+    # ported again -- but only where what it provides is *this*
+    # theory's.  llist's fromList is not balanced_map's, and
+    # taking the one for the other left mlmap's fromList_def
+    # reading `Map cmp (fromList cmp l)' with the fromList of a
+    # lazy list (provided_thy says which theory a provided name
+    # stands for, and None is the general layer)
     if self.kind_of_thy.get(thy) == 'lib' and \
-       all(nm in self.provided for nm in names):
+       all(nm in self.provided and
+           self.provided_thy.get(nm) in (None, thy) for nm in names):
       return False
     return any(((thy, nm) in self.needed_names or
                 (thy, nm) in overrides.ALSO_NEEDED) and

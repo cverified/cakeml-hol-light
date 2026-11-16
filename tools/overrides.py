@@ -1130,6 +1130,21 @@ LOCAL_NAMES = {
 # has it is not ported: the constructors and the type of every
 # argument, so that the db knows the names (the port writes the
 # datatype itself in EXTRA_HEAD)
+# the HOL4 theory that a name of the hand written library layer
+# stands for, where it is not the theory of the file that holds
+# it: ml/lib/words4.ml has what the port needs of words, of
+# bitstring and of integer_word alike, and three of them are a
+# constant of HOL Light under another name (override_interface).
+# A name in here is not ported again under a prefix, because the
+# layer already has that theory's -- which is what tools/db.py
+# asks of every name the layer provides
+PROVIDED_THY = {
+  'v2w': 'bitstring', 'w2v': 'bitstring',
+  'i2w': 'integer_word', 'w2i': 'integer_word',
+  'word_sdiv': 'integer_word', 'UINT_MAX': 'integer_word',
+  'INT_MAX': 'integer_word', 'INT_MIN': 'integer_word',
+}
+
 EXTRA_DATATYPES = {
   # ag32, the Silver instruction set: HOL4's ag32Script.sml is a
   # file that L3 generated and builds its types by calling the ML
