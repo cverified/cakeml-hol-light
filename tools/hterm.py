@@ -1352,7 +1352,8 @@ class Ctx:
     # values and calls one of the seven ways of building one Num,
     # where HOL4's integerTheory has the Num that takes an integer
     # to a number and the map sends that to num_of_int
-    if n in NAME_MAP and (self.thy, n) not in self.names:
+    if (n in NAME_MAP and n not in self.names
+        and (self.thy, n) not in self.names):
       return NAME_MAP[n]
     # the block that defines a name uses the name of the constant,
     # and everything else the name that HOL4 overloads with it
