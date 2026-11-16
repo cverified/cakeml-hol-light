@@ -1131,12 +1131,70 @@ LOCAL_NAMES = {
 # argument, so that the db knows the names (the port writes the
 # datatype itself in EXTRA_HEAD)
 EXTRA_DATATYPES = {
+  # ag32, the Silver instruction set: HOL4's ag32Script.sml is a
+  # file that L3 generated and builds its types by calling the ML
+  # of HOL4's Import library, so the theory is outside the port
+  # (tools/excluded.txt).  Seven files of the load order use the
+  # model all the same, and what they use of it is data: these
+  # four datatypes, the record of the machine state
+  # (EXTRA_RECORDS) and four constants (EXTRA_DEFS), which
+  # ml/lib/ag32.ml makes.  PENDING.md says the rest
+  ('ag32', 'funcT'): [(c, []) for c in
+    ['fAdd', 'fAddWithCarry', 'fSub', 'fCarry', 'fOverflow', 'fInc',
+     'fDec', 'fMul', 'fMulHU', 'fAnd', 'fOr', 'fXor', 'fEqual',
+     'fLess', 'fLower', 'fSnd']],
+  ('ag32', 'shiftT'): [(c, []) for c in
+    ['shiftLL', 'shiftLR', 'shiftAR', 'shiftRor']],
+  ('ag32', 'reg_immT'): [('Imm', ['(6)word']), ('Reg', ['(6)word'])],
+  ('ag32', 'instruction'): [
+    ('Accelerator', ['(6)word#reg_immT']),
+    ('In', ['(6)word']),
+    ('Interrupt', []),
+    ('Jump', ['funcT#(6)word#reg_immT']),
+    ('JumpIfNotZero', ['funcT#reg_immT#reg_immT#reg_immT']),
+    ('JumpIfZero', ['funcT#reg_immT#reg_immT#reg_immT']),
+    ('LoadConstant', ['(6)word#bool#(23)word']),
+    ('LoadMEM', ['(6)word#reg_immT']),
+    ('LoadMEMByte', ['(6)word#reg_immT']),
+    ('LoadUpperConstant', ['(6)word#(9)word']),
+    ('Normal', ['funcT#(6)word#reg_immT#reg_immT']),
+    ('Out', ['funcT#(6)word#reg_immT#reg_immT']),
+    ('ReservedInstr', []),
+    ('Shift', ['shiftT#(6)word#reg_immT#reg_immT']),
+    ('StoreMEM', ['reg_immT#reg_immT']),
+    ('StoreMEMByte', ['reg_immT#reg_immT']),
+  ],
+}
+
+# the records of such a theory: the fields in the order of the
+# source and the type of each, as tools/db.py reads them off a
+# Datatype block of a theory that is ported
+EXTRA_RECORDS = {
+  ('ag32', 'ag32_state'): [
+    ('CarryFlag', 'bool'),
+    ('MEM', '(32)word->(8)word'),
+    ('OverflowFlag', 'bool'),
+    ('PC', '(32)word'),
+    ('R', '(6)word->(32)word'),
+    ('data_in', '(2)word'),
+    ('data_out', '(10)word'),
+    ('io_events', '((32)word->(8)word)list'),
+  ],
 }
 
 EXTRA_DEFS = [
   ('walk', 'vwalk'), ('walkstar', 'walkstar'),
   ('walkstar', 'oc'), ('unifDef', 'unify'),
-]
+  # the four names of the Silver model that the sources write and
+  # whose value is the ML of the file L3 generated: ml/lib/ag32.ml
+  # declares them, as the port declares the six encoders
+  ('ag32', 'Encode'), ('ag32', 'Decode'),
+  ('ag32', 'Run'), ('ag32', 'Next'),
+] + [('ag32', "dfn'" + c) for c in
+     ['Accelerator', 'In', 'Interrupt', 'Jump', 'JumpIfNotZero',
+      'JumpIfZero', 'LoadConstant', 'LoadMEM', 'LoadMEMByte',
+      'LoadUpperConstant', 'Normal', 'Out', 'Shift', 'StoreMEM',
+      'StoreMEMByte']]
 
 # the HOL Light constant that an infix of HOL4 means where no
 # CakeML source overloads it with one of its own; a source that does

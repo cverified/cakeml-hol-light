@@ -407,6 +407,16 @@ class Db:
         for j, t in enumerate(argtys):
           self.con_argty.setdefault((c, j), set()).add(t)
           self.con_argty_thy[(thy, c, j)] = t
+    # and the records of such a theory, whose accessors a source
+    # writes as a field (s.PC) and the port as a constant
+    for (thy, ty), flds in overrides.EXTRA_RECORDS.items():
+      if (thy, ty) in self.recs: continue
+      self.datatypes[(thy, ty)] = ([], [f for f, _ in flds])
+      self.defs[ty].append((thy, 'type'))
+      self.recs[(thy, ty)] = [f for f, _ in flds]
+      self.rectys[(thy, ty)] = dict(flds)
+      for f, _ in flds:
+        self.defs[f].append((thy, 'def'))
 
   # ---------------------------------------------------------------
 

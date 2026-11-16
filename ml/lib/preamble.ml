@@ -48,6 +48,12 @@ needs "lib/relation.ml";;
 needs "lib/bag.ml";;
 needs "lib/string4.ml";;
 
+(* as much of the Silver instruction set as the seven files of the
+   port that use it need: its source is a file L3 generated, which
+   a source level port cannot follow, so the theory is outside the
+   port and this is written by hand (PENDING.md) *)
+needs "lib/ag32.ml";;
+
 (* the tactics and the lemmas of phase three go last, and define
    nothing: tools/bin/reload loads them again into a session that is
    already running, where a change in the files above costs the

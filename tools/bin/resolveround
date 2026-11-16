@@ -33,11 +33,11 @@ rm -f tmp/res/resolve.txt tmp/unstated-res.txt
 echo "== the session"
 repl-kill res > /dev/null 2>&1 || true
 TIMEOUT=300 repl-clone hol-template-cakeml res > /dev/null
-TIMEOUT=300 repl-step res 'loadt "'$C'/ml/lib/fast.ml";;' \
+TIMEOUT=900 repl-step res 'loadt "'$C'/ml/lib/fast.ml";;' \
   > /dev/null
 TIMEOUT=300 repl-step res 'loadt "'$C'/tools/resolve.ml";;' \
   > /dev/null
-TIMEOUT=${TIMEOUT:-5400} repl-step res \
+TIMEOUT=${TIMEOUT:-10800} repl-step res \
   'loadt "'$C'/tmp/drvres/driver.ml";;' | tail -3
 TIMEOUT=120 repl-step res 'flush_all ();;' > /dev/null
 echo "== the table"
