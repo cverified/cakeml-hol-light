@@ -144,7 +144,7 @@ let if_eq1w = prove
 (* HOL4 riscvProgScript.sml:245-254: ML code, not ported *)
 
 let riscv_enc_Const_def = new_definition
-  `riscv_enc_Const n c = riscv_enc (word_Inst (asm_Const n c))`;;
+  `riscv_enc_Const n c = riscv_enc (asm_Inst (asm_Const n c))`;;
 
 (* HOL4 riscvProgScript.sml:373-414: ML code, not ported *)
 

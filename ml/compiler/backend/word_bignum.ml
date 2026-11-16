@@ -222,9 +222,9 @@ let dest_el_let tm =
   then failwith "dest_el_let"
   else
   let a = fst (dest_var (rand r)) in
-  let a = if a = "xs" then `In1` else
-          if a = "ys" then `In2` else
-          if a = "zs" then `Out` else failwith "dest_el_let" in
+  let a = if a = "xs" then `word_bignum_In1` else
+          if a = "ys" then `word_bignum_In2` else
+          if a = "zs" then `word_bignum_Out` else failwith "dest_el_let" in
   let y = rand (rand (rator r)) in
   (v,y,a,body);;
 

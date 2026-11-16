@@ -250,7 +250,7 @@ let case_append2 = prove
 (* HOL4 x64ProgScript.sml:382-392: ML code, not ported *)
 
 let x64_enc_Const_def = new_definition
-  `x64_enc_Const n c = x64_enc (word_Inst (asm_Const n c))`;;
+  `x64_enc_Const n c = x64_enc (asm_Inst (asm_Const n c))`;;
 
 (* HOL4 x64ProgScript.sml:499-510: ML code, not ported *)
 

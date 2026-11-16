@@ -97,7 +97,7 @@ let ag32Prog_word_neg = prove
 (* HOL4 ag32ProgScript.sml:113-123: ML code, not ported *)
 
 let ag32_enc_Const_def = new_definition
-  `ag32_enc_Const n c = ag32_enc (word_Inst (asm_Const n c))`;;
+  `ag32_enc_Const n c = ag32_enc (asm_Inst (asm_Const n c))`;;
 
 (* HOL4 ag32ProgScript.sml:164: ML code, not ported *)
 

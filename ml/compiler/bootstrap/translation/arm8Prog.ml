@@ -224,7 +224,7 @@ let num_rw = prove
 (* HOL4 arm8ProgScript.sml:364-374: ML code, not ported *)
 
 let arm8_enc_Const_def = new_definition
-  `arm8_enc_Const n c = arm8_enc (word_Inst (asm_Const n c))`;;
+  `arm8_enc_Const n c = arm8_enc (asm_Inst (asm_Const n c))`;;
 
 (* HOL4 arm8ProgScript.sml:493-534: ML code, not ported *)
 

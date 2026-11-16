@@ -98,7 +98,7 @@ let delete_def,delete_ind = define_rec
            mk_BS (sptree_delete ((k - 1) DIV 2) t1) a t2
          else mk_BS t1 a (sptree_delete ((k - 1) DIV 2) t2))`;;
 
-let sptree_fromList_def = new_definition
+let fromList_def = new_definition
   `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a t))
   (0,LN) l)`;;
 
@@ -883,7 +883,7 @@ let SPTAUX_lookup_fromList_gen = prove
 let lookup_fromList = prove
  (`sptree_lookup n (sptree_fromList l) =
    if n < LENGTH l then SOME (EL n (l:A list)) else NONE`,
-  REWRITE_TAC[fromList_def; SPTAUX_lookup_fromList_gen; ADD_CLAUSES; LT;
+  REWRITE_TAC[sptree_fromList_def; SPTAUX_lookup_fromList_gen; ADD_CLAUSES; LT;
               SUB_0; lookup_rwts]);;
 
 let domain_fromList = prove
