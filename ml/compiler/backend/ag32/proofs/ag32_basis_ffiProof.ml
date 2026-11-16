@@ -326,8 +326,8 @@ let startup_asm_code_small_enough = prove
    comment *)
 
 let get_output_io_event_def = new_definition
-  `get_output_io_event (IO_event CommandLineProof_name conf bs2) =
-     if CommandLineProof_name = ffi_ExtCall (implode "write") then
+  `get_output_io_event (IO_event name' conf bs2) =
+     if name' = ffi_ExtCall (implode "write") then
        match MAP FST bs2 with (CONS n1 (CONS n0 (CONS off1 (CONS off0
          tll)))) ->
          let k = MIN (w22n [n1; n0]) output_buffer_size in

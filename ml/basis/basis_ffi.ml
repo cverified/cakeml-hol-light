@@ -46,50 +46,50 @@ let _ = do_list hide_constant ["C"; "fv"; "prog"];;
    meaning in an environment providing further FFIs. *)
 let basis_ffi_oracle_def = new_definition
   `basis_ffi_oracle ext =
-     (\CommandLineProof_name (cls,fs) conf bytes.
-      if CommandLineProof_name = ffi_ExtCall (implode "write") then
+     (\name' (cls,fs) conf bytes.
+      if name' = ffi_ExtCall (implode "write") then
         match ffi_write conf bytes fs with SOME (FFIreturn bytes fs) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "read") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "read") then
         match ffi_read conf bytes fs with SOME (FFIreturn bytes fs) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "get_arg_count") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "get_arg_count") then
         match ffi_get_arg_count conf bytes cls with SOME (FFIreturn bytes
           cls) -> Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "get_arg_length") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "get_arg_length") then
         match ffi_get_arg_length conf bytes cls with SOME (FFIreturn bytes
           cls) -> Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "get_arg") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "get_arg") then
         match ffi_get_arg conf bytes cls with SOME (FFIreturn bytes cls) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "open_in") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "open_in") then
         match ffi_open_in conf bytes fs with SOME (FFIreturn bytes fs) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "open_out") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "open_out") then
         match ffi_open_out conf bytes fs with SOME (FFIreturn bytes fs) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "close") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "close") then
         match ffi_close conf bytes fs with SOME (FFIreturn bytes fs) ->
           Oracle_return (cls,fs) bytes
-        | _ -> Oracle_final FFI_failed else if CommandLineProof_name =
-          ffi_ExtCall (implode "exit") then
+        | _ -> Oracle_final FFI_failed else if name' = ffi_ExtCall (implode
+          "exit") then
         match ffi_exit conf bytes one with SOME (FFIreturn bytes one) ->
           Oracle_return (cls,fs) bytes
         | SOME (FFIdiverge) -> Oracle_final FFI_diverged
-        | NONE -> Oracle_final FFI_failed else ext CommandLineProof_name
-          (cls,fs) conf bytes)`;;
+        | NONE -> Oracle_final FFI_failed else ext name' (cls,fs) conf
+          bytes)`;;
 
 (* the FFI names that basis_ffi_oracle answers itself *)
 let is_basis_ffi_name_def = new_definition
-  `is_basis_ffi_name CommandLineProof_name <=>
-     CommandLineProof_name IN {(implode "write"),(implode "read"),(implode
+  `is_basis_ffi_name name' <=>
+     name' IN {(implode "write"),(implode "read"),(implode
        "get_arg_count"),(implode "get_arg_length"),(implode "get_arg"),
              (implode "open_in"),(implode "open_out"),(implode
                "close"),(implode "exit")}`;;
@@ -120,8 +120,7 @@ let basis_ffi_def = new_definition
 (* the fall-through oracle answering no call at all: the basis FFIs and
    nothing else *)
 let no_ext_def = new_definition
-  `no_ext = (\(CommandLineProof_name:ffiname) (st:mlstring list#IO_fs)
-  (conf:word8 list)
+  `no_ext = (\(name':ffiname) (st:mlstring list#IO_fs) (conf:word8 list)
               (bytes:word8 list). Oracle_final FFI_failed)`;;
 
 let basis_proj1_def = new_definition
@@ -153,19 +152,19 @@ let basis_proj1_write = prove
 let extract_fs_with_numchars_def,extract_fs_with_numchars_ind = define_guess
   `(extract_fs_with_numchars ext (st:mlstring list#IO_fs) [] = SOME st) /\
    (extract_fs_with_numchars ext (st:mlstring list#IO_fs) (CONS (IO_event
-    (ffi_ExtCall CommandLineProof_name) conf bytes) xs) =
-        match (ALOOKUP (SND (SND fs_ffi_part)) CommandLineProof_name) with
-            SOME ffi_fun -> (match ffi_fun conf (MAP FST bytes) (SND st) with
-            SOME (FFIreturn bytes' fs') ->
+    (ffi_ExtCall name') conf bytes) xs) =
+        match (ALOOKUP (SND (SND fs_ffi_part)) name') with SOME ffi_fun ->
+            (match ffi_fun conf (MAP FST bytes) (SND st) with SOME (FFIreturn
+            bytes' fs') ->
                              if bytes' = MAP SND bytes then
                               extract_fs_with_numchars ext (FST st,fs') xs
                              else NONE
                            | _ -> NONE)
         | NONE ->
-          (if is_basis_ffi_name CommandLineProof_name then
+          (if is_basis_ffi_name name' then
             extract_fs_with_numchars ext st xs
-          else (match ext (ffi_ExtCall CommandLineProof_name) st conf (MAP
-              FST bytes) with Oracle_return st' bytes' ->
+          else (match ext (ffi_ExtCall name') st conf (MAP FST bytes) with
+              Oracle_return st' bytes' ->
                if bytes' = MAP SND bytes then
                  extract_fs_with_numchars ext st' xs
                else NONE
@@ -288,33 +287,32 @@ let RUNTIME_precond = prove
    below antiquote *)
 
 let whole_prog_spec_def = new_definition
-  `whole_prog_spec fv' cl fs sprop basis_ffi_post <=>
+  `whole_prog_spec fv' cl fs sprop post' <=>
      (?fs'.
      app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
        (COMMANDLINE cl * STDIO fs * (match sprop with NONE -> &T | SOME p ->
          p))
        (POSTv (\uv. &(UNIT_TYPE one uv) * STDIO fs')) /\
-     basis_ffi_post (IO_fs_numchars_fupd (K (IO_fs_numchars fs)) fs'))`;;
+     post' (IO_fs_numchars_fupd (K (IO_fs_numchars fs)) fs'))`;;
 
 let whole_prog_ffidiv_spec_def = new_definition
-  `whole_prog_ffidiv_spec fv' cl fs basis_ffi_post <=>
+  `whole_prog_ffidiv_spec fv' cl fs post' <=>
      (?fs' n' c' b'.
      app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
        (COMMANDLINE cl * STDIO fs * RUNTIME)
        (POSTf (\n. \c b. STDIO fs' * RUNTIME * &(n = n' /\ c = c' /\ b =
          b'))) /\
-     basis_ffi_post n' c' b' (IO_fs_numchars_fupd (K (IO_fs_numchars fs))
-       fs'))`;;
+     post' n' c' b' (IO_fs_numchars_fupd (K (IO_fs_numchars fs)) fs'))`;;
 
 let whole_prog_spec2_def = new_definition
-  `whole_prog_spec2 fv' cl fs sprop basis_ffi_post <=>
+  `whole_prog_spec2 fv' cl fs sprop post' <=>
      app (basis_proj1,basis_proj2) fv' [semanticPrimitives_Conv NONE []]
        (COMMANDLINE cl * STDIO fs * (match sprop with NONE -> &T | SOME p ->
          p))
        (POSTv (\uv. &(UNIT_TYPE one uv) *
        SEP_EXISTS (\fs'.
-         STDIO fs' * &(basis_ffi_post (IO_fs_numchars_fupd (K
-           (IO_fs_numchars fs)) fs')))))`;;
+         STDIO fs' * &(post' (IO_fs_numchars_fupd (K (IO_fs_numchars fs))
+           fs')))))`;;
 
 (* HOL4 basis_ffiScript.sml:567-618: a theorem whose statement the port
    cannot state yet: whole_prog_spec2_semantics_prog *)

@@ -54,19 +54,19 @@ let mul_const_def = new_definition
 let simp_exp_def,simp_exp_ind = define_guess
   `simp_exp exp =
      match exp with
-       crep_Crepop op crepLang_exps ->
-       (let crepLang_exps = MAP simp_exp crepLang_exps in
-       match (op,crepLang_exps) with (crep_Mul,[exp1; exp2]) -> (
+       crep_Crepop op exps' ->
+       (let exps' = MAP simp_exp exps' in
+       match (op,exps') with (crep_Mul,[exp1; exp2]) -> (
            match (crep_arith_dest_const exp1,crep_arith_dest_const exp2)
              with (SOME c,SOME c2) -> crep_Const (c * c2)
            | (SOME c,_) -> mul_const exp2 c
            | (_,SOME c) -> mul_const exp1 c
-           | _ -> crep_Crepop op crepLang_exps)
-       | _ -> crep_Crepop op crepLang_exps)
+           | _ -> crep_Crepop op exps')
+       | _ -> crep_Crepop op exps')
      | crep_Load32 exp -> crep_Load32 (simp_exp exp)
      | crep_LoadByte exp -> crep_LoadByte (simp_exp exp)
      | crep_Load exp -> crep_Load (simp_exp exp)
-     | crep_Op bop crepLang_exps -> crep_Op bop (MAP simp_exp crepLang_exps)
+     | crep_Op bop exps' -> crep_Op bop (MAP simp_exp exps')
      | crep_Cmp cmp exp1 exp2 -> crep_Cmp cmp (simp_exp exp1) (simp_exp
        exp2)
      | crep_Shift s exp1 exp2 -> crep_Shift s (simp_exp exp1) (simp_exp
@@ -87,12 +87,12 @@ let simp_prog_def,simp_prog_ind = define_guess
    | crep_If exp p1 p2 -> crep_If (simp_exp exp) (simp_prog p1) (simp_prog
      p2)
    | crep_While exp p -> crep_While (simp_exp exp) (simp_prog p)
-   | crep_Call call_type e crepLang_exps -> (
+   | crep_Call call_type e exps' -> (
      let call_type2 = (match call_type with NONE -> NONE
        | SOME (rv,opt_handler) -> SOME (rv,(match opt_handler with NONE ->
          NONE
            | SOME (ix,ep) -> SOME (ix,simp_prog ep)))) in
-     crep_Call call_type2 e (MAP simp_exp crepLang_exps))
+     crep_Call call_type2 e (MAP simp_exp exps'))
    | crep_Return exp -> crep_Return (MAP simp_exp exp)
    | crep_ShMem op vn exp -> crep_ShMem op vn (simp_exp exp)
    | p -> p`;;

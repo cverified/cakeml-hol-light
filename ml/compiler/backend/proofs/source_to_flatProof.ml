@@ -507,23 +507,23 @@ let s_rel = cake_inductive
      source_to_flatProof_s_rel genv s s')`;;
 
 let env_all_rel = cake_inductive
-  `(!genv sptree_map env_v_local env env' locals.
+  `(!genv map' env_v_local env env' locals.
      (?l. env_v_local = alist_to_ns l /\ MAP FST l = locals) /\
-     global_env_inv genv sptree_map (set_of_list locals) env /\
+     global_env_inv genv map' (set_of_list locals) env /\
      source_to_flatProof_env_rel genv env_v_local env' ==>
-     env_all_rel genv sptree_map
+     env_all_rel genv map'
        (mk_sem_env (nsAppend env_v_local (sem_env_v env)) (sem_env_c env))
        (mk_flatSem_environment env')
        locals)`;;
 
 (* [local] *)
 let env_all_rel_weak = prove
- (`!genv sptree_map locals env env' genv'.
-    env_all_rel genv sptree_map env env' locals /\ global_env_c
+ (`!genv map' locals env env' genv'.
+    env_all_rel genv map' env env' locals /\ global_env_c
     genv SUBMAP global_env_c genv' /\ global_env_tys
     genv SUBMAP global_env_tys genv' /\
     subglobals (global_env_v genv) (global_env_v genv') ==>
-    env_all_rel genv' sptree_map env env' locals`,
+    env_all_rel genv' map' env env' locals`,
   CHEAT_TAC);;
 
 let source_to_flatProof_match_result_rel_def = new_definition

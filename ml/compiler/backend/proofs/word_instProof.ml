@@ -229,8 +229,8 @@ let binary_branch_exp_def,binary_branch_exp_ind = define_wf
        word_Op asm_Sub exps -> ALL (binary_branch_exp) exps
      | word_Op op xs -> (LENGTH xs = 2 /\ ALL (binary_branch_exp) xs)
      | word_Load exp -> binary_branch_exp exp
-     | word_Shift backend_common_word_shift exp nexp -> (binary_branch_exp
-       exp /\ binary_branch_exp nexp)
+     | word_Shift shift' exp nexp -> (binary_branch_exp exp
+       /\ binary_branch_exp nexp)
      | exp -> T`;;
 
 (* flatten_exp syntax *)

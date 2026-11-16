@@ -129,8 +129,8 @@ let pull_exp_def,pull_exp_ind = define_wf
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls
      | word_Load exp -> word_Load (pull_exp exp)
-     | word_Shift backend_common_word_shift exp nexp -> word_Shift
-       backend_common_word_shift (pull_exp exp) (pull_exp nexp)
+     | word_Shift shift' exp nexp -> word_Shift shift' (pull_exp exp)
+       (pull_exp nexp)
      | exp -> exp`;;
 
 let pull_exp_pmatch = prove
@@ -175,8 +175,8 @@ let flatten_exp_def,flatten_exp_ind = define_wf
      | word_Op op (CONS x xs) -> word_Op op [flatten_exp (word_Op op xs);
        flatten_exp x]
      | word_Load exp -> word_Load (flatten_exp exp)
-     | word_Shift backend_common_word_shift exp nexp -> word_Shift
-       backend_common_word_shift (flatten_exp exp) (flatten_exp nexp)
+     | word_Shift shift' exp nexp -> word_Shift shift' (flatten_exp exp)
+       (flatten_exp nexp)
      | exp -> exp`;;
 
 

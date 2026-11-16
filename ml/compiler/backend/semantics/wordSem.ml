@@ -521,11 +521,11 @@ let share_inst_def = define_cases
         | _ -> (SOME wordSem_Error,s))`;;
 
 let wordSem_call_env_def = new_definition
-  `wordSem_call_env args sptree__size (s:('a,'c,'ffi)wordSem_state) =
+  `wordSem_call_env args size' (s:('a,'c,'ffi)wordSem_state) =
   wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX (wordSem_state_stack_max s)
-  (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s)) sptree__size)))
-  (wordSem_state_locals_size_fupd (K sptree__size) (wordSem_state_locals_fupd
-  (K (fromList2 args))
+  (OPTION_MAP2 (+) (stack_size (wordSem_state_stack s)) size')))
+  (wordSem_state_locals_size_fupd (K size') (wordSem_state_locals_fupd (K
+  (fromList2 args))
      s))`;;
 
 let list_rearrange_def = new_definition

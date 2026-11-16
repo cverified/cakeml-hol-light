@@ -1554,15 +1554,15 @@ let stack_names_compile_no_shmemop = prove
 let flatten_no_share_mem_inst = prove
  (`!t p n m cs bs.
        no_shmemop p ==>
-       ALL (\ln. !op re a stackSem_inst len. ~(ln = lab_Asm (ShareMem op re
-         a) stackSem_inst len))
+       ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
+         len))
              (append (FST (stack_to_lab_flatten t p n m cs bs)))`,
   CHEAT_TAC);;
 
 let asm_fetch_aux_no_share_mem_inst_CONS = prove
  (`!xs.
-   ALL (\ln. !op re a stackSem_inst len. ~(ln = lab_Asm (ShareMem op re a)
-     stackSem_inst len)) xs /\
+   ALL (\ln. !op re a inst' len. ~(ln = lab_Asm (ShareMem op re a) inst'
+     len)) xs /\
    no_share_mem_inst ls ==>
    no_share_mem_inst (CONS (Section k xs) ls)`,
   CHEAT_TAC);;

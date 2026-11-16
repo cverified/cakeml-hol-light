@@ -2197,11 +2197,11 @@ let print_list_spec = prove
 
 let INSTREAM_STR_def = new_definition
   `INSTREAM_STR fd is (str:string) fs =
-     SEP_EXISTS (\fsFFI_read active left.
+     SEP_EXISTS (\read' active left.
        INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd is *
        &(str = APPEND active left /\
-          get_file_content fs fd = SOME (APPEND fsFFI_read str,LENGTH
-            fsFFI_read + LENGTH active) /\
+          get_file_content fs fd = SOME (APPEND read' str,LENGTH read' +
+            LENGTH active) /\
           get_mode fs fd = SOME ReadMode))`;;
 
 let INSTREAM_STR_fd_neq = prove
@@ -2218,12 +2218,12 @@ let INSTREAM_STR_add_stdout = prove
 
 let INSTREAM_STR'_def = new_definition
   `INSTREAM_STR' fd is (str:string) fs non_empty is_empty =
-     SEP_EXISTS (\fsFFI_read active left.
+     SEP_EXISTS (\read' active left.
        INSTREAM_BUFFERED_FD (MAP (n2w o ORD) active) fd is *
        &(str = APPEND active left /\
           (non_empty ==> ~(active = [])) /\ (is_empty ==> active = []) /\
-          get_file_content fs fd = SOME (APPEND fsFFI_read str,LENGTH
-            fsFFI_read + LENGTH active) /\
+          get_file_content fs fd = SOME (APPEND read' str,LENGTH read' +
+            LENGTH active) /\
           get_mode fs fd = SOME ReadMode))`;;
 
 (* [local] *)

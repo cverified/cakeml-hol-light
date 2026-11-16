@@ -127,8 +127,8 @@ let every_var_inst_def = new_definition
        asm_Const reg w -> P reg
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) -> (P r1
-       /\ P r2 /\ every_var_imm P ri)
+     | asm_Arith (asm_Shift shift' r1 r2 ri) -> (P r1 /\ P r2
+       /\ every_var_imm P ri)
      | asm_Arith (asm_Div r1 r2 r3) -> (P r1 /\ P r2 /\ P r3)
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> (P r1 /\ P r2 /\ P r3 /\ P
        r4)
@@ -268,7 +268,7 @@ let max_var_inst_def = new_definition
      | asm_Const reg w -> reg
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 n) ->
+     | asm_Arith (asm_Shift shift' r1 r2 n) ->
        (match n with Reg r -> max3 r1 r2 r | _ -> MAX r1 r2)
      | asm_Arith (asm_Div r1 r2 r3) -> max3 r1 r2 r3
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> MAX (MAX r1 r2) (MAX r3 r4)

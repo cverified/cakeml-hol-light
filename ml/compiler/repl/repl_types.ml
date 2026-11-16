@@ -54,12 +54,10 @@ let to_type_def = define_cases
    (to_type repl_types_Exn = Infer_Tapp [] Texn_num)`;;
 
 let check_ref_types_def = new_definition
-  `check_ref_types types' (env:semanticPrimitives_v sem_env)
-  (CommandLineProof_name,ty,loc) <=>
-     nsLookup (inf_env_inf_v types') CommandLineProof_name = SOME
-       (0,Infer_Tapp [to_type ty] Tref_num) /\
-     nsLookup (sem_env_v env) CommandLineProof_name = SOME
-       (semanticPrimitives_Loc T loc)`;;
+  `check_ref_types types' (env:semanticPrimitives_v sem_env) (name',ty,loc) <=>
+     nsLookup (inf_env_inf_v types') name' = SOME (0,Infer_Tapp [to_type ty]
+       Tref_num) /\
+     nsLookup (sem_env_v env) name' = SOME (semanticPrimitives_Loc T loc)`;;
 
 let repl_types_roll_back_def = new_definition
   `repl_types_roll_back ((old_ienv:inf_env),(old_next_id:num))
@@ -111,20 +109,20 @@ let repl_types = cake_inductive
         repl_types b (ffi,rs) (repl_types_roll_back types'
           new_types,new_s,env))) /\
    ((!ffi rs decs types' new_types (s:'ffi semanticPrimitives_state) env e
-       new_s CommandLineProof_name loc new_store b.
+       new_s name' loc new_store b.
         repl_types b (ffi,rs) (types',s,env) /\
         infertype_prog_inc types' decs = M_success new_types /\
         evaluate_evaluate_decs s env decs = (new_s,Rerr (Rraise e)) /\
-        MEM (CommandLineProof_name,repl_types_Exn,loc) rs /\
+        MEM (name',repl_types_Exn,loc) rs /\
         store_assign loc (semanticPrimitives_Refv e)
           (semanticPrimitives_state_refs new_s) = SOME new_store ==>
         repl_types b (ffi,rs) (repl_types_roll_back types'
           new_types,semanticPrimitives_state_refs_fupd (K new_store)
           new_s,env))) /\
-   ((!ffi rs types' (s:'ffi semanticPrimitives_state) env t
-     CommandLineProof_name loc new_store b.
+   ((!ffi rs types' (s:'ffi semanticPrimitives_state) env t name' loc
+     new_store b.
         repl_types b (ffi,rs) (types',s,env) /\
-        MEM (CommandLineProof_name,repl_types_Str,loc) rs /\
+        MEM (name',repl_types_Str,loc) rs /\
         store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
           (ast_StrLit t))) (semanticPrimitives_state_refs s) = SOME new_store
           ==>
@@ -138,12 +136,11 @@ let to_type_TS_def = define_cases
    (to_type_TS repl_types_Exn = Tapp [] Texn_num)`;;
 
 let check_ref_types_TS_def = new_definition
-  `check_ref_types_TS types' (env:semanticPrimitives_v sem_env)
-  (CommandLineProof_name,ty,loc) <=>
-     nsLookup (sem_env_v types') CommandLineProof_name = SOME (0,Tapp
-       [to_type_TS ty] Tref_num) /\
-     nsLookup (sem_env_v env) CommandLineProof_name = SOME
-       (semanticPrimitives_Loc T loc)`;;
+  `check_ref_types_TS types' (env:semanticPrimitives_v sem_env) (name',ty,loc)
+  <=>
+     nsLookup (sem_env_v types') name' = SOME (0,Tapp [to_type_TS ty]
+       Tref_num) /\
+     nsLookup (sem_env_v env) name' = SOME (semanticPrimitives_Loc T loc)`;;
 
 let repl_types_TS = cake_inductive
   `((!ffi rs decs tids tenv (s:'ffi semanticPrimitives_state) env ck.
@@ -171,21 +168,21 @@ let repl_types_TS = cake_inductive
         evaluate_evaluate_decs s env decs = (new_s,Rerr (Rraise e)) ==>
         repl_types_TS (ffi,rs) (tids UNION new_tids,tenv,new_s,env))) /\
    ((!ffi rs decs tids tenv (s:'ffi semanticPrimitives_state) env
-       new_tids new_tenv new_s e CommandLineProof_name loc new_store.
+       new_tids new_tenv new_s e name' loc new_store.
         repl_types_TS (ffi,rs) (tids,tenv,s,env) /\
         type_ds T tenv decs new_tids new_tenv /\
         DISJOINT tids new_tids /\
         evaluate_evaluate_decs s env decs = (new_s,Rerr (Rraise e)) /\
-        MEM (CommandLineProof_name,repl_types_Exn,loc) rs /\
+        MEM (name',repl_types_Exn,loc) rs /\
         store_assign loc (semanticPrimitives_Refv e)
           (semanticPrimitives_state_refs new_s) = SOME new_store ==>
         repl_types_TS (ffi,rs) (tids UNION
           new_tids,tenv,semanticPrimitives_state_refs_fupd (K new_store)
           new_s,env))) /\
-   ((!ffi rs tids tenv (s:'ffi semanticPrimitives_state) env t
-     CommandLineProof_name loc new_store.
+   ((!ffi rs tids tenv (s:'ffi semanticPrimitives_state) env t name' loc
+     new_store.
         repl_types_TS (ffi,rs) (tids,tenv,s,env) /\
-        MEM (CommandLineProof_name,repl_types_Str,loc) rs /\
+        MEM (name',repl_types_Str,loc) rs /\
         store_assign loc (semanticPrimitives_Refv (semanticPrimitives_Litv
           (ast_StrLit t))) (semanticPrimitives_state_refs s) = SOME new_store
           ==>
@@ -241,8 +238,7 @@ let check_ref_types_check_ref_types_TS = prove
   CHEAT_TAC);;
 
 let ref_lookup_ok_def = new_definition
-  `ref_lookup_ok refs
-  ((CommandLineProof_name:(mlstring,mlstring)namespace_id),ty,loc) =
+  `ref_lookup_ok refs ((name':(mlstring,mlstring)namespace_id),ty,loc) =
      (?(v:semanticPrimitives_v).
        store_lookup loc refs = SOME (semanticPrimitives_Refv v) /\
        (ty = repl_types_Bool ==> v = semanticPrimitives_Boolv T \/ v =

@@ -3771,16 +3771,16 @@ let memory_rel_Cons1 = prove
       LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = []) /\
       encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
       LENGTH ws < sp /\ good_dimindex (:'a) ==>
-      (?clos_known_free (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
-        (let w = clos_known_free + bytes_in_word * n2w (LENGTH ws + 1) in
-          data_to_word_memoryProof_store_list clos_known_free (CONS
-            (word_Word hd) ws) m dm = SOME m1 /\
+        (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
+          data_to_word_memoryProof_store_list free' (CONS (word_Word hd)
+            ws) m dm = SOME m1 /\
           memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
             (st |+ (NextFree,word_Word w)) m1 dm
-            (CONS (dataSem_Block ts tag vals,make_cons_ptr c
-              (clos_known_free - curr) tag (LENGTH ws)) vars)))`),
+            (CONS (dataSem_Block ts tag vals,make_cons_ptr c (free' -
+              curr) tag (LENGTH ws)) vars)))`),
   CHEAT_TAC);;
 
 (* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the Block it
@@ -3798,20 +3798,20 @@ let memory_rel_MutCons = prove
       index < LENGTH vals /\ ~(ptr IN sptree_domain refs) /\
       (!gs. ~(data_to_word_config_gc_kind c = data_to_word_Generational
         gs)) ==>
-      (?clos_known_free (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
-        (let w = clos_known_free + bytes_in_word * n2w (LENGTH ws + 1) in
-          data_to_word_memoryProof_store_list clos_known_free (CONS
-            (word_Word hd) ws) m dm = SOME m1 /\
+        (let w = free' + bytes_in_word * n2w (LENGTH ws + 1) in
+          data_to_word_memoryProof_store_list free' (CONS (word_Word hd)
+            ws) m dm = SOME m1 /\
           memory_rel c be ts
             (sptree_insert ptr (bvlSem_MutBlock tag F (TAKE index vals)
               (EL index vals)
                               (DROP (index + 1) vals)) refs)
             (sp - (LENGTH ws + 1))
             (st |+ (NextFree,word_Word w)) m1 dm
-            (CONS (dataSem_RefPtr F ptr,make_cons_ptr c (clos_known_free
-              - curr) tag (LENGTH ws)) vars)))`),
+            (CONS (dataSem_RefPtr F ptr,make_cons_ptr c (free' - curr)
+              tag (LENGTH ws)) vars)))`),
   CHEAT_TAC);;
 
 let INJ_FUPDATE = prove
@@ -4092,11 +4092,11 @@ let memory_rel_AllocThunk = prove
 let memory_rel_write = prove
  (cake_as_vars (fun () ->
     `memory_rel c be ts refs sp st m dm vars ==>
-      (?(clos_known_free:'a word).
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?(free':'a word).
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         (!n.
           n < sp ==>
-          (let a = clos_known_free + bytes_in_word * n2w n in
+          (let a = free' + bytes_in_word * n2w n in
             a IN dm /\ memory_rel c be ts refs sp st ((a =+ w) m) dm
               vars)))`),
   CHEAT_TAC);;
@@ -4120,16 +4120,16 @@ let memory_rel_Cons_alt = prove
       LENGTH vals = LENGTH (ws:('a word_loc) list) /\ ~(vals = []) /\
       encode_header c (4 * tag) (LENGTH ws) = SOME hd /\
       LENGTH ws < sp /\ good_dimindex (:'a) ==>
-      (?clos_known_free (curr:'a word) m1.
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?free' (curr:'a word) m1.
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
-        ((misc_word_list clos_known_free (CONS (word_Word hd) ws) * SEP_T)
-          (fun2set (m,dm)) ==>
+        ((misc_word_list free' (CONS (word_Word hd) ws) * SEP_T) (fun2set
+          (m,dm)) ==>
          memory_rel c be (ts + 1) refs (sp - (LENGTH ws + 1))
-           (st |+ (NextFree,word_Word (clos_known_free + bytes_in_word *
-             n2w (LENGTH ws + 1)))) m dm
-           (CONS (dataSem_Block ts tag vals,make_cons_ptr c
-             (clos_known_free - curr) tag (LENGTH ws)) vars)))`),
+           (st |+ (NextFree,word_Word (free' + bytes_in_word * n2w (LENGTH
+             ws + 1)))) m dm
+           (CONS (dataSem_Block ts tag vals,make_cons_ptr c (free' -
+             curr) tag (LENGTH ws)) vars)))`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -4384,21 +4384,20 @@ let memory_rel_RefByte_content = prove
      byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\ n = LENGTH
        bytes /\
      good_dimindex (:'a) ==>
-     (?clos_known_free curr m1.
-       FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+     (?free' curr m1.
+       FLOOKUP st NextFree = SOME (word_Word free') /\
        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
        (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a word) in
         let ws = REPLICATE (byte_len (:'a) n) (n2w 0) in
         let ws = write_bytes bytes ws be in
-          data_to_word_memoryProof_store_list clos_known_free (CONS
-            (word_Word (make_byte_header c fl n)) (MAP word_Word ws)) m dm =
-            SOME m1 /\
+          data_to_word_memoryProof_store_list free' (CONS (word_Word
+            (make_byte_header c fl n)) (MAP word_Word ws)) m dm = SOME m1 /\
           memory_rel c be ts (sptree_insert new (bvlSem_ByteArray fl
             bytes) refs)
             (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,word_Word
-              (clos_known_free + w'))) m1 dm
-            (CONS (dataSem_RefPtr T new,make_ptr c (clos_known_free -
-              curr) ((n2w 0):'a word) (byte_len (:'a) n)) vars)))`),
+              (free' + w'))) m1 dm
+            (CONS (dataSem_RefPtr T new,make_ptr c (free' - curr) ((n2w
+              0):'a word) (byte_len (:'a) n)) vars)))`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -4410,8 +4409,8 @@ let memory_rel_RefByte_alt = prove
       byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
       byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
       good_dimindex (:'a) ==>
-      (?clos_known_free curr m1.
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?free' curr m1.
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
         (let w' = bytes_in_word * ((n2w (byte_len (:'a) n + 1)):'a word)
           in
@@ -4420,14 +4419,14 @@ let memory_rel_RefByte_alt = prove
          let nb = (n MOD (dimindex (:'a) DIV 8)) in
          let ws = LUPDATE (word_Word (last_bytes nb w (n2w 0) (n2w 0) be))
            (byte_len (:'a) n - 1) ws in
-           data_to_word_memoryProof_store_list clos_known_free (CONS
-             (word_Word (make_byte_header c fl n)) ws) m dm = SOME m1 /\
+           data_to_word_memoryProof_store_list free' (CONS (word_Word
+             (make_byte_header c fl n)) ws) m dm = SOME m1 /\
            memory_rel c be ts (sptree_insert new (bvlSem_ByteArray fl
              (REPLICATE n w)) refs)
              (sp - (byte_len (:'a) n + 1)) (st |+ (NextFree,word_Word
-               (clos_known_free + w'))) m1 dm
-             (CONS (dataSem_RefPtr T new,make_ptr c (clos_known_free -
-               curr) (n2w 0) (byte_len (:'a) n)) vars)))`),
+               (free' + w'))) m1 dm
+             (CONS (dataSem_RefPtr T new,make_ptr c (free' - curr) (n2w
+               0) (byte_len (:'a) n)) vars)))`),
   CHEAT_TAC);;
 
 (* the names of record fields that this statement uses for
@@ -4559,16 +4558,15 @@ let memory_rel_FromList = prove
         /\
       encode_header c (4 * tag) (LENGTH vs) = SOME hd /\ LENGTH vs < sp /\
       good_dimindex (:'a) ==>
-      (?clos_known_free curr m1 f1 xs.
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+      (?free' curr m1 f1 xs.
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
-        copy_list c st (LENGTH vs) (a,word_Word hd,clos_known_free,m,dm) =
-          SOME (f1,m1) /\
+        copy_list c st (LENGTH vs) (a,word_Word hd,free',m,dm) = SOME
+          (f1,m1) /\
         memory_rel c be (ts + 1) refs (sp - (LENGTH vs + 1)) (st |+
           (NextFree,word_Word f1)) m1 dm
           (CONS (dataSem_Block ts tag vs,
-            make_cons_ptr c (clos_known_free - curr) tag (LENGTH vs))
-              vars))`),
+            make_cons_ptr c (free' - curr) tag (LENGTH vs)) vars))`),
   CHEAT_TAC);;
 
 (* [local] *)
@@ -4833,12 +4831,12 @@ let memory_rel_ByteArray_IMP = prove
             mem_load_byte_aux m dm be (a + bytes_in_word + n2w i) =
             SOME (EL i vals)) /\
        (!i w. i < LENGTH vals ==>
-         (let labSem_addr = a + bytes_in_word + n2w i in
+         (let addr' = a + bytes_in_word + n2w i in
          memory_rel c be ts (sptree_insert p (bvlSem_ByteArray fl (LUPDATE
            w i vals)) refs) sp st
-           ((byte_align labSem_addr =+
-             word_Word (set_byte labSem_addr w (theWord (m (byte_align
-               labSem_addr))) be)) m) dm
+           ((byte_align addr' =+
+             word_Word (set_byte addr' w (theWord (m (byte_align addr')))
+               be)) m) dm
              (CONS (dataSem_RefPtr bl p,v) vars))) /\
        (if dimindex (:'a) = 32 then
          LENGTH vals + 4 < 2 EXP (dimindex (:'a) - 3) /\
@@ -6764,15 +6762,15 @@ let memory_rel_copy_array_NONE = prove
         4) /\
       byte_len (:'a) n < 2 EXP data_to_word_config_len_size c
         /\ good_dimindex (:'a) ==>
-      (?clos_known_free curr a1 a2 m1 m2 w1 w2.
+      (?free' curr a1 a2 m1 m2 w1 w2.
         v1 = word_Word w1 /\
         get_real_addr c st w1 = SOME a1 /\
-        make_ptr c (clos_known_free - curr) (n2w 0) (byte_len (:'a) n) =
-          word_Word w2 /\
+        make_ptr c (free' - curr) (n2w 0) (byte_len (:'a) n) = word_Word
+          w2 /\
         get_real_addr c st w2 = SOME a2 /\
-        FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+        FLOOKUP st NextFree = SOME (word_Word free') /\
         FLOOKUP st CurrHeap = SOME (word_Word curr) /\
-        data_to_word_memoryProof_store_list clos_known_free
+        data_to_word_memoryProof_store_list free'
           (CONS (word_Word (make_byte_header c fl n))
                (REPLICATE (byte_len (:'a) n) (word_Word (n2w 0)))) m dm =
                  SOME m1 /\
@@ -6782,8 +6780,8 @@ let memory_rel_copy_array_NONE = prove
           refs)
          (sp - (byte_len (:'a) n + 1))
          (st |+ (NextFree,
-                 word_Word (clos_known_free + bytes_in_word * n2w
-                   (byte_len (:'a) n + 1)))) m2 dm
+                 word_Word (free' + bytes_in_word * n2w (byte_len (:'a) n
+                   + 1)))) m2 dm
          (CONS (dataSem_RefPtr T new,word_Word w2) vars))`),
   CHEAT_TAC);;
 
@@ -7347,23 +7345,22 @@ let _ = do_list hide_constant ["free"];;
    variables of its own are read as variables *)
 let memory_rel_do_build = prove
  (cake_as_vars (fun () ->
-    `!parts' i st clos_known_free curr sp map0 map0' refs ts refs1 v m v ws.
+    `!parts' i st free' curr sp map0 map0' refs ts refs1 v m v ws.
        dataSem_do_build map0 i parts' refs (SOME ts) = (v,refs1,SOME ts1)
          /\
-       build_words c map0' i parts' (clos_known_free - (curr:'a word)) =
-         SOME (w,ws) /\
+       build_words c map0' i parts' (free' - (curr:'a word)) = SOME (w,ws)
+         /\
        SUM (MAP part_space_req parts') <= sp /\
-       FLOOKUP st NextFree = SOME (word_Word clos_known_free) /\
+       FLOOKUP st NextFree = SOME (word_Word free') /\
        FLOOKUP st CurrHeap = SOME (word_Word curr) /\
        (!ks. memory_rel c be ts refs sp st m dm (APPEND (MAP (\k. (map0
          k,(map0' k))) ks) vars)) /\
        good_dimindex (:'a) ==>
        (?m1.
-         let nf = clos_known_free + bytes_in_word * n2w (LENGTH ws) in
+         let nf = free' + bytes_in_word * n2w (LENGTH ws) in
            memory_rel c be ts1 refs1 (sp - LENGTH ws)
              (st |+ (NextFree,word_Word nf)) m1 dm (CONS (v,w) vars) /\
-           data_to_word_memoryProof_store_list clos_known_free ws m dm =
-             SOME m1)`),
+           data_to_word_memoryProof_store_list free' ws m dm = SOME m1)`),
   CHEAT_TAC);;
 
 let word_and_lsr_0 = prove

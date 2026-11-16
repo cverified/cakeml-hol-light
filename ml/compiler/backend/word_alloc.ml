@@ -158,19 +158,18 @@ let ssa_cc_trans_inst_def = new_definition
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (word_Inst (asm_Arith (asm_Binop bop r1' r2' ri)),ssa',na'))
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
        (match ri with Reg r3 ->
          let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let mov_in = (word_Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (word_Seq mov_in (word_Inst (asm_Arith (asm_Shift
-             backend_common_word_shift r1' r2' (Reg 8)))),ssa',na')
+           (word_Seq mov_in (word_Inst (asm_Arith (asm_Shift shift' r1' r2'
+             (Reg 8)))),ssa',na')
        | _ ->
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (word_Inst (asm_Arith (asm_Shift backend_common_word_shift r1'
-             r2' ri)),ssa',na'))
+           (word_Inst (asm_Arith (asm_Shift shift' r1' r2' ri)),ssa',na'))
      | asm_Arith (asm_Div r1 r2 r3) ->
        let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
@@ -639,9 +638,8 @@ let apply_colour_inst_def = new_definition
      | asm_Const reg w -> asm_Const (f reg) w
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        asm_Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
-       asm_Arith (asm_Shift backend_common_word_shift (f r1) (f r2)
-         (apply_colour_imm f ri))
+     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
+       asm_Arith (asm_Shift shift' (f r1) (f r2) (apply_colour_imm f ri))
      | asm_Arith (asm_Div r1 r2 r3) ->
        asm_Arith (asm_Div (f r1) (f r2) (f r3))
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) ->
@@ -742,8 +740,7 @@ let get_writes_inst_def = new_definition
      match inst with
        asm_Const reg w -> sptree_insert reg one LN
      | asm_Arith (asm_Binop bop r1 r2 ri) -> sptree_insert r1 one LN
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
-       sptree_insert r1 one LN
+     | asm_Arith (asm_Shift shift' r1 r2 ri) -> sptree_insert r1 one LN
      | asm_Arith (asm_Div r1 r2 r3) -> sptree_insert r1 one LN
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> sptree_insert r4 one
        (sptree_insert r1 one LN)
@@ -777,7 +774,7 @@ let get_live_inst_def = new_definition
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
          (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert r3 one
          (sptree_delete r1 live))
        | _ -> sptree_insert r2 one (sptree_delete r1 live))
@@ -941,8 +938,8 @@ let remove_dead_inst_def = new_definition
      | (asm_Const reg w,live) -> (sptree_lookup reg live = NONE)
      | (asm_Arith (asm_Binop bop r1 r2 ri),live) -> (sptree_lookup r1 live =
        NONE)
-     | (asm_Arith (asm_Shift backend_common_word_shift r1 r2 n),live) ->
-       (sptree_lookup r1 live = NONE)
+     | (asm_Arith (asm_Shift shift' r1 r2 n),live) -> (sptree_lookup r1 live
+       = NONE)
      | (asm_Arith (asm_Div r1 r2 r3),live) -> (sptree_lookup r1 live = NONE)
      | (asm_Arith (asm_AddCarry r1 r2 r3 r4),live) ->
        (sptree_lookup r1 live = NONE /\ sptree_lookup r4 live = NONE)
@@ -1145,7 +1142,7 @@ let get_delta_inst_def = new_definition
      | asm_Arith (asm_Binop bop r1 r2 ri) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3]
                      | _ -> reg_alloc_Delta [r1] [r2])
      | asm_Arith (asm_Div r1 r2 r3) -> reg_alloc_Delta [r1] [r3; r2]
@@ -1395,7 +1392,7 @@ let get_heu_inst_def = new_definition
        | _ ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
-     | asm_Arith (asm_Shift backend_common_word_shift r1 r2 ri) ->
+     | asm_Arith (asm_Shift shift' r1 r2 ri) ->
        (match ri with
          Reg r3 ->
            (

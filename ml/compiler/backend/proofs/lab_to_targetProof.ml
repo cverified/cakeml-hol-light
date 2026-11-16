@@ -522,9 +522,9 @@ let share_mem_domain_code_rel_def = new_definition
      (
       // whenever the pc is accessing share mem, the pc is in ffi_entry_pcs
       // * after mmio_pcs_min_index and the mmio_info for it is correct
-      !pc' op re a wordSem_inst len i.
-         (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a)
-           wordSem_inst len) /\
+      !pc' op re a inst' len i.
+         (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst'
+           len) /\
          mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i) ==>
          (?index.
            i <= index /\
@@ -542,8 +542,8 @@ let share_mem_domain_code_rel_def = new_definition
       // * it must be fetching ShareMem instruction
       !pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a wordSem_inst len. ~(line = lab_Asm (ShareMem op re a)
-         wordSem_inst len)) ==>
+       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
+         ==>
        DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc_conf))
          {p + n2w a + n2w (pos_val pc' 0 code2) |
            a < LENGTH (line_bytes line)}) /\
@@ -938,9 +938,9 @@ let lab_to_targetProof_state_rel_def = new_definition
       // Remaining space for code buffer exists
       !n.
        n < buffer_space_left (labSem_state_code_buffer s1) ==>
-       (let labSem_addr = buffer_position (labSem_state_code_buffer s1) +
-         n2w (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n) in
-       labSem_addr IN asm_state_mem_domain t1 /\ ~(labSem_addr IN
+       (let addr' = buffer_position (labSem_state_code_buffer s1) + n2w
+         (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n) in
+       addr' IN asm_state_mem_domain t1 /\ ~(addr' IN
          labSem_state_mem_domain s1))) /\
      // Position of code memory
      bytes_in_mem p (prog_to_bytes code2) (asm_state_mem
@@ -4127,17 +4127,16 @@ let make_word_def = new_definition
 let make_init_def = new_definition
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
-     stack_remove_comp cbpos cbspace coracle =
+     comp' cbpos cbspace coracle =
      mk_labSem_state (\k. word_Word ((asm_state_regs t k):'a word))
        (asm_state_fp_regs t) m dm sdm 0 (asm_config_big_endian (target_config
        (machine_config_target mc_conf))) ffi (target_io_regs mc_conf ffi ms)
        (target_cc_regs mc_conf ffi ms) (target_io_fp_regs mc_conf ffi ms)
-       (target_cc_fp_regs mc_conf ffi ms) code stack_remove_comp coracle
-       (mk_buffer cbpos [] cbspace) 0 F (machine_config_ptr_reg mc_conf)
-       (machine_config_len_reg mc_conf) (machine_config_ptr2_reg mc_conf)
-       (machine_config_len2_reg mc_conf) (match asm_config_link_reg
-       (target_config (machine_config_target mc_conf)) with SOME n -> n | _ ->
-       0)
+       (target_cc_fp_regs mc_conf ffi ms) code comp' coracle (mk_buffer cbpos
+       [] cbspace) 0 F (machine_config_ptr_reg mc_conf) (machine_config_len_reg
+       mc_conf) (machine_config_ptr2_reg mc_conf) (machine_config_len2_reg
+       mc_conf) (match asm_config_link_reg (target_config
+       (machine_config_target mc_conf)) with SOME n -> n | _ -> 0)
    // Initialize with code buffer empty`;;
 
 let oracle_tie_make_init = prove
@@ -4325,9 +4324,9 @@ let get_shmem_info_ok_lemma = prove
    LENGTH (prog_to_bytes code2) < dimword (:'a) /\
    ALL (\x. ?s. x = ffi_ExtCall s) ffis /\
    get_shmem_info code2 p ffis [] = (new_ffi_names,new_shmem_info) ==>
-   (!pc' op re a wordSem_inst len i.
-     (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a)
-       wordSem_inst len) /\
+   (!pc' op re a inst' len i.
+     (asm_fetch_aux pc' code2 = SOME (lab_Asm (ShareMem op re a) inst' len)
+       /\
      mmio_pcs_min_index new_ffi_names = SOME i) ==>
      (?index.
        find_index (p + (pos_val pc' 0 code2)) (MAP (\rec.
@@ -4341,8 +4340,8 @@ let get_shmem_info_ok_lemma = prove
              Addr r off -> w2n off) re (p + (pos_val pc' 0 code2 + len))))) /\
    (!pc' line.
        asm_fetch_aux pc' code2 = SOME line /\
-       (!op re a wordSem_inst len. ~(line = lab_Asm (ShareMem op re a)
-         wordSem_inst len)) ==>
+       (!op re a inst' len. ~(line = lab_Asm (ShareMem op re a) inst' len))
+         ==>
        DISJOINT (set_of_list (MAP (\rec. shmem_info_num_entry_pc rec)
          new_shmem_info))
          {p + a + (pos_val pc' 0 code2) |

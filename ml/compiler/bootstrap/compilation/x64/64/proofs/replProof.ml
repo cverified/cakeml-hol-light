@@ -306,7 +306,7 @@ let evaluate_repl = prove
  (`!(st:'ffi semanticPrimitives_state) s repl_str arg_str
     env s1_v types' cur_gen next_id next_gen env1
     parse_v types_v conf_v env_v decs_v input_str_v
-    types' decs input_str env_id s1 semantics_parse.
+    types' decs input_str env_id s1 parse'.
       semanticPrimitives_state_eval_state
       st = SOME (EvalDecs s) /\ eval_decs_state_compiler
       s = compiler_inst x64_config /\ eval_decs_state_compiler_state
@@ -320,7 +320,7 @@ let evaluate_repl = prove
         NUM)) types' types_v /\
       STRING_TYPE input_str input_str_v /\
       (STRING_TYPE (Arrow) SUM_TYPE STRING_TYPE (LIST_TYPE AST_DEC_TYPE))
-        semantics_parse parse_v /\
+        parse' parse_v /\
       env_v = flatSem_Conv NONE [dataSem_Env env1 (env_id,0); flatSem_Litv
         (ast_IntLit (&env_id))] /\
       conf_v = flatSem_Conv NONE [s1_v; flatSem_Litv (ast_IntLit

@@ -286,12 +286,12 @@ let make_funcs_def = new_definition
 let crep_to_loop_compile_prog_def = new_definition
   `crep_to_loop_compile_prog target prog =
    let fnums = list_of_seq (\n. n + first_name) (LENGTH prog) in let
-       loop_live_comp = crep_to_loop_comp_func target
-         (crep_to_loop_make_funcs prog) in
+       comp' = crep_to_loop_comp_func target (crep_to_loop_make_funcs prog)
+         in
     MAP2 (\n (name,params',body).
           (n,
            (list_of_seq I o LENGTH) params',
-           loop_live_optimise (loop_live_comp params' (simp_prog body))))
+           loop_live_optimise (comp' params' (simp_prog body))))
     fnums prog`;;
 
 (* and the interface *)

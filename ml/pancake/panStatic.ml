@@ -505,10 +505,10 @@ let get_redec_msg_def = new_definition
   is_untrust: NotTrusted vs other
 *)
 let get_memop_msg_def = new_definition
-  `get_memop_msg is_local' asm_is_load is_untrust loc scope =
+  `get_memop_msg is_local' is_load' is_untrust loc scope =
      let mem_type = (if is_local' then (implode "local ") else (implode
        "shared ")) in
-     let op_type' = (if asm_is_load then (implode "load ") else (implode
+     let op_type' = (if is_load' then (implode "load ") else (implode
        "store ")) in
      let issue =
        (match (is_local',is_untrust) with (F,F) -> (implode "is ")

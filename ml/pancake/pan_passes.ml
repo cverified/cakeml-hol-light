@@ -88,10 +88,10 @@ let pan_to_target_all_def = new_definition
          fnums = list_of_seq (\n. n + first_name) (LENGTH prog_b) in let
          funcs = pan_to_crep_make_funcs prog_b in let
          target = asm_config_ISA asm_conf in let
-         word_to_stack_comp = pan_to_crep_comp_func target funcs in let
+         comp' = pan_to_crep_comp_func target funcs in let
          prog_b1 = MAP2 (\n (name,params',body).
-                     (n,(list_of_seq I o LENGTH) params',word_to_stack_comp
-                       params' body)) fnums prog_b in let
+                     (n,(list_of_seq I o LENGTH) params',comp' params'
+                       body)) fnums prog_b in let
          prog_c = MAP (\(name,params',body).
            (name,params',loop_live_optimise body)) prog_b1 in let
          prog2 = loop_to_word_compile_prog prog_c in let

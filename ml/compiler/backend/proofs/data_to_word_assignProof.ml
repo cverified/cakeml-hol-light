@@ -2856,9 +2856,8 @@ let assign_BoundsCheckBlock = prove
         (adjust_var v1) (Imm (n2w 1))
                               (word_Assign 1 (word_Const (n2w 0)))
                               (word_Assign 1
-                              (let labSem_addr = real_addr c (adjust_var v1)
-                                in
-                              let header = word_Load labSem_addr in
+                              (let addr' = real_addr c (adjust_var v1) in
+                              let header = word_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               (\sh e n. word_Shift sh e (word_Const (n2w
@@ -2902,9 +2901,8 @@ let assign_BoundsCheckArray = prove
  (`data_to_word_assign c secn l dest (clos_MemOp clos_BoundsCheckArray) args
   names =
       match args with [v1; v2] -> (data_to_word_list_Seq [word_Assign 1
-                              (let labSem_addr = real_addr c (adjust_var v1)
-                                in
-                              let header = word_Load labSem_addr in
+                              (let addr' = real_addr c (adjust_var v1) in
+                              let header = word_Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
                               (\sh e n. word_Shift sh e (word_Const (n2w
@@ -2948,9 +2946,8 @@ let assign_BoundsCheckByte = prove
  (`data_to_word_assign c secn l dest (clos_MemOp (clos_BoundsCheckByte leq))
   args names =
       match args with [v1; v2] -> (data_to_word_list_Seq [word_Assign 1
-                              (let labSem_addr = real_addr c (adjust_var v1)
-                                in
-                              let header = word_Load labSem_addr in
+                              (let addr' = real_addr c (adjust_var v1) in
+                              let header = word_Load addr' in
                               let extra = (if dimindex (:'a) = 32 then 2
                                 else 3) in
                               let k = dimindex (:'a) -
@@ -4378,33 +4375,32 @@ let getWords_thm = prove
   CHEAT_TAC);;
 
 let store_list_word_cond_add_IMP = prove
- (`!y2 m a m1 clos_known_free.
-     data_to_word_memoryProof_store_list clos_known_free (MAP (word_cond_add
-       c (a:'a word))
+ (`!y2 m a m1 free'.
+     data_to_word_memoryProof_store_list free' (MAP (word_cond_add c (a:'a
+       word))
        (MAP (\(b,c). (b,word_Word c)) y2)) m dm = SOME m1 ==>
-     const_addresses clos_known_free y2 dm /\
-     const_writes clos_known_free (a << (shift_length c -
-       backend_common_word_shift (:'a))) y2 m = m1`,
+     const_addresses free' y2 dm /\
+     const_writes free' (a << (shift_length c - backend_common_word_shift
+       (:'a))) y2 m = m1`,
   CHEAT_TAC);;
 
 let evaluate_StoreAnyConsts = prove
- (`!r1 r2 r3 vs w (s:('a,'c,'ffi)wordSem_state) clos_known_free m dm m1.
-     data_to_word_memoryProof_store_list clos_known_free (MAP (word_cond_add
-       c (a:'a word)) vs) m dm = SOME m1 /\
+ (`!r1 r2 r3 vs w (s:('a,'c,'ffi)wordSem_state) free' m dm m1.
+     data_to_word_memoryProof_store_list free' (MAP (word_cond_add c (a:'a
+       word)) vs) m dm = SOME m1 /\
      m = wordSem_state_memory s /\ dm = wordSem_state_mdomain s
        /\ ALL_DISTINCT [r1; r2; r3] /\
      ALL (good_loc (sptree_domain (wordSem_state_code s)) o SND) (CONS w vs)
        /\
-     sptree_lookup r2 (wordSem_state_locals s) = SOME (word_Word
-       clos_known_free) /\
+     sptree_lookup r2 (wordSem_state_locals s) = SOME (word_Word free') /\
      sptree_lookup r3 (wordSem_state_locals s) = SOME (word_Word (a <<
        (shift_length c - backend_common_word_shift (:'a)))) ==>
      (?ll.
        wordSem_evaluate (StoreAnyConsts r1 r2 r3 vs w,s) =
          (NONE,wordSem_state_store_fupd (K (wordSem_state_store s |+
            (NextFree,word_Word
-                            (clos_known_free + bytes_in_word * n2w (LENGTH
-                              vs))))) (wordSem_state_locals_fupd (K ll)
+                            (free' + bytes_in_word * n2w (LENGTH vs)))))
+                              (wordSem_state_locals_fupd (K ll)
                               (wordSem_state_memory_fupd (K m1) s))) /\
        sptree_lookup r1 ll = SOME (word_cond_add c a w) /\
        (!n. ~(MEM n [r1; r2; r3]) ==> sptree_lookup n ll = sptree_lookup n

@@ -1328,8 +1328,8 @@ let build_letrec_def = new_definition
 
 let build_lets_def = new_definition
   `build_lets binds body =
-     ITLIST (\camlPtreeConversion_bind rest.
-              match camlPtreeConversion_bind with
+     ITLIST (\bind' rest.
+              match bind' with
                 sum_INL (sum_INL (c,fs),x) ->
                   ast_Let (SOME (implode " r")) x (mk_record_match c fs
                     (implode " r") rest)
@@ -2258,11 +2258,11 @@ let ptree_ConstrDecl_def = define_cases
         | [name; oft; args] ->
               OPTION_IGNORE_BIND (expect_tok oft caml_lex_OfT) (OPTION_BIND
                   (ptree_ConstrName name) (\nm. OPTION_BIND (nterm_of args)
-                  (\peg_nt.
-              if peg_nt = sum_INL camlPEG_nRecord then
+                  (\nt'.
+              if nt' = sum_INL camlPEG_nRecord then
                 OPTION_BIND (ptree_Record args) (\ts.
                   SOME (sum_INR (nm,ts)))
-              else if peg_nt = sum_INL camlPEG_nConstrArgs then
+              else if nt' = sum_INL camlPEG_nConstrArgs then
                 OPTION_BIND (ptree_ConstrArgs args) (\ts.
                   SOME (sum_INL (nm,ts)))
               else NONE (locs,(implode "Impossible: nConstrDecl")))))
@@ -2602,8 +2602,8 @@ let ptree_TypeDefinition_def = define_cases
 
 let build_dlet_def = new_definition
   `build_dlet locs binds =
-     MAP (\camlPtreeConversion_bind.
-            match camlPtreeConversion_bind with
+     MAP (\bind'.
+            match bind' with
               sum_INL (sum_INL (c,fs),x) ->
                 let v = (implode " c") in
                 Dlocal
@@ -2696,11 +2696,11 @@ let ptree_ModuleType_def,ptree_ModuleType_ind = define_guess
         if nterm = sum_INL camlPEG_nModuleType then
           match args with
             [arg] ->
-              OPTION_BIND (nterm_of arg) (\peg_nt.
-                if peg_nt = sum_INL camlPEG_nModTypePath then
+              OPTION_BIND (nterm_of arg) (\nt'.
+                if nt' = sum_INL camlPEG_nModTypePath then
                     OPTION_IGNORE_BIND (ptree_ModTypePath arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nSigSpec then
+                else if nt' = sum_INL camlPEG_nSigSpec then
                     OPTION_IGNORE_BIND (ptree_SigSpec arg) (
                     SOME one)
                 else NONE (locs,(implode "Impossible: nModuleType")))
@@ -2761,26 +2761,26 @@ let ptree_ModuleType_def,ptree_ModuleType_ind = define_guess
         if nterm = sum_INL camlPEG_nSigItem then
           match args with
             [arg] ->
-              OPTION_BIND (nterm_of arg) (\peg_nt.
-                if peg_nt = sum_INL camlPEG_nTypeDefinition then
+              OPTION_BIND (nterm_of arg) (\nt'.
+                if nt' = sum_INL camlPEG_nTypeDefinition then
                     OPTION_IGNORE_BIND (ptree_TypeDefinition arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nExcType then
+                else if nt' = sum_INL camlPEG_nExcType then
                     OPTION_IGNORE_BIND (ptree_ExcType arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nValType then
+                else if nt' = sum_INL camlPEG_nValType then
                     OPTION_IGNORE_BIND (ptree_ValType arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nModTypeAsc then
+                else if nt' = sum_INL camlPEG_nModTypeAsc then
                     OPTION_IGNORE_BIND (ptree_ModTypeAsc arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nModTypeAssign then
+                else if nt' = sum_INL camlPEG_nModTypeAssign then
                     OPTION_IGNORE_BIND (ptree_ModTypeAssign arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nOpenMod then
+                else if nt' = sum_INL camlPEG_nOpenMod then
                     OPTION_IGNORE_BIND (ptree_OpenMod arg) (
                     SOME one)
-                else if peg_nt = sum_INL camlPEG_nIncludeMod then
+                else if nt' = sum_INL camlPEG_nIncludeMod then
                     OPTION_IGNORE_BIND (ptree_IncludeMod arg) (
                     SOME one)
                 else NONE (locs,(implode "Impossible: nSigItem")))

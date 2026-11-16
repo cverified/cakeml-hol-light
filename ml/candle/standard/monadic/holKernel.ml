@@ -1224,12 +1224,12 @@ let new_basic_type_definition_def,new_basic_type_definition_ind = define_guess
          "new_basic_type_definition: Not a combination")) (\(P,x).
      if ~(freesin [] P) then
        failwith (implode
-         "new_basic_type_definition: Predicate is not closed") else let
-         holKernel_tyvars = MAP holSyntax_Tyvar (MAP implode (sort string_le
-         (MAP explode (type_vars_in_term P)))) in
+         "new_basic_type_definition: Predicate is not closed") else let tyvars'
+         = MAP holSyntax_Tyvar (MAP implode (sort string_le (MAP explode
+         (type_vars_in_term P)))) in
      st_ex_bind (type_of x) (\rty.
-        st_ex_ignore_bind (add_type (tyname,LENGTH holKernel_tyvars))
-          (st_ex_bind (mk_type (tyname,holKernel_tyvars)) (\aty'.
+        st_ex_ignore_bind (add_type (tyname,LENGTH tyvars')) (st_ex_bind
+          (mk_type (tyname,tyvars')) (\aty'.
         st_ex_ignore_bind (add_constants [(absname,mk_fun_ty rty aty');
           (repname,mk_fun_ty aty' rty)]) (
         st_ex_ignore_bind (add_def (TypeDefn tyname P absname repname))

@@ -85,7 +85,7 @@ let asm_fetch_aux_eq = prove
 This is probably the wrong direction*)
 (* [local] *)
 let asm_fetch_not_skip_adjust_pc = prove
- (`!pc' code wordSem_inst.
+ (`!pc' code inst'.
    (!x y. ~(asm_fetch_aux pc' code = SOME (lab_Asm (Asmi (asm_Inst
      asm_Skip)) x y))) ==>
    asm_fetch_aux pc' code = asm_fetch_aux (adjust_pc pc' code)

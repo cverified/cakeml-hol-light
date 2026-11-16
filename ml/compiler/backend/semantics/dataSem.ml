@@ -1472,16 +1472,16 @@ let flush_state_def = define_general
     (K LN) s))`;;
 
 let call_env_def = new_definition
-  `dataSem_call_env args sptree__size (s:('c,'ffi)dataSem_state) =
+  `dataSem_call_env args size' (s:('c,'ffi)dataSem_state) =
      let new_stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
                               (OPTION_MAP2 (+) (size_of_stack
-                                (dataSem_state_stack s)) sptree__size) in let
+                                (dataSem_state_stack s)) size') in let
          stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit
            (dataSem_state_limits s))) new_stack_max) in
            dataSem_state_safe_for_space_fupd (K (dataSem_state_safe_for_space s
            /\ stack_safe)) (dataSem_state_stack_max_fupd (K new_stack_max)
-           (dataSem_state_locals_size_fupd (K sptree__size)
-           (dataSem_state_locals_fupd (K (sptree_fromList args))
+           (dataSem_state_locals_size_fupd (K size') (dataSem_state_locals_fupd
+           (K (sptree_fromList args))
        s)))`;;
 
 let push_env_def = define_general

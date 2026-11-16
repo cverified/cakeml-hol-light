@@ -1404,7 +1404,7 @@ let find_code_upto_size = prove
  (`(dataSem_find_code dest x code sizes = foo) ==>
     (?other_size.
     dataSem_find_code dest x code other_sizes = OPTION_MAP
-      (\(args,exp,sptree__size). (args,exp,other_size)) foo)`,
+      (\(args,exp,size'). (args,exp,other_size)) foo)`,
   CHEAT_TAC);;
 
 

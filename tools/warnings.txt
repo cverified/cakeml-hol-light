@@ -228,9 +228,9 @@ linear_scan	line 871 is 99 characters
 word_alloc	Overload Move0
 word_alloc	Overload Move1
 word_alloc	line 138 is 103 characters
-word_alloc	line 1137 is 80 characters
-word_alloc	line 1550 is 81 characters
-word_alloc	line 1693 is 91 characters
+word_alloc	line 1134 is 80 characters
+word_alloc	line 1547 is 81 characters
+word_alloc	line 1690 is 91 characters
 word_cse	ML code skipped: val _ = Theory.delete_const "Seqs";
 word_cse	line 582 is 81 characters
 word_inst	line 354 is 83 characters
@@ -3040,20 +3040,20 @@ basis_ffi	derive basis_ffi_length_thms: no ffi_write_length
 basis_ffi	ML code skipped: val _ = translation_extends "TextIOProg"; val st_f = get_ml_
 basis_ffi	ML code skipped: val ref_eq_nil_pat = “_ = [] : v store_v list”
 basis_ffi	derive basis_refs_eqs: '"refs_def"\n '
-basis_ffi	line 195 is 81 characters
-basis_ffi	line 196 is 80 characters
-basis_ffi	line 199 is 81 characters
-basis_ffi	line 229 is 101 characters
-basis_ffi	line 231 is 101 characters
-basis_ffi	line 237 is 96 characters
-basis_ffi	line 238 is 95 characters
-basis_ffi	line 240 is 83 characters
-basis_ffi	line 278 is 99 characters
-basis_ffi	line 279 is 93 characters
-basis_ffi	line 280 is 89 characters
+basis_ffi	line 194 is 81 characters
+basis_ffi	line 195 is 80 characters
+basis_ffi	line 198 is 81 characters
+basis_ffi	line 228 is 101 characters
+basis_ffi	line 230 is 101 characters
+basis_ffi	line 236 is 96 characters
+basis_ffi	line 237 is 95 characters
+basis_ffi	line 239 is 83 characters
+basis_ffi	line 277 is 99 characters
+basis_ffi	line 278 is 93 characters
+basis_ffi	line 279 is 89 characters
+basis_ffi	line 280 is 92 characters
 basis_ffi	line 281 is 92 characters
-basis_ffi	line 282 is 92 characters
-basis_ffi	line 332 is 90 characters
+basis_ffi	line 330 is 90 characters
 compiler32Prog	ML code skipped: open preamble; open compilerTheory      exportTheory      ml
 compiler32Prog	ML code skipped: val _ = translation_extends "ag32Prog"; val _ = ml_translato
 compiler32Prog	ML code skipped: val _ = ml_translatorLib.ml_prog_update (ml_progLib.open_mod
@@ -6173,11 +6173,11 @@ lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
 lab_to_targetProof	line 3248 is 92 characters
 lab_to_targetProof	line 3289 is 84 characters
-lab_to_targetProof	line 4511 is 93 characters
-lab_to_targetProof	line 4674 is 89 characters
-lab_to_targetProof	line 4677 is 81 characters
-lab_to_targetProof	line 4734 is 89 characters
-lab_to_targetProof	line 4737 is 81 characters
+lab_to_targetProof	line 4510 is 93 characters
+lab_to_targetProof	line 4673 is 89 characters
+lab_to_targetProof	line 4676 is 81 characters
+lab_to_targetProof	line 4733 is 89 characters
+lab_to_targetProof	line 4736 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i

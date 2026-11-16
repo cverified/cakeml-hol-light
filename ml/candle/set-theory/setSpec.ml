@@ -32,16 +32,16 @@ let extensional_def = new_definition
   mem' a y))`;;
 
 let is_separation_def = new_definition
-  `is_separation (mem':'U->'U->bool) setSpec_sub <=> (!x P. !a. mem' a
-  (setSpec_sub x P) <=> mem' a x /\ P a)`;;
+  `is_separation (mem':'U->'U->bool) sub' <=> (!x P. !a. mem' a (sub' x P)
+  <=> mem' a x /\ P a)`;;
 
 let is_power_def = new_definition
   `is_power (mem':'U->'U->bool) power' <=> (!x. !a. mem' a (power' x) <=>
   (!b. mem' b a ==> mem' b x))`;;
 
 let is_union_def = new_definition
-  `is_union (mem':'U->'U->bool) setSpec_union <=> (!x. !a. mem' a
-  (setSpec_union x) <=> (?b. mem' a b /\ mem' b x))`;;
+  `is_union (mem':'U->'U->bool) union' <=> (!x. !a. mem' a (union' x) <=>
+  (?b. mem' a b /\ mem' b x))`;;
 
 let is_upair_def = new_definition
   `is_upair (mem':'U->'U->bool) upair' <=> (!x y. !a. mem' a (upair' x y)
@@ -50,9 +50,9 @@ let is_upair_def = new_definition
 let is_set_theory_def = new_definition
   `is_set_theory (mem':'U->'U->bool) <=>
      extensional mem' /\
-     (?setSpec_sub. is_separation mem' setSpec_sub) /\
+     (?sub'. is_separation mem' sub') /\
      (?power'. is_power mem' power') /\
-     (?setSpec_union. is_union mem' setSpec_union) /\
+     (?union'. is_union mem' union') /\
      (?upair'. is_upair mem' upair')`;;
 
 let separation_unique = prove
@@ -79,16 +79,14 @@ let upair_unique = prove
       = upair2)`,
   CHEAT_TAC);;
 
-let setSpec_sub_def,setSpec_sub_ind = define_guess
-  `setSpec_sub (mem':'U->'U->bool) = (@setSpec_sub. is_separation mem'
-  setSpec_sub)`;;
+let setSpec_sub_def = new_definition
+  `sub' (mem':'U->'U->bool) = (@sub'. is_separation mem' sub')`;;
 
 let power_def,power_ind = define_guess
   `power' (mem':'U->'U->bool) = (@power'. is_power mem' power')`;;
 
-let setSpec_union_def,setSpec_union_ind = define_guess
-  `setSpec_union (mem':'U->'U->bool) = (@setSpec_union. is_union mem'
-  setSpec_union)`;;
+let setSpec_union_def = new_definition
+  `union' (mem':'U->'U->bool) = (@union'. is_union mem' union')`;;
 
 let upair_def,upair_ind = define_guess
   `upair' (mem':'U->'U->bool) = (@upair'. is_upair mem' upair')`;;

@@ -1409,9 +1409,19 @@ class Porter:
 
   def is_const(self, n):
     # a name that the port overloads the accessors of a record
-    # field with is a constant of HOL Light as well
+    # field with is a constant of HOL Light as well.
+    #
+    # self.ctx.names is the table that resolves a bare name of
+    # this theory's scope to the constant the port calls it, so a
+    # name in it is a constant here whatever the port renamed it
+    # to: backend_common's word_shift is in scope in wordLang
+    # under the overload shift, and a bound shift there has to
+    # give way to it.  A name that is renamed in a theory this one
+    # is no descendant of is not in the table and is no constant
+    # here, which is the whole point (backend_x64_eval's prog)
     return (n in self.db.hl or n in self.db.provided or
             n in set(self.db.ambiguous_fields().values()) or
+            n in self.ctx.names or
             any(k not in ('type', 'tyabbrev') and self.keeps_name(t, n)
                 for t, k in self.db.defs.get(n, [])))
 

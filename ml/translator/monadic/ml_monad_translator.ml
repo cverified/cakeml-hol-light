@@ -1280,17 +1280,17 @@ let EXC_TYPE_aux_def = define_cases
                                 [v1_1] /\ a x_1 v1_1))`;;
 
 let EvalM_to_EvalSt = prove
- (`!exc_stamp TYPE' EXN_TYPE x exp H ml_prog_init_state env.
-     EvalM T env ml_prog_init_state exp (MONAD TYPE' EXN_TYPE x) H ==>
+ (`!exc_stamp TYPE' EXN_TYPE x exp H init_state' env.
+     EvalM T env init_state' exp (MONAD TYPE' EXN_TYPE x) H ==>
      lookup_cons (Short (implode "M_success")) env = SOME (1,TypeStamp
        (implode "M_success") exc_stamp) ==>
      lookup_cons (Short (implode "M_failure")) env = SOME (1,TypeStamp
        (implode "M_failure") exc_stamp) ==>
-     EvalSt env ml_prog_init_state
+     EvalSt env init_state'
        (handle_all (ast_Con (SOME (Short (implode "M_success"))) [exp])
          (implode "M_failure"))
        (EXC_TYPE_aux exc_stamp TYPE' EXN_TYPE (ml_monadBase_run x
-         ml_prog_init_state)) H`,
+         init_state')) H`,
   CHEAT_TAC);;
 
 let EvalSt_Let_Fun = prove

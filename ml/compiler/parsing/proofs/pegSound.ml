@@ -230,7 +230,7 @@ let real_fringe_mkNd = prove
 add_simp real_fringe_mkNd;;
 
 let ptree_head_NT_mkNd = prove
- (`ptree_head pt = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num) peg_nt)) n
+ (`ptree_head pt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) n
   /\ valid_lptree cmlG pt /\
    real_fringe pt = MAP
      ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol) ## I) pf
@@ -343,9 +343,9 @@ let ptPapply_lemma = prove
        LENGTH i0 < limit' ==>
        peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) gram_nPbase)
          I) (peg_Success i pts eo) ==>
-       (?pt. pts = [pt] /\ ptree_head pt = (\peg_nt. grammar_NT
-         ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPbase /\ valid_lptree cmlG
-         pt /\
+       (?pt. pts = [pt] /\ ptree_head pt = (\nt'. grammar_NT
+         ((INL:MMLnonT->MMLnonT+num) nt')) gram_nPbase /\ valid_lptree cmlG pt
+         /\
             MAP
               ((grammar_TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol)
               ## I) i0 = APPEND (real_fringe pt) (MAP
@@ -354,16 +354,15 @@ let ptPapply_lemma = prove
      (!ptlist pt0 acc i0 err.
        peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
          gram_nPbase) I) (i,ptlist,err) /\
-       ptree_head pt0 = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-         peg_nt)) gram_nPbase /\ valid_lptree cmlG pt0 /\
-       ptree_head acc = (\peg_nt. grammar_NT ((INL:MMLnonT->MMLnonT+num)
-         peg_nt)) gram_nPConApp /\ valid_lptree cmlG acc /\
+       ptree_head pt0 = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
+         gram_nPbase /\ valid_lptree cmlG pt0 /\
+       ptree_head acc = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
+         gram_nPConApp /\ valid_lptree cmlG acc /\
        LENGTH i0 < limit' ==>
        (?pt. ptPapply0 acc (CONS pt0 (FLAT ptlist)) = [pt] /\
-            ptree_head pt = (\peg_nt. grammar_NT
-              ((INL:MMLnonT->MMLnonT+num) peg_nt)) gram_nPapp /\ valid_lptree
-              cmlG pt /\ APPEND (APPEND (real_fringe acc) (real_fringe pt0))
-              (MAP
+            ptree_head pt = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+              nt')) gram_nPapp /\ valid_lptree cmlG pt /\ APPEND (APPEND
+              (real_fringe acc) (real_fringe pt0)) (MAP
               ((grammar_TOK:tokens_token->(tokens_token
               ,MMLnonT)grammar_symbol) ## I) i0) = APPEND (real_fringe pt)
               (MAP

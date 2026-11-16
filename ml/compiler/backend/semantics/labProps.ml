@@ -874,8 +874,8 @@ let no_install_def = new_definition
 
 let no_share_mem_inst_def = new_definition
   `no_share_mem_inst code <=>
-   (!p op re a wordSem_inst len. ~(asm_fetch_aux p code =
-       SOME (lab_Asm (ShareMem op re a) wordSem_inst len)))`;;
+   (!p op re a inst' len. ~(asm_fetch_aux p code =
+       SOME (lab_Asm (ShareMem op re a) inst' len)))`;;
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant

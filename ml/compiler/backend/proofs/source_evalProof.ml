@@ -142,14 +142,14 @@ let do_eval_record_def = new_definition
 (* a somewhat generic env rel *)
 
 let source_evalProof_env_rel_def = new_definition
-  `source_evalProof_env_rel source_evalProof_v_rel (env:semanticPrimitives_v
-  sem_env) env' <=> sem_env_c
+  `source_evalProof_env_rel v_rel' (env:semanticPrimitives_v sem_env) env' <=>
+  sem_env_c
      env = sem_env_c env' /\ nsDom (sem_env_v env) = nsDom (sem_env_v env')
        /\
      nsDomMod (sem_env_v env) = nsDomMod (sem_env_v env') /\
      (!nm x y. nsLookup (sem_env_v env) nm = SOME x /\ nsLookup (sem_env_v
        env') nm = SOME y ==>
-         source_evalProof_v_rel x y)`;;
+         v_rel' x y)`;;
 
 let env_rel_mono_rel = prove
  (`(!y z. R y z ==> R' y z) ==>

@@ -2529,8 +2529,8 @@ let max_var_exp_max = prove
 
 (* [local] *)
 let max_var_inst_max = prove
- (`!wordSem_inst.
-     every_var_inst (\x. x <= max_var_inst wordSem_inst) wordSem_inst`,
+ (`!inst'.
+     every_var_inst (\x. x <= max_var_inst inst') inst'`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -2768,10 +2768,10 @@ let call_arg_convention_preservation = prove
 
 (*Composing with a function using apply_colour*)
 let every_var_inst_apply_colour_inst = prove
- (`!P wordSem_inst Q f.
-   every_var_inst P wordSem_inst /\
+ (`!P inst' Q f.
+   every_var_inst P inst' /\
    (!x. P x ==> Q (f x)) ==>
-   every_var_inst Q (apply_colour_inst f wordSem_inst)`,
+   every_var_inst Q (apply_colour_inst f inst')`,
   CHEAT_TAC);;
 
 let every_var_exp_apply_colour_exp = prove
