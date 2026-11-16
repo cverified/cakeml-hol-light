@@ -13437,6 +13437,11 @@ DEF_NAMES = {
 # is not a definition, so it has a table of its own; what a patch
 # is and what happens when one does not apply is the same.
 THM_PATCH = {
+  # the same CROSS of setSpec, in the one theorem that writes it
+  ('setSpec', 'mem_product'): [
+    ("a (x * y)", "a (setSpec_product mem x y)"),
+  ],
+
   # data_to_word_gcProof relates a state of dataSem, which it
   # calls s, to one of wordSem, which it calls t, and the two
   # semantics have get_var, get_vars, pop_env, jump_exc, set_var,
@@ -14441,6 +14446,25 @@ DEF_PATCH = {
   # type through the injection that hol4_numeral_form declares
   ('rat', 'rat_expn_def'): [
     ('(1:rat)', '(&1:rat)'),
+  ],
+  # HOL4's pred_set overloads * with CROSS and setSpec overloads
+  # CROSS with its own product, so `x * y` of this file is the
+  # product of two sets of the set theory.  The port writes an
+  # overloaded infix out as an application of what it is
+  # overloaded with, but not one of HOL Light's own infixes, and *
+  # is one of those -- so these said the multiplication of two
+  # numbers.  Four places in the file and none outside it
+  ('setSpec', 'relspace_def'): [
+    ("(power mem') (x * y)",
+     "(power mem') (setSpec_product mem' x y)"),
+  ],
+  ('setSpec', 'abstract_def'): [
+    ("(setSpec_sub mem' (dom * rng)",
+     "(setSpec_sub mem' (setSpec_product mem' dom rng)"),
+  ],
+  ('setSpec', 'bigcross_def'): [
+    ("(CONS a as) = a * (bigcross0",
+     "(CONS a as) = setSpec_product mem' a (bigcross0"),
   ],
   ('binary_ieee', 'ULP_def'): [
     ('2 pow (if e', '(&2:real) pow (if e'),
