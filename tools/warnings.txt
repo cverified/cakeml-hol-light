@@ -276,30 +276,30 @@ presLang	ML code skipped: val bvl_test =   “concat $ append $ bvl_to_strs     
 presLang	ML code skipped: val bvi_test =   “concat $ append $ bvi_to_strs      (insert
 presLang	ML code skipped: val data_test =   “concat $ append $ data_to_strs      (inse
 presLang	ML code skipped: val lab_test =   “concat $ append $ lab_to_strs      (insert
-typeSystem	line 28 is 81 characters
-typeSystem	line 180 is 120 characters
-typeSystem	line 259 is 80 characters
-typeSystem	line 301 is 99 characters
-typeSystem	line 474 is 101 characters
-typeSystem	line 493 is 118 characters
-typeSystem	line 659 is 84 characters
-typeSystem	line 746 is 81 characters
-typeSystem	line 819 is 85 characters
-typeSystem	line 833 is 110 characters
-typeSystem	line 838 is 82 characters
-typeSystem	line 845 is 123 characters
-typeSystem	line 849 is 93 characters
-typeSystem	line 879 is 95 characters
-typeSystem	line 882 is 85 characters
-typeSystem	line 893 is 95 characters
-typeSystem	line 906 is 94 characters
-typeSystem	line 928 is 117 characters
-typeSystem	line 947 is 82 characters
-typeSystem	line 956 is 91 characters
-typeSystem	line 962 is 93 characters
-typeSystem	line 965 is 88 characters
-typeSystem	line 970 is 92 characters
-typeSystem	line 976 is 96 characters
+typeSystem	line 30 is 81 characters
+typeSystem	line 182 is 120 characters
+typeSystem	line 261 is 80 characters
+typeSystem	line 303 is 99 characters
+typeSystem	line 476 is 101 characters
+typeSystem	line 495 is 118 characters
+typeSystem	line 661 is 84 characters
+typeSystem	line 748 is 81 characters
+typeSystem	line 821 is 85 characters
+typeSystem	line 835 is 110 characters
+typeSystem	line 840 is 82 characters
+typeSystem	line 847 is 123 characters
+typeSystem	line 851 is 93 characters
+typeSystem	line 881 is 95 characters
+typeSystem	line 884 is 85 characters
+typeSystem	line 895 is 95 characters
+typeSystem	line 908 is 94 characters
+typeSystem	line 930 is 117 characters
+typeSystem	line 949 is 82 characters
+typeSystem	line 958 is 91 characters
+typeSystem	line 964 is 93 characters
+typeSystem	line 967 is 88 characters
+typeSystem	line 972 is 92 characters
+typeSystem	line 978 is 96 characters
 source_let	Overload string_size
 stack_alloc	derive next_lab_pmatch: '=> Portable.'
 stack_alloc	derive comp_pmatch: '=> Portable.'
@@ -6287,7 +6287,7 @@ source_to_flatProof	ML code skipped: rveq >>   fs [] >>   first_x_assum (drule_t
 source_to_flatProof	ML code skipped: Finalise compile_correct;
 source_to_flatProof	ML code skipped: val COUNT_LIST_ADD_SYM = COUNT_LIST_ADD   |> CONV_RULE (SIMP
 source_to_flatProof	derive compile_flat_BAG_ALL_DISTINCT: no BAG_ALL_DISTINCT_SUB_BAG
-source_to_flatProof	line 227 is 81 characters
+source_to_flatProof	line 228 is 81 characters
 source_letProof	derive evaluate_lift_start: rule Once/0
 stack_allocProof	ML code skipped: val _ = (max_print_depth := 18);
 stack_allocProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def val

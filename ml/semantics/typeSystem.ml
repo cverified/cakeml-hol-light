@@ -18,6 +18,8 @@ needs "semantics/semanticPrimitives.ml";;
 let _ = cake_theory "typeSystem"
   ["ast"; "namespace"; "semanticPrimitives"];;
 
+let _ = do_list hide_constant ["check"; "error"];;
+
 new_type_abbrev("type_ident",`:num`);;
 
 (* Types *)
@@ -980,6 +982,11 @@ type_prog extra_checks (union_decls decls1 decls) (extend_dec_tenv tenv1 tenv) t
 type_prog extra_checks decls tenv (top :: tops)
   (union_decls decls2 decls1) (extend_dec_tenv tenv2 tenv1)
   *)
+
+(* and the names it reads as variables are constants again *)
+let _ = do_list unhide_constant
+  ["check";
+   "error"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

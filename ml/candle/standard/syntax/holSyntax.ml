@@ -19,7 +19,8 @@ needs "lib/toto.ml";;
 let _ = cake_theory "holSyntax"
   ["holSyntaxLib"; "mlstring"];;
 
-let _ = do_list hide_constant ["Fun"];;
+let _ = do_list hide_constant ["Bool"; "Fun"; "abs"; "new_axiom";
+       "new_constant"; "new_specification"; "new_type"];;
 
 (* HOL types *)
 
@@ -650,8 +651,8 @@ let updates = cake_inductive
       (TypeDefn name pred abs rep) ctxt)`;;
 
 let extends_def = new_definition
-  `extends <=> RTC (\ctxt2 ctxt1. ?upd. ctxt2 = CONS upd ctxt1 /\ updates
-  upd ctxt1)`;;
+  `extends = RTC (\ctxt2 ctxt1. ?upd. ctxt2 = CONS upd ctxt1 /\ updates upd
+  ctxt1)`;;
 
 (* Initial theory context *)
 
@@ -664,7 +665,13 @@ let init_ctxt_def = new_definition
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["Fun"];;
+  ["Bool";
+   "Fun";
+   "abs";
+   "new_axiom";
+   "new_constant";
+   "new_specification";
+   "new_type"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

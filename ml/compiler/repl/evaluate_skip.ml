@@ -26,7 +26,7 @@ let _ = cake_theory "evaluate_skip"
   ["evaluate"; "evaluateProps"; "ml_prog"; "namespaceProps";
    "semanticPrimitives"];;
 
-let _ = do_list hide_constant ["test"];;
+let _ = do_list hide_constant ["id"; "test"];;
 
 let NOT_NIL_CONS = prove
  (`~(xs = []) <=> (?y ys. xs = CONS y ys)`,
@@ -677,7 +677,8 @@ let evaluate_decs_skip = prove
 
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
-  ["test"];;
+  ["id";
+   "test"];;
 
 (* and the interface *)
 let _ = unhide_overloads ();;

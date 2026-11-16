@@ -42,8 +42,8 @@ let _ = cake_theory "clos_to_bvlProof"
   ["backendProps"; "bvlProps"; "bvlSem"; "closProps"; "closSem";
    "clos_to_bvl"; "ffi"];;
 
-let _ = do_list hide_constant ["C"; "all"; "app"; "build_const'"; "concl";
-       "exps"; "globals_approx_every_Fn_SOME";
+let _ = do_list hide_constant ["C"; "Num"; "all"; "app"; "build_const'";
+       "concl"; "exps"; "globals_approx_every_Fn_SOME";
        "globals_approx_every_Fn_vs_NONE"; "known_co"; "parts"; "rand";
        "syntax_ok"; "update_tag"; "updates"];;
 
@@ -3330,6 +3330,7 @@ let clos_to_bvlProof_chain_exps_every_Fn_SOME = prove
 (* and the names it reads as variables are constants again *)
 let _ = do_list unhide_constant
   ["C";
+   "Num";
    "all";
    "app";
    "build_const'";
