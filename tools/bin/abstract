@@ -31,6 +31,10 @@ rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
 repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
   echo "abstract: cannot clone the template"; exit 1; }
 repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
+# a file to load over the abstract before the port: the harvest of
+# what define_datatype makes (tools/harvest_datatypes.ml) is one
+[ -n "$CAKE_EXTRA" ] && repl-step $s "loadt \"$CAKE_EXTRA\";;" \
+  > /dev/null 2>&1
 python3 -I $C/tools/loadorder.py > $C/tools/load.txt
 for f in $(cat $C/tools/load.txt); do
   [ -n "$upto" ] && [ "$f" = "$upto" ] && break

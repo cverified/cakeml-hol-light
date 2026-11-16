@@ -54,6 +54,89 @@ let fast_clauses cls = fast_definition (definition_of_clauses cls);;
 
 let fast_one tm = fast_clauses [tm];;
 
+(* ------------------------------------------------------------------ *)
+(* The datatypes.                                                     *)
+(*                                                                    *)
+(* define_datatype proves the induction and the recursion theorem of  *)
+(* a datatype, which is 18% of an abstract's processor time over the  *)
+(* 249 datatypes of the port and is a proof like any other.  So an    *)
+(* abstract makes the type and the constructors through the kernel    *)
+(* and assumes those two, exactly as it assumes the equations of a    *)
+(* definition.                                                        *)
+(*                                                                    *)
+(* The two statements are not read off the specification: HOL Light   *)
+(* states and proves them together, and a datatype that recurses      *)
+(* through a list (CakeML's expressions do) gets a statement about    *)
+(* the list as well, which is where a hand written generator would    *)
+(* go wrong.  They are recorded from a real construction instead      *)
+(* (tools/harvest_datatypes.ml writes ml/lib/datatypes.txt), so what  *)
+(* an abstract assumes is the term a run proves, by construction.     *)
+(* A datatype the table does not have is built for real.              *)
+(* ------------------------------------------------------------------ *)
+
+let cake_dt_table = Hashtbl.create 500;;
+
+(* the key is the specification with its whitespace taken out, so
+   that how the port breaks the lines of one is no part of it *)
+
+let cake_dt_key s =
+  implode (filter (fun c -> c <> " " && c <> "\n" && c <> "\t")
+                  (explode s));;
+
+(* ml/lib/datatypes.txt has one datatype to a line, in five fields
+   that a tab separates: the key, the types with their arity, the
+   constructors with their type, and the two statements.  A term
+   is written with its line breaks taken out, which the parser of
+   HOL Light does not mind *)
+
+let cake_dt_split c s =
+  let out = ref [] and cur = ref [] in
+  do_list (fun ch ->
+             if ch = c then (out := implode (rev !cur) :: !out;
+                             cur := [])
+             else cur := ch :: !cur)
+          (explode s);
+  rev (implode (rev !cur) :: !out);;
+
+let cake_dt_pairs sep s =
+  if s = "" then [] else
+  map (fun e -> let p = cake_dt_split ":" e in hd p, hd (tl p))
+      (cake_dt_split sep s);;
+
+let cake_dt_line l =
+  let f = cake_dt_split "\t" l in
+  if length f <> 5 then () else
+  let tys = map (fun (n, a) -> n, int_of_string a)
+                (cake_dt_pairs "," (el 1 f)) in
+  Hashtbl.replace cake_dt_table (hd f)
+    (tys, cake_dt_pairs ";" (el 2 f), el 3 f, el 4 f);;
+
+let cake_dt_read file =
+  let ic = open_in file in
+  (try while true do cake_dt_line (input_line ic) done
+   with End_of_file -> ());
+  close_in ic;;
+
+(* the type and the constructors are made through the kernel, so
+   that everything after the datatype sees what it would see *)
+
+let cake_dt_make (tys, cons, ind, rc) =
+  do_list (fun (n, a) ->
+             if not (can get_type_arity n) then new_type (n, a)) tys;
+  do_list (fun (c, ty) ->
+             if not (can get_const_type c) then
+               new_constant (c, parse_type ty)) cons;
+  let ith = mk_thm ([], parse_term ind) in
+  let rth = mk_thm ([], parse_term rc) in
+  register_rec_thm rth;
+  ith, rth;;
+
+let real_define_datatype = define_datatype;;
+
+let fast_datatype spec =
+  try cake_dt_make (Hashtbl.find cake_dt_table (cake_dt_key spec))
+  with Not_found -> real_define_datatype spec;;
+
 (* the statement is read off the clauses, and a real load reads it
    the same way; where it cannot be read off, a real load binds
    nothing either (ISSUES.md) *)
@@ -117,6 +200,8 @@ let real_prove = prove;;
 
 let new_definition tm = fast_definition tm;;
 
+let define_datatype spec = fast_datatype spec;;
+
 let define_cases tm = fast_one tm;;
 let define_cases_clauses cls = fast_clauses cls;;
 
@@ -173,5 +258,16 @@ let assume_definition_rec_clauses why cls = fast_pair cls;;
 
 let prove (tm,tac) = mk_thm([],tm);;
 
+(* the datatypes a real construction recorded; without the file
+   every datatype is built for real, which is what an abstract did
+   before this *)
+
+let _ =
+  try cake_dt_read
+        "/home/freek/claude/hol-light/cakeml/ml/lib/datatypes.txt"
+  with Sys_error _ -> ();;
+
 print_string
-  "\n*** ABSTRACT: nothing below this line is proved ***\n\n";;
+  ("\n*** ABSTRACT: nothing below this line is proved ***\n" ^
+   "*** " ^ string_of_int (Hashtbl.length cake_dt_table) ^
+   " datatypes are assumed and not built ***\n\n");;

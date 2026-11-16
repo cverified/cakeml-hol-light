@@ -52,6 +52,7 @@ let define_shaped_wf_clauses = real_define_shaped_wf_clauses;;
 let define_shaped_wf_cheat_clauses = real_define_shaped_wf_cheat_clauses;;
 let define_shaped_wf_tac_clauses = real_define_shaped_wf_tac_clauses;;
 let assume_definition_rec_clauses = real_assume_definition_rec_clauses;;
+let define_datatype = real_define_datatype;;
 let prove = real_prove;;
 
 print_string

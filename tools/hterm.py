@@ -36,6 +36,18 @@ GREEK = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
 # it is a term variable wherever it stands
 GREEK_VAR = {'μ': 'mu', 'σ': 'sigma', 'τ': 'tau', 'ρ': 'rho'}
 
+# HOL4 prints a type variable with a lower case Greek letter and
+# never with a capital one, so a capital is always a variable of
+# the term.  Candle's semantics writes the term assignment of an
+# interpretation as Γ, 48 times in two theories, and the port's
+# tokenizer did not know the character at all
+GREEK_UPPER = dict(zip('ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ',
+                       ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon',
+                        'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa',
+                        'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi',
+                        'Rho', 'Sigma', 'Tau', 'Upsilon', 'Phi',
+                        'Chi', 'Psi', 'Omega']))
+
 GREEK_NAME = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
                       ['alpha', 'beta', 'gamma', 'delta', 'epsilon',
                        'zeta', 'eta', 'theta', 'iota', 'kappa',
@@ -298,6 +310,11 @@ def tokenize(s):
       j = i + 1
       while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
       toks.append(Tok('id', GREEK_VAR[c] + s[i+1:j], start, nl, icol))
+      i = j; col += j - i; nl = 0; continue
+    if c in GREEK_UPPER:
+      j = i + 1
+      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
+      toks.append(Tok('id', GREEK_UPPER[c] + s[i+1:j], start, nl, icol))
       i = j; col += j - i; nl = 0; continue
     if c in GREEK:
       t = Tok('tyvar', GREEK[c], start, nl, icol)
