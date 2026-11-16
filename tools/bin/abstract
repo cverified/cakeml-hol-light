@@ -46,9 +46,17 @@ for f in $(cat $C/tools/load.txt); do
     python3 -I $C/tools/tolerant.py "$g" $C/tmp/abstract-$s.ml \
       > /dev/null
     h=$C/tmp/abstract-$s.ml; }
-  out=$(TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$h\";;" 2>&1 |
-        grep -E "Exception|Error in")
-  [ -n "$out" ] && printf '%s\n' "$out" | sed "s|^|$f: |"
+  TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$h\";;" > /dev/null 2>&1
+  # the toplevel breaks a long exception over lines of the pane, so
+  # the message of one is not on the line that says Exception: the
+  # whole of the pane is read and tools/cserr.py puts the message
+  # together, as tools/bin/checkseq does for a run.  Without it the
+  # report said "Exception:" and nothing else, which is no report
+  out=$(tmux capture-pane -p -J -S - -t hol-$s |
+        sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+        python3 -I $C/tools/cserr.py "$h")
+  [ -n "$out" ] && printf '%s: %s\n' "$f" "$out"
+  tmux clear-history -t hol-$s 2> /dev/null
   # a file that dies never reaches its own unhide_overloads, so
   # the interface stays cut down to its ancestors and every file
   # after it is read in a scope that no report describes: one
