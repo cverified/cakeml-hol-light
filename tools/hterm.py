@@ -887,6 +887,13 @@ class Parser:
         self.expect(')')
         return Node('paren', tok=t, e=e)
       if t.text == '[':
+        # HOL4 writes the empty lazy list [||] (fsFFI's numchars
+        # is one), which the port has as LNIL in ml/lib/llist.ml.
+        # A lazy list literal with elements in it HOL4 writes with
+        # LCONS and not this way
+        if self.at('||'):
+          self.next(); self.expect(']')
+          return Node('id', tok=t, name='LNIL')
         items = []
         if not self.at(']'):
           while True:
