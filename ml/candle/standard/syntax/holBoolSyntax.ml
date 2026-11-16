@@ -286,22 +286,14 @@ let is_exists_sig_def = new_definition
 let is_bool_sig_def = new_definition
   `is_bool_sig (sig:(mlstring,num)fmap#(mlstring,type)fmap) <=>
    is_std_sig sig /\
-   is_true_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-     ctxt)) ctxt)) sig) /\
-   is_false_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-     ctxt)) ctxt)) sig) /\
-   is_implies_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-     ctxt)) ctxt)) sig) /\
-   is_and_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-     ctxt)) sig) /\
-   is_or_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-     ctxt)) sig) /\
-   is_not_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-     ctxt)) sig) /\
-   is_forall_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-     ctxt)) ctxt)) sig) /\
-   is_exists_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-     ctxt)) ctxt)) sig)`;;
+   is_true_sig (SND sig) /\
+   is_false_sig (SND sig) /\
+   is_implies_sig (SND sig) /\
+   is_and_sig (SND sig) /\
+   is_or_sig (SND sig) /\
+   is_not_sig (SND sig) /\
+   is_forall_sig (SND sig) /\
+   is_exists_sig (SND sig)`;;
 
 let bool_has_bool_sig = prove
  (`!ctxt.
@@ -360,8 +352,7 @@ let bool_term_ok = prove
       (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
       "A"))) ty) (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
       [])))) z ty (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode
-      "bool") []))) <=> type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-      types_of_upd ctxt)) ctxt)) sig) ty /\ holSyntax_term_ok sig
+      "bool") []))) <=> type_ok (FST sig) ty /\ holSyntax_term_ok sig
       (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool") []))
       /\ typeof (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
       [])) = (holSyntax_Tyapp (implode "bool") [])) /\
@@ -375,8 +366,7 @@ let bool_term_ok = prove
       (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
       "A"))) ty) (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
       [])))) z ty (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode
-      "bool") []))) <=> type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-      types_of_upd ctxt)) ctxt)) sig) ty /\ holSyntax_term_ok sig
+      "bool") []))) <=> type_ok (FST sig) ty /\ holSyntax_term_ok sig
       (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool") []))
       /\ typeof (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
       [])) = (holSyntax_Tyapp (implode "bool") [])) /\

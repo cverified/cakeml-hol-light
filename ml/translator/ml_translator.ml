@@ -216,7 +216,7 @@ let Eval_Fun_Eq = prove
   CHEAT_TAC);;
 
 let And_IMP_Eq = prove
- (`ml_translator_Eval env exp ((Arrow (ast_And a P) b) f) ==>
+ (`ml_translator_Eval env exp ((Arrow (ml_translator_And a P) b) f) ==>
     (P x ==> ml_translator_Eval env exp ((Arrow (ml_translator_Eq a x) b)
       f))`,
   CHEAT_TAC);;
@@ -224,13 +224,15 @@ let And_IMP_Eq = prove
 let Eq_IMP_And = prove
  (`(!x. P x ==> ml_translator_Eval env (ast_Fun name exp) ((Arrow
   (ml_translator_Eq a x) b) f)) ==>
-    ml_translator_Eval env (ast_Fun name exp) ((Arrow (ast_And a P) b) f)`,
+    ml_translator_Eval env (ast_Fun name exp) ((Arrow (ml_translator_And a
+      P) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Fun_And = prove
  (`(!v x. P x ==> a x v ==> ml_translator_Eval (ml_prog_write name v env) body
   (b (f x))) ==>
-    ml_translator_Eval env (ast_Fun name body) ((Arrow (ast_And a P) b) f)`,
+    ml_translator_Eval env (ast_Fun name body) ((Arrow (ml_translator_And
+      a P) b) f)`,
   CHEAT_TAC);;
 
 let Eval_Let = prove
@@ -2193,7 +2195,8 @@ let EQ_COND_INTRO = prove
   CHEAT_TAC);;
 
 let LIST_TYPE_And = prove
- (`LIST_TYPE (ast_And a P) = ast_And (LIST_TYPE a) (ALL (P:'a->bool))`,
+ (`LIST_TYPE (ast_And a P) = ml_translator_And (LIST_TYPE a) (ALL
+  (P:'a->bool))`,
   CHEAT_TAC);;
 
 let EVERY_MEM_CONTAINER = prove

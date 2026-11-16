@@ -133,25 +133,16 @@ let bool_thy_ok_def = new_definition
 
 let bool_thy_ok_terms_ok = prove
  (`bool_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "T") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "F") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "COND") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp (implode
        "num") []) (holSyntax_Tyapp (implode "num") []))))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) (holSyntax_Const (implode "COND") ((\s t.
+     holSyntax_term_ok (FST thy) (holSyntax_Const (implode "COND") ((\s t.
        holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
        "bool") []) (ast_Fun (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "bool") []) (holSyntax_Tyapp (implode
@@ -525,106 +516,71 @@ add_simp numeral_thy_ok_bool_thy_ok;;
 
 let numeral_thy_ok_terms_ok = prove
  (`numeral_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "T") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "F") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "COND") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp (implode
        "num") []) (holSyntax_Tyapp (implode "num") []))))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "COND") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "bool") []) (ast_Fun (holSyntax_Tyapp (implode
        "bool") []) (holSyntax_Tyapp (implode "bool") []))))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "+") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "-") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "*") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "DIV") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "MOD") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "<") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "bool") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "_0") (holSyntax_Tyapp (implode "num") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "SUC") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp (implode
        "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "BIT0") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "BIT1") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) (holSyntax_Const (implode "NUMERAL") ((\s t.
+     holSyntax_term_ok (FST thy) (holSyntax_Const (implode "NUMERAL") ((\s t.
        holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
        "num") []) (holSyntax_Tyapp (implode "num") [])))`,
   CHEAT_TAC);;
 
 let term_ok_NUMERAL = prove
  (`numeral_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) ((\tm. holSyntax_Comb (holSyntax_Const (implode
+     holSyntax_term_ok (FST thy) ((\tm. holSyntax_Comb (holSyntax_Const
+       (implode
        "NUMERAL") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
        (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp (implode "num")
-       []))) tm) N) = (holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-       ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) N /\ has_type N (holSyntax_Tyapp (implode "num")
+       []))) tm) N) = (holSyntax_term_ok (FST thy) N /\ has_type N
+         (holSyntax_Tyapp (implode "num")
        []))`,
   CHEAT_TAC);;
 add_simp term_ok_NUMERAL;;
@@ -645,16 +601,12 @@ add_simp has_type_0;;
 
 let term_ok_SUC = prove
  (`numeral_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) ((\tm. holSyntax_Comb (holSyntax_Const (implode
+     holSyntax_term_ok (FST thy) ((\tm. holSyntax_Comb (holSyntax_Const
+       (implode
        "SUC") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
        (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp (implode "num")
-       []))) tm) N) = (holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-       ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) N /\ has_type N (holSyntax_Tyapp (implode "num")
+       []))) tm) N) = (holSyntax_term_ok (FST thy) N /\ has_type N
+         (holSyntax_Tyapp (implode "num")
        []))`,
   CHEAT_TAC);;
 add_simp term_ok_SUC;;
@@ -673,9 +625,7 @@ add_simp SUC_has_type;;
 
 let NUMERAL_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      n /\ has_type n (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "NUMERAL") ((\s
      t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
@@ -684,9 +634,7 @@ let NUMERAL_eqn = prove
 
 let BIT0_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      n /\ has_type n (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "BIT0") ((\s t.
      holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode "num")
@@ -699,9 +647,7 @@ let BIT0_eqn = prove
 
 let BIT1_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      n /\ has_type n (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "BIT1") ((\s t.
      holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode "num")
@@ -717,12 +663,8 @@ let BIT1_eqn = prove
 
 let ADD_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "+") ((\s t.
@@ -750,12 +692,8 @@ let ADD_eqn = prove
 
 let SUB_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "-") ((\s t.
@@ -795,12 +733,8 @@ let SUB_eqn = prove
 
 let MUL_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "*") ((\s t.
@@ -833,12 +767,8 @@ let MUL_eqn = prove
 
 let LESS_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "<") ((\s t.
@@ -891,9 +821,7 @@ let EQ_eqn1 = prove
 
 let EQ_eqn2 = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      n /\ has_type n (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "NUMERAL")
      ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp
@@ -907,9 +835,7 @@ let EQ_eqn2 = prove
 
 let EQ_eqn3 = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "SUC")
      ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp
@@ -923,12 +849,8 @@ let EQ_eqn3 = prove
 
 let EQ_eqn4 = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((===)
      ((\tm. holSyntax_Comb (holSyntax_Const (implode "SUC") ((\s t.
@@ -941,12 +863,8 @@ let EQ_eqn4 = prove
 
 let COND_eqn = prove
  (`bool_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t t1
      t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Comb (holSyntax_Const
@@ -966,12 +884,8 @@ let COND_eqn = prove
 
 let IF_eqn = prove
  (`bool_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     x /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     x /\ holSyntax_term_ok (FST thy)
      y /\ has_type x (holSyntax_Tyapp (implode "bool") []) /\ has_type y
      (holSyntax_Tyapp (implode "bool") []) ==> (|-) (thy,[]) ((===) ((\t t1
      t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Comb (holSyntax_Const
@@ -991,12 +905,8 @@ let IF_eqn = prove
 
 let DIV_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy) n
      /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "DIV") ((\s t.
@@ -1056,12 +966,8 @@ let DIV_eqn = prove
 
 let MOD_eqn = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy) n
      /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "MOD") ((\s t.
@@ -1165,9 +1071,7 @@ add_simp DIV_has_type;;
 
 let MOD_eqn1 = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\t1 t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Const
      (implode "MOD") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
@@ -1181,9 +1085,7 @@ let MOD_eqn1 = prove
 
 let DIV_eqn1 = prove
  (`numeral_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\t1 t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Const
      (implode "DIV") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
@@ -1229,10 +1131,7 @@ let num2term_welltyped = prove
 add_simp num2term_welltyped;;
 
 let num2term_term_ok = prove
- (`numeral_thy_ok thy ==> holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-  ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-  ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt))
-  ctxt)) thy) (num2term n)`,
+ (`numeral_thy_ok thy ==> holSyntax_term_ok (FST thy) (num2term n)`,
   CHEAT_TAC);;
 
 let num2term_VSUBST = prove
@@ -1256,10 +1155,7 @@ let num2bit_welltyped = prove
 add_simp num2bit_welltyped;;
 
 let num2bit_term_ok = prove
- (`numeral_thy_ok thy ==> holSyntax_term_ok ((\(ctxt:holSyntax_update list).
-  ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-  ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt))
-  ctxt)) thy) (num2bit n)`,
+ (`numeral_thy_ok thy ==> holSyntax_term_ok (FST thy) (num2bit n)`,
   CHEAT_TAC);;
 
 let num2bit_VSUBST = prove
@@ -2361,12 +2257,8 @@ let compute_thy_ok_def = new_definition
 
 let LET_eqn = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     f /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     f /\ holSyntax_term_ok (FST thy)
      p1 /\ has_type f ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
      (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
      [])) /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) ==> (|-)
@@ -2380,15 +2272,9 @@ let LET_eqn = prove
 
 let CEXP_IF_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2 t3.
@@ -2407,19 +2293,11 @@ let CEXP_IF_eqn1 = prove
 
 let CEXP_IF_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p2 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     p2 /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval")
@@ -2437,12 +2315,8 @@ let CEXP_IF_eqn2 = prove
 
 let CEXP_IF_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2
      t3. holSyntax_Comb (holSyntax_Comb (holSyntax_Comb (holSyntax_Const
@@ -2461,12 +2335,8 @@ let CEXP_IF_eqn3 = prove
 
 let CEXP_ADD_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_add")
@@ -2489,15 +2359,9 @@ let CEXP_ADD_eqn1 = prove
 
 let CEXP_ADD_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2519,15 +2383,9 @@ let CEXP_ADD_eqn2 = prove
 
 let CEXP_ADD_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     n /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     n /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2549,19 +2407,11 @@ let CEXP_ADD_eqn3 = prove
 
 let CEXP_ADD_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -2590,12 +2440,8 @@ let CEXP_ADD_eqn4 = prove
 
 let CEXP_SUB_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_sub")
@@ -2618,15 +2464,9 @@ let CEXP_SUB_eqn1 = prove
 
 let CEXP_SUB_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2648,15 +2488,9 @@ let CEXP_SUB_eqn2 = prove
 
 let CEXP_SUB_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) n
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2684,19 +2518,11 @@ let CEXP_SUB_eqn3 = prove
 
 let CEXP_SUB_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -2725,12 +2551,8 @@ let CEXP_SUB_eqn4 = prove
 
 let CEXP_MUL_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_mul")
@@ -2753,15 +2575,9 @@ let CEXP_MUL_eqn1 = prove
 
 let CEXP_MUL_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2788,15 +2604,9 @@ let CEXP_MUL_eqn2 = prove
 
 let CEXP_MUL_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) n
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2824,19 +2634,11 @@ let CEXP_MUL_eqn3 = prove
 
 let CEXP_MUL_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -2865,12 +2667,8 @@ let CEXP_MUL_eqn4 = prove
 
 let CEXP_DIV_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_div")
@@ -2893,15 +2691,9 @@ let CEXP_DIV_eqn1 = prove
 
 let CEXP_DIV_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2928,15 +2720,9 @@ let CEXP_DIV_eqn2 = prove
 
 let CEXP_DIV_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) n
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -2964,19 +2750,11 @@ let CEXP_DIV_eqn3 = prove
 
 let CEXP_DIV_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -3005,12 +2783,8 @@ let CEXP_DIV_eqn4 = prove
 
 let CEXP_MOD_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     m /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     m /\ holSyntax_term_ok (FST thy)
      n /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_mod")
@@ -3033,15 +2807,9 @@ let CEXP_MOD_eqn1 = prove
 
 let CEXP_MOD_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -3063,15 +2831,9 @@ let CEXP_MOD_eqn2 = prove
 
 let CEXP_MOD_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) n
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -3099,19 +2861,11 @@ let CEXP_MOD_eqn3 = prove
 
 let CEXP_MOD_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -3140,12 +2894,8 @@ let CEXP_MOD_eqn4 = prove
 
 let CEXP_LESS_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy) n
      /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type n
      (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[]) ((===) ((\t1 t2.
      holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_less") ((\s
@@ -3191,15 +2941,9 @@ let CEXP_LESS_eqn1 = prove
 
 let CEXP_LESS_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) m
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type m (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -3226,15 +2970,9 @@ let CEXP_LESS_eqn2 = prove
 
 let CEXP_LESS_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) n
+     /\ holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type n (holSyntax_Tyapp (implode "num") []) /\ has_type p1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type q1 (holSyntax_Tyapp
      (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1 t2. holSyntax_Comb
@@ -3262,19 +3000,11 @@ let CEXP_LESS_eqn3 = prove
 
 let CEXP_LESS_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p2
+     /\ holSyntax_term_ok (FST thy)
      q2 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) /\ has_type p2 (holSyntax_Tyapp
      (implode "cval") []) /\ has_type q2 (holSyntax_Tyapp (implode "cval") [])
@@ -3303,12 +3033,8 @@ let CEXP_LESS_eqn4 = prove
 
 let CEXP_FST_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\tm.
      holSyntax_Comb (holSyntax_Const (implode "Cexp_fst") ((\s t.
@@ -3322,9 +3048,7 @@ let CEXP_FST_eqn1 = prove
 
 let CEXP_FST_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "Cexp_fst") ((\s
      t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
@@ -3343,12 +3067,8 @@ let CEXP_FST_eqn2 = prove
 
 let CEXP_SND_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     p1 /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\tm.
      holSyntax_Comb (holSyntax_Const (implode "Cexp_snd") ((\s t.
@@ -3362,9 +3082,7 @@ let CEXP_SND_eqn1 = prove
 
 let CEXP_SND_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "Cexp_snd") ((\s
      t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
@@ -3383,12 +3101,8 @@ let CEXP_SND_eqn2 = prove
 
 let CEXP_ISPAIR_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1
-     /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy) p1
+     /\ holSyntax_term_ok (FST thy)
      q1 /\ has_type p1 (holSyntax_Tyapp (implode "cval") []) /\ has_type q1
      (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\tm.
      holSyntax_Comb (holSyntax_Const (implode "Cexp_ispair") ((\s t.
@@ -3414,9 +3128,7 @@ let CEXP_ISPAIR_eqn1 = prove
 
 let CEXP_ISPAIR_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode "Cexp_ispair")
      ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp
@@ -3435,13 +3147,9 @@ let CEXP_ISPAIR_eqn2 = prove
 
 let CEXP_EQ_eqn1 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1 /\ has_type
+   holSyntax_term_ok (FST thy) p1 /\ has_type
      p1 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) q1 /\ has_type
+   holSyntax_term_ok (FST thy) q1 /\ has_type
      q1 (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((\t1
      t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "Cexp_eq")
      ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
@@ -3476,21 +3184,13 @@ let CEXP_EQ_eqn1 = prove
 
 let CEXP_EQ_eqn2 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1 /\ has_type
+   holSyntax_term_ok (FST thy) p1 /\ has_type
      p1 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) q1 /\ has_type
+   holSyntax_term_ok (FST thy) q1 /\ has_type
      q1 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p2 /\ has_type
+   holSyntax_term_ok (FST thy) p2 /\ has_type
      p2 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) q2 /\ has_type
+   holSyntax_term_ok (FST thy) q2 /\ has_type
      q2 (holSyntax_Tyapp (implode "cval") []) ==> (|-) (thy,[]) ((===) ((===)
      ((\t1 t2. holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode
      "Cexp_pair") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
@@ -3512,13 +3212,9 @@ let CEXP_EQ_eqn2 = prove
 
 let CEXP_EQ_eqn3 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n /\ has_type n
+   holSyntax_term_ok (FST thy) n /\ has_type n
      (holSyntax_Tyapp (implode "num") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      m /\ has_type m (holSyntax_Tyapp (implode "num") []) ==> (|-) (thy,[])
      ((===) ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode
      "Cexp_num") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
@@ -3531,17 +3227,11 @@ let CEXP_EQ_eqn3 = prove
 
 let CEXP_EQ_eqn4 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) m /\ has_type m
+   holSyntax_term_ok (FST thy) m /\ has_type m
      (holSyntax_Tyapp (implode "num") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1 /\ has_type
+   holSyntax_term_ok (FST thy) p1 /\ has_type
      p1 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      q1 /\ has_type q1 (holSyntax_Tyapp (implode "cval") []) ==> (|-)
      (thy,[]) ((===) ((===) ((\tm. holSyntax_Comb (holSyntax_Const (implode
      "Cexp_num") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
@@ -3555,17 +3245,11 @@ let CEXP_EQ_eqn4 = prove
 
 let CEXP_EQ_eqn5 = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) n /\ has_type n
+   holSyntax_term_ok (FST thy) n /\ has_type n
      (holSyntax_Tyapp (implode "num") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-     ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy) p1 /\ has_type
+   holSyntax_term_ok (FST thy) p1 /\ has_type
      p1 (holSyntax_Tyapp (implode "cval") []) /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
      q1 /\ has_type q1 (holSyntax_Tyapp (implode "cval") []) ==> (|-)
      (thy,[]) ((===) ((===) ((\t1 t2. holSyntax_Comb (holSyntax_Comb
      (holSyntax_Const (implode "Cexp_pair") ((\s t. holSyntax_Tyapp (implode
@@ -3581,193 +3265,134 @@ let CEXP_EQ_eqn5 = prove
 let compute_thy_ok_terms_ok = prove
  (`compute_thy_ok thy ==>
      // bools
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "T") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "F") (holSyntax_Tyapp (implode "bool") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "COND") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp (implode
        "num") []) (holSyntax_Tyapp (implode "num") []))))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "COND") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) (ast_Fun
        (holSyntax_Tyapp (implode "bool") []) (ast_Fun (holSyntax_Tyapp (implode
        "bool") []) (holSyntax_Tyapp (implode "bool") []))))) /\
      // nums
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "+") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "-") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "*") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "DIV") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "MOD") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "num") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "<") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (ast_Fun (holSyntax_Tyapp
        (implode "num") []) (holSyntax_Tyapp (implode "bool") [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "_0") (holSyntax_Tyapp (implode "num") [])) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "SUC") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp (implode
        "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "BIT0") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "BIT1") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "num") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "NUMERAL") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "num") []))) /\
      // cexps
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_add") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_sub") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_mul") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_div") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_mod") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_less") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_num") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "num") []) (holSyntax_Tyapp
        (implode "cval") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_if") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (ast_Fun (holSyntax_Tyapp (implode
        "cval") []) (holSyntax_Tyapp (implode "cval") []))))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_pair") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_fst") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp
        (implode "cval") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_snd") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp
        (implode "cval") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_ispair") ((\s t. holSyntax_Tyapp
        (implode "fun") [s; t]) (holSyntax_Tyapp (implode "cval") [])
        (holSyntax_Tyapp (implode "cval") []))) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "Cexp_eq") ((\s t. holSyntax_Tyapp (implode
        "fun") [s; t]) (holSyntax_Tyapp (implode "cval") []) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
      // let
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (holSyntax_Const (implode "LET") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp
        (implode "cval") []) (holSyntax_Tyapp (implode "cval") [])) (ast_Fun
        (holSyntax_Tyapp (implode "cval") []) (holSyntax_Tyapp (implode "cval")
        [])))) /\
      // types
-     type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-       ctxt)) thy) (holSyntax_Tyapp (implode "cval") [])`,
+     type_ok (FST (FST thy)) (holSyntax_Tyapp (implode "cval") [])`,
   CHEAT_TAC);;
 
 let compute_thy_ok_theory_ok = prove
@@ -3804,30 +3429,18 @@ let bop2term_term_ok = prove
  (`compute_thy_ok thy ==>
      typeof tm1 = (holSyntax_Tyapp (implode "cval") []) /\ typeof tm2 =
        (holSyntax_Tyapp (implode "cval") []) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-       tm1 /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
+       tm1 /\ holSyntax_term_ok (FST thy)
        tm2 ==>
-       holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) thy) (bop2term bop tm1 tm2)`,
+       holSyntax_term_ok (FST thy) (bop2term bop tm1 tm2)`,
   CHEAT_TAC);;
 
 let uop2term_term_ok = prove
  (`compute_thy_ok thy ==>
      typeof tm = (holSyntax_Tyapp (implode "cval") []) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        tm ==>
-       holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) thy) (uop2term uop tm)`,
+       holSyntax_term_ok (FST thy) (uop2term uop tm)`,
   CHEAT_TAC);;
 
 let cexp2term_term_ok = prove
@@ -3835,23 +3448,14 @@ let cexp2term_term_ok = prove
      (!cv.
        (!c n.
          (c,n) IN cexp_consts cv ==>
-           holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-             alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-             ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-             ctxt)) ctxt)) thy) (holSyntax_Const c (app_type n))) ==>
-         holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-           alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-           ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-           ctxt)) ctxt)) thy) (cexp2term cv))`,
+           holSyntax_term_ok (FST thy) (holSyntax_Const c (app_type n))) ==>
+         holSyntax_term_ok (FST thy) (cexp2term cv))`,
   CHEAT_TAC);;
 
 (* TODO move *)
 let bool2term_term_ok = prove
  (`bool_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) (bool2term b)`,
+     holSyntax_term_ok (FST thy) (bool2term b)`,
   CHEAT_TAC);;
 add_simp bool2term_term_ok;;
 

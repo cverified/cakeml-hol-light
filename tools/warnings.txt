@@ -566,7 +566,7 @@ ml_translator	ML code skipped: val tac2 =   rw[Eval_rw,CHAR_def,NUM_def,INT_def]
 ml_translator	ML code skipped: val str_cmp_tac =   Cases_on ‘s1’ \\ Cases_on ‘s2’   \\ simp
 ml_translator	ML code skipped: val two_pow_64 = EVAL ``2i**64`` |> concl |> rand
 ml_translator	Theorem v1_size: the auxiliary size function v1_size
-ml_translator	line 355 is 83 characters
+ml_translator	line 357 is 83 characters
 cfFFIType	derive ffi_distinct: '\\\\ fs [Num_d'
 cfFFIType	ML code skipped: val destNum_def_name = "destNum_def"; val destNum_def = new_
 cfFFIType	ML code skipped: val destStr_def_name = "destStr_def" val destStr_def = new_s
@@ -1655,7 +1655,11 @@ holSyntaxExtra	derive variant_inst_thm: '\\\\ HO_MATCH_'
 holSyntaxExtra	ML code skipped: val assume = proves_rules |> CONJUNCTS |> el 2
 holSyntaxExtra	ML code skipped: val rws = [   rich_listTheory.EL_APPEND1,   rich_listTheory.
 holSyntaxExtra	Overload ConstDef
-holSyntaxExtra	line 1318 is 80 characters
+holSyntaxExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+holSyntaxExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSyntaxExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSyntaxExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSyntaxExtra	line 1311 is 80 characters
 holBoolSyntax	Overload True
 holBoolSyntax	Overload And
 holBoolSyntax	Overload Implies
@@ -1679,6 +1683,10 @@ holBoolSyntax	ML code skipped: val Defs = [TrueDef_def, AndDef_def, ImpliesDef_d
 holBoolSyntax	ML code skipped: val ConstDef_tac =   pop_assum(assume_tac o REWRITE_RULE[GSY
 holBoolSyntax	ML code skipped: fun pull_tac () =   REWRITE_TAC[Once RTC_CASES1] >> disj2_ta
 holBoolSyntax	ML code skipped: val sigs = [is_true_sig_def, is_false_sig_def, is_implies_si
+holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBoolSyntax	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holAxiomsSyntax	ML code skipped: val mem = ``mem:'U->'U->bool``
 holAxiomsSyntax	Overload A
 holAxiomsSyntax	Overload B
@@ -4868,6 +4876,8 @@ holSemantics	Overload interprets
 holSemantics	Definition is_std_interpretation_def: unparsed input at 137: '\\'
 holSemantics	Overload is_std_interpretation
 holSemantics	Overload is_structure
+holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	ML code skipped: val mem = ``mem:'U->'U->bool``
 holSemanticsExtra	Theorem typesem_inhabited: binder expected at 36: "'d"
 holSemanticsExtra	Theorem typesem_Fun: binder expected at 5: "'d"
@@ -4889,7 +4899,11 @@ holSemanticsExtra	ML code skipped: val rwt = MATCH_MP (PROVE[]``P x ⇒ ((∀x. 
 holSemanticsExtra	derive interprets_nil: '++listSimps.'
 holSemanticsExtra	Theorem is_type_assignment_reduce: binder expected at 18: "'d"
 holSemanticsExtra	Theorem is_term_assignment_reduce: binder expected at 18: "'d"
-holSemanticsExtra	line 293 is 80 characters
+holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemanticsExtra	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemanticsExtra	line 288 is 80 characters
 holBool	ML code skipped: val mem = ``mem:'U->'U->bool``
 holBool	Overload p
 holBool	Overload FAp
@@ -4917,7 +4931,15 @@ holBool	Overload is_bool_interpretation
 holBool	ML code skipped: val Defs = [TrueDef_def, AndDef_def, ImpliesDef_def, ForallD
 holBool	ML code skipped: fun init_tac q =   fs[models_def] >>   first_x_assum(qspec_t
 holBool	ML code skipped: val apply_abstract_tac = rpt ( (     qmatch_abbrev_tac`Abstr
+holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBool	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSoundness	ML code skipped: val mem = ``mem:'U->'U-> bool``
+holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holExtension	ML code skipped: val mem = ``mem:'U->'U->bool``
 holExtension	Overload sound_update
 holExtension	ML code skipped: val _ = delete_const"eqsh"
@@ -4959,6 +4981,10 @@ holLightConsistency	Overload y
 holLightConsistency	Overload h
 holLightConsistency	ML code skipped: val mem = ``mem:'U->'U->bool``
 holLightConsistency	Overload axiom_free
+holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holLightConsistency	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 repl_init_types	ML code skipped: val _ = cv_trans_deep_embedding EVAL repl_moduleProgTheory.r
 repl_init_types	ML code skipped: val _ = cv_auto_trans inferTheory.init_config_def;
 repl_init_types	ML code skipped: val eval_res_thm =   cv_eval “infertype_prog_inc (init_confi
@@ -6725,7 +6751,16 @@ holKernelProof	Overload aty
 holKernelProof	ML code skipped: val _ = delete_const"STRCAT_SHADOW"
 compute_syntaxProof	ML code skipped: fun SIMPR ths = SIMP_RULE (srw_ss()) ths; fun SIMPC ths = SI
 compute_syntaxProof	derive MK_COMB_simple: no proves_MK_COMB
+compute_syntaxProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+compute_syntaxProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+compute_syntaxProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+compute_syntaxProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 compute_evalProof	ML code skipped: fun SIMPR ths = SIMP_RULE (srw_ss()) ths; fun SIMPC ths = SI
+compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
+compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 compute_execProof	derive exec_lemma: no listTheory.LIST_TO_SET
 x64_targetProof	ML code skipped: val () = wordsLib.guess_lengths()
 x64_targetProof	Overload reg

@@ -823,29 +823,22 @@ let term_ok_equation = prove
 
 let term_ok_clauses = prove
  (`is_std_sig sig ==>
-    (holSyntax_term_ok sig (holSyntax_Var s ty) <=> type_ok ((\ctxt.
-      alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) sig) ty) /\
-    (type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) (holSyntax_Tyvar a) <=> T) /\
-    (type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) (holSyntax_Tyapp (implode "bool") []) <=> T) /\
-    (type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty1 ty2) <=>
-      type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) ty1 /\ type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-      types_of_upd ctxt)) ctxt)) sig) ty2) /\
+    (holSyntax_term_ok sig (holSyntax_Var s ty) <=> type_ok (FST sig) ty) /\
+    (type_ok (FST sig) (holSyntax_Tyvar a) <=> T) /\
+    (type_ok (FST sig) (holSyntax_Tyapp (implode "bool") []) <=> T) /\
+    (type_ok (FST sig) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty1 ty2)
+      <=>
+      type_ok (FST sig) ty1 /\ type_ok (FST sig) ty2) /\
     (holSyntax_term_ok sig (holSyntax_Comb t1 t2) <=> holSyntax_term_ok sig
       t1 /\ holSyntax_term_ok sig t2 /\ welltyped (holSyntax_Comb t1 t2)) /\
     (holSyntax_term_ok sig ((\ty. holSyntax_Const (implode "=") ((\s t.
       holSyntax_Tyapp (implode "fun") [s; t]) ty ((\s t. holSyntax_Tyapp
       (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") [])))) ty)
-      <=> type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) ty) /\
+      <=> type_ok (FST sig) ty) /\
     (holSyntax_term_ok sig ((===) t1 t2) <=> holSyntax_term_ok sig t1
       /\ holSyntax_term_ok sig t2 /\ typeof t1 = typeof t2) /\
     (holSyntax_term_ok sig (holSyntax_Abs (holSyntax_Var s ty) t) <=>
-      type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-      ctxt)) sig) ty /\ holSyntax_term_ok sig t)`,
+      type_ok (FST sig) ty /\ holSyntax_term_ok sig t)`,
   CHEAT_TAC);;
 
 let term_ok_VSUBST = prove
@@ -1428,10 +1421,7 @@ let proves_theory_ok = prove
   CHEAT_TAC);;
 
 let theory_ok_sig = prove
- (`!thy. theory_ok thy ==> is_std_sig ((\(ctxt:holSyntax_update list).
-  ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-  ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt))
-  ctxt)) thy)`,
+ (`!thy. theory_ok thy ==> is_std_sig (FST thy)`,
   CHEAT_TAC);;
 
 let proves_term_ok = prove
@@ -1455,10 +1445,8 @@ let appThm_equation =
   REWRITE_RULE [GSYM IMP_IMP] (el 7 (CONJUNCTS (cake_rules proves)));;
 
 let addAssum = prove
- (`!thy h c a. (|-) (thy,h) c /\ holSyntax_term_ok ((\(ctxt:holSyntax_update
-  list). ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-  ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt))
-  ctxt)) thy) a /\ (has_type a (holSyntax_Tyapp (implode "bool") [])) ==>
+ (`!thy h c a. (|-) (thy,h) c /\ holSyntax_term_ok (FST thy) a /\ (has_type a
+  (holSyntax_Tyapp (implode "bool") [])) ==>
   (|-) (thy,term_union [a] h) c`,
   CHEAT_TAC);;
 
@@ -1477,10 +1465,8 @@ let proves_ACONV_lemma = prove
      (|-) (thy,APPEND h1 h) c /\
      hypset_ok (APPEND h1 h') /\
      ALL (\x. EX (ACONV x) h') h /\
-     ALL (\x. holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy) x /\ has_type x (holSyntax_Tyapp (implode "bool")
+     ALL (\x. holSyntax_term_ok (FST thy) x /\ has_type x (holSyntax_Tyapp
+       (implode "bool")
        [])) h' ==> (|-) (thy,APPEND h1 h') c`,
   CHEAT_TAC);;
 
@@ -1489,10 +1475,8 @@ let proves_ACONV = prove
       (|-) (thy,h) c /\ welltyped c' /\ ACONV c c' /\
       hypset_ok h' /\
       ALL (\x. EX (ACONV x) h') h /\
-      ALL (\x. holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-        alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-        ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-        ctxt)) ctxt)) thy) x /\ has_type x (holSyntax_Tyapp (implode "bool")
+      ALL (\x. holSyntax_term_ok (FST thy) x /\ has_type x (holSyntax_Tyapp
+        (implode "bool")
         [])) h' ==> (|-) (thy,h') c'`,
   CHEAT_TAC);;
 
@@ -1859,8 +1843,7 @@ add_simp types_in_def;;
 
 let type_ok_types_in = prove
  (`!sig. is_std_sig sig ==> (!tm ty. holSyntax_term_ok sig tm /\ ty IN
-  types_in tm ==> type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-  types_of_upd ctxt)) ctxt)) sig) ty)`,
+  types_in tm ==> type_ok (FST sig) ty)`,
   CHEAT_TAC);;
 
 let VFREE_IN_types_in = prove

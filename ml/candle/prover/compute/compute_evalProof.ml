@@ -166,10 +166,8 @@ let dest_cexp_thm = prove
  (`compute_thy_ok thy ==>
      (!tm cv.
        dest_cexp tm = SOME cv ==>
-       holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) thy) tm ==> (|-) (thy,[]) ((===) (cexp2term cv) tm) /\
+       holSyntax_term_ok (FST thy) tm ==> (|-) (thy,[]) ((===) (cexp2term cv)
+         tm) /\
          typeof tm = (holSyntax_Tyapp (implode "cval") []))`,
   CHEAT_TAC);;
 
@@ -269,13 +267,9 @@ let NUMERAL_ONE = prove
 
 let do_binop_thm = prove
  (`compute_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (cexp2term p) /\
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (cexp2term q) /\ (|-) (thy,[]) ((===) (cexp2term p) (cexp2term x))
        /\ cexp_value x /\ (|-) (thy,[]) ((===) (cexp2term q) (cexp2term y))
        /\ cexp_value y /\
@@ -287,9 +281,7 @@ let do_binop_thm = prove
 
 let do_uop_thm = prove
  (`compute_thy_ok thy ==>
-     holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     holSyntax_term_ok (FST thy)
        (cexp2term p) /\ (|-) (thy,[]) ((===) (cexp2term p) (cexp2term x))
        /\ cexp_value x /\
      do_uop uop x s = (res,s') ==>
@@ -314,10 +306,7 @@ let compute_eval_list_map = prove
   CHEAT_TAC);;
 
 let compute_thy_ok_is_std_sig = prove
- (`compute_thy_ok thy ==> is_std_sig ((\(ctxt:holSyntax_update list).
-  ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-  ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt))
-  ctxt)) thy)`,
+ (`compute_thy_ok thy ==> is_std_sig (FST thy)`,
   CHEAT_TAC);;
 
 (* the termination relation that HOL4 gives is
@@ -361,15 +350,9 @@ let cexp_consts_ok_subst = prove
 
 let LET_VSUBST = prove
  (`compute_thy_ok thy /\
-   holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     q /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
-     p /\ holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-     alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+   holSyntax_term_ok (FST thy)
+     q /\ holSyntax_term_ok (FST thy)
+     p /\ holSyntax_term_ok (FST thy)
      r /\ (|-) (thy,[]) ((===) p r) /\ has_type p (holSyntax_Tyapp (implode
      "cval") []) /\ has_type q (holSyntax_Tyapp (implode "cval") []) ==> (|-)
      (thy,[]) ((===) ((\t1 t2. holSyntax_Comb (holSyntax_Comb
@@ -386,10 +369,7 @@ let compute_eval_thm = prove
  (`compute_thy_ok thy ==>
      ((!ck eqs cv s res s' tm.
        compute_eval ck eqs cv s = (res,s') /\
-       holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) thy) (cexp2term cv) /\
+       holSyntax_term_ok (FST thy) (cexp2term cv) /\
        cexp_vars cv = {} /\
        cexp_consts_ok eqs cv /\
        ALL_DISTINCT (MAP FST eqs) /\
@@ -407,10 +387,7 @@ let compute_eval_thm = prove
            (cexp2term cv')))) /\
      (!ck eqs cvs s res s' tm.
        compute_eval_list ck eqs cvs s = (res,s') /\
-       ALL (holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) thy)) (MAP cexp2term cvs) /\
+       ALL (holSyntax_term_ok (FST thy)) (MAP cexp2term cvs) /\
        ALL (\cv. cexp_vars cv = {}) cvs /\
        ALL (cexp_consts_ok eqs) cvs /\
        ALL_DISTINCT (MAP FST eqs) /\

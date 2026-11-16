@@ -182,13 +182,10 @@ let satisfies_def = new_definition
   `satisfies0 (mem':'U->'U->bool) i
   ((sig:(mlstring,num)fmap#(mlstring,type)fmap),h,c) <=>
      (!v.
-       (is_valuation0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-         types_of_upd ctxt)) ctxt)) sig) ((FST:(mlstring->'U
+       (is_valuation0 mem') (FST sig) ((FST:(mlstring->'U
          list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) v /\
-       ALL (\t. (termsem0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-         consts_of_upd ctxt)) ctxt)) sig) i v t = (setSpec_true mem')) h ==>
-         (termsem0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-         consts_of_upd ctxt)) ctxt)) sig) i v c = (setSpec_true mem'))`;;
+       ALL (\t. (termsem0 mem') (SND sig) i v t = (setSpec_true mem')) h ==>
+         (termsem0 mem') (SND sig) i v c = (setSpec_true mem'))`;;
 (* HOL4 holSemanticsScript.sml:156: the overload satisfies, which the port
    expands *)
 
@@ -198,11 +195,9 @@ let satisfies_def = new_definition
 let is_interpretation_def = new_definition
   `is_interpretation0 (mem':'U->'U->bool)
   (sig:(mlstring,num)fmap#(mlstring,type)fmap) int' <=>
-     (is_type_assignment0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-       types_of_upd ctxt)) ctxt)) sig) ((FST:(mlstring->'U
+     (is_type_assignment0 mem') (FST sig) ((FST:(mlstring->'U
        list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int') /\
-     (is_term_assignment0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-       consts_of_upd ctxt)) ctxt)) sig) ((FST:(mlstring->'U
+     (is_term_assignment0 mem') (SND sig) ((FST:(mlstring->'U
        list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int')
        ((SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
        list->'U) int')`;;
@@ -243,17 +238,11 @@ let interprets_def = new_definition
 let models_def = new_definition
   `models0 (mem':'U->'U->bool) i
   (thy:((mlstring,num)fmap#(mlstring,type)fmap)#(holSyntax_term->bool)) <=>
-     (is_interpretation0 mem') ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy)
+     (is_interpretation0 mem') (FST thy)
        i /\
      (is_std_interpretation0 mem') i /\
-     (!p. p IN ((\ctxt. set_of_list ((\ctxt. FLAT (MAP (\upd. APPEND
-       (axexts_of_upd upd) (conexts_of_upd upd)) ctxt)) ctxt)) thy) ==>
-       satisfies0 mem' i ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-       ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-       ctxt)) ctxt)) thy,[],p))`;;
+     (!p. p IN (SND thy) ==>
+       satisfies0 mem' i (FST thy,[],p))`;;
 (* HOL4 holSemanticsScript.sml:218: the overload models, which the port
    expands *)
 
@@ -262,18 +251,13 @@ let models_def = new_definition
 let entails_def = new_definition
   `entails0 (mem':'U->'U->bool) (thy,h) c <=>
      theory_ok thy /\
-     ALL (holSyntax_term_ok ((\(ctxt:holSyntax_update list). ((\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
-       alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt))
-       thy)) (CONS c h) /\
+     ALL (holSyntax_term_ok (FST thy)) (CONS c h) /\
      ALL (\p. has_type p (holSyntax_Tyapp (implode "bool") [])) (CONS c h)
        /\
      hypset_ok h /\
      (!i.
          models0 mem' i thy ==> satisfies0 mem' i
-           ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap ((\ctxt.
-           FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap
-           ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) thy,h,c))`;;
+           (FST thy,h,c))`;;
 (* HOL4 holSemanticsScript.sml:233: the overload |=, which the port expands *)
 
 (* Collect standard signature, standard interpretation and valuation up in one
@@ -284,8 +268,7 @@ let is_structure_def = new_definition
      is_std_sig sig /\
      (is_std_interpretation0 mem') int' /\
      (is_interpretation0 mem') sig int' /\
-     (is_valuation0 mem') ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-       types_of_upd ctxt)) ctxt)) sig) ((FST:(mlstring->'U
+     (is_valuation0 mem') (FST sig) ((FST:(mlstring->'U
        list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int') val'`;;
 
 (* HOL4 holSemanticsScript.sml:246: the overload is_structure, which the

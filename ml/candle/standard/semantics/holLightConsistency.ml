@@ -390,11 +390,10 @@ let satisfies_Forall = prove
  (`is_set_theory (mem:'U->'U->bool) ==>
    (!i sig nm ty b.
      (is_interpretation0 mem) sig i /\ (is_std_interpretation0 mem) i /\
-     type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-       ctxt)) sig) ty /\ holSyntax_term_ok sig b /\ typeof b = (holSyntax_Tyapp
+     type_ok (FST sig) ty /\ holSyntax_term_ok sig b /\ typeof b =
+       (holSyntax_Tyapp
        (implode "bool") []) /\
-     is_forall_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-       ctxt)) ctxt)) sig) /\ (is_forall_interpretation0 mem)
+     is_forall_sig (SND sig) /\ (is_forall_interpretation0 mem)
        ((SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
        list->'U) i) /\ satisfies0 mem i (sig,[],b) ==> satisfies0 mem i
        (sig,[],(\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
@@ -504,9 +503,7 @@ let equal_on_bool_interpretation = prove
 (* [local] *)
 let term_ok_Forall = prove
  (`!sig nm ty p.
-     is_std_sig sig /\ is_forall_sig ((\ctxt. alist_to_fmap ((\ctxt. FLAT
-       (MAP consts_of_upd ctxt)) ctxt)) sig) /\ type_ok ((\ctxt. alist_to_fmap
-       ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) sig) ty /\
+     is_std_sig sig /\ is_forall_sig (SND sig) /\ type_ok (FST sig) ty /\
      holSyntax_term_ok sig p /\ typeof p = (holSyntax_Tyapp (implode "bool")
        []) ==>
      holSyntax_term_ok sig ((\(holSyntax_Var (implode "x")

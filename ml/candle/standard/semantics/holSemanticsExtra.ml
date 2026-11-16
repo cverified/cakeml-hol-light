@@ -100,8 +100,7 @@ let termsem_equation = prove
     (!sig i v s t tmenv.
     (is_structure0 mem) sig i v /\
     holSyntax_term_ok sig ((===) s t) /\
-    tmenv = (\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig ==> (termsem0 mem) tmenv i v ((===) s t) = (boolean mem)
+    tmenv = SND sig ==> (termsem0 mem) tmenv i v ((===) s t) = (boolean mem)
       ((termsem0 mem) tmenv i v s = (termsem0 mem) tmenv i v t))`,
   CHEAT_TAC);;
 
@@ -236,13 +235,11 @@ let satisfies_extend = prove
 
 let equal_on_def = new_definition
   `equal_on (sig:(mlstring,num)fmap#(mlstring,type)fmap) i i' <=>
-   (!name. name IN FDOM ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-     types_of_upd ctxt)) ctxt)) sig) ==> (FST:(mlstring->'U
+   (!name. name IN FDOM (FST sig) ==> (FST:(mlstring->'U
      list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i' name =
      (FST:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
      list->'U) i name) /\
-   (!name. name IN FDOM ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
-     consts_of_upd ctxt)) ctxt)) sig) ==> (SND:(mlstring->'U
+   (!name. name IN FDOM (SND sig) ==> (SND:(mlstring->'U
      list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i' name =
      (SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
      list->'U) i name)`;;
@@ -265,10 +262,8 @@ let equal_on_interprets = prove
       equal_on sig i1 i2 /\
       (SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
         list->'U) i1 (interprets0 mem) name on args as m /\
-      (FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-        ctxt)) ctxt)) sig) name = SOME ty) /\
-      type_ok ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-        ctxt)) sig) ty /\
+      (FLOOKUP (SND sig) name = SOME ty) /\
+      type_ok (FST sig) ty /\
       (set_of_list (holSyntax_tyvars ty) = set_of_list args) ==>
       (SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
         list->'U) i2 (interprets0 mem) name on args as m`,

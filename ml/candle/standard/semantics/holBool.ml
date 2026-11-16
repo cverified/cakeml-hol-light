@@ -49,49 +49,48 @@ let _ = do_list hide_constant ["mem"];;
 
 let bool_sig_instances = prove
  (`is_bool_sig sig ==>
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) (i:(mlstring->'U list->'U)#(mlstring->'U list->'U)) (implode
+    instance (SND sig) (i:(mlstring->'U list->'U)#(mlstring->'U list->'U))
+      (implode
       "T") (holSyntax_Tyapp (implode "bool") []) = (K ((SND:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i (implode "T")
       [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "F") (holSyntax_Tyapp (implode "bool") []) = (K
+    instance (SND sig) i (implode "F") (holSyntax_Tyapp (implode "bool") []) =
+      (K
       ((SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
       list->'U) i (implode "F") [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "==>") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+    instance (SND sig) i (implode "==>") ((\s t. holSyntax_Tyapp (implode
+      "fun") [s;
       t]) (holSyntax_Tyapp (implode "bool") []) ((\s t. holSyntax_Tyapp
       (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool") [])
       (holSyntax_Tyapp (implode "bool") []))) = (K ((SND:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i (implode
       "==>") [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "/\\") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+    instance (SND sig) i (implode "/\\") ((\s t. holSyntax_Tyapp (implode
+      "fun") [s;
       t]) (holSyntax_Tyapp (implode "bool") []) ((\s t. holSyntax_Tyapp
       (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool") [])
       (holSyntax_Tyapp (implode "bool") []))) = (K ((SND:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i (implode
       "/\\") [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "\\/") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+    instance (SND sig) i (implode "\\/") ((\s t. holSyntax_Tyapp (implode
+      "fun") [s;
       t]) (holSyntax_Tyapp (implode "bool") []) ((\s t. holSyntax_Tyapp
       (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool") [])
       (holSyntax_Tyapp (implode "bool") []))) = (K ((SND:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i (implode
       "\\/") [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "~") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+    instance (SND sig) i (implode "~") ((\s t. holSyntax_Tyapp (implode "fun")
+      [s;
       t]) (holSyntax_Tyapp (implode "bool") []) (holSyntax_Tyapp (implode
       "bool") [])) = (K ((SND:(mlstring->'U list->'U)#(mlstring->'U
       list->'U)->mlstring->'U list->'U) i (implode "~") [])) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-      ctxt)) sig) i (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+    instance (SND sig) i (implode "!") ((\s t. holSyntax_Tyapp (implode "fun")
+      [s;
       t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar
       (implode "A")) (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp
       (implode "bool") [])) = (\tau. (SND:(mlstring->'U list->'U)#(mlstring->'U
       list->'U)->mlstring->'U list->'U) i (implode "!") [tau (implode "A")]) /\
-    instance ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-      ctxt)) ctxt)) sig) i (implode "?") ((\s t. holSyntax_Tyapp (implode
+    instance (SND sig) i (implode "?") ((\s t. holSyntax_Tyapp (implode
       "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
       (holSyntax_Tyvar (implode "A")) (holSyntax_Tyapp (implode "bool") []))
       (holSyntax_Tyapp (implode "bool") [])) = (\tau. (SND:(mlstring->'U
