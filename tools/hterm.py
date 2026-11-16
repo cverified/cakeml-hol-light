@@ -1345,7 +1345,15 @@ class Ctx:
       if (thy, n2) in self.names or n2 in self.names:
         return self.names.get((thy, n2), self.names.get(n2, n2))
       return self.size_name(n2, thy) or self.case_name(n2, thy) or n2
-    if n in NAME_MAP: return NAME_MAP[n]
+    # NAME_MAP is HOL4's vocabulary against HOL Light's, for the
+    # names the port has no constant of its own under.  Where this
+    # theory has one, the resolution below says which it is and
+    # the map does not speak: cfFFIType builds its own type of FFI
+    # values and calls one of the seven ways of building one Num,
+    # where HOL4's integerTheory has the Num that takes an integer
+    # to a number and the map sends that to num_of_int
+    if n in NAME_MAP and (self.thy, n) not in self.names:
+      return NAME_MAP[n]
     # the block that defines a name uses the name of the constant,
     # and everything else the name that HOL4 overloads with it
     if n in self.defining:

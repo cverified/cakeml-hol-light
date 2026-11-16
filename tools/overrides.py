@@ -999,6 +999,17 @@ RENAME = {
 # has as well: the type keeps the name, which HOL Light holds
 # apart from the names of the constants
 RENAME_CONST = {
+  # cfFFIType builds its own type of FFI values and calls the
+  # seven functions that build one Str, Num, Cons, List, Stream,
+  # Fun and Inner.  Num is the name HOL4's integerTheory gives the
+  # conversion of an integer to a number, which NAME_MAP sends to
+  # HOL Light's num_of_int, so the port defined cfFFIType's
+  # constructor as num_of_int and stated its injectivity about
+  # that: `num_of_int n1 = num_of_int n2 <=> n1 = n2`, which is
+  # false of the conversion.  Its name is its theory's, as the
+  # Str and the Cons beside it have
+  ('cfFFIType', 'Num'): 'cfFFIType_Num',
+
   # While's TAILREC is in the library layer by hand already
   ('tailrec', 'TAILREC'): 'tailrec_TAILREC',
 
