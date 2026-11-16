@@ -1049,6 +1049,15 @@ LOCAL_NAMES = {
   ('source_to_flat', 'pat_bindings'): 'pat_bindings',
   # listCmp gives an ordering of ternaryComparisons, and asm has
   # a Less and an Equal of its own
+  # the comparison of two rationals gives an ordering, and ast has
+  # an Equal of its own (a test of the source language), which is
+  # what the name alone resolves to.  RatProg is the only file of
+  # the port that writes one of ast's tests beside the ordering
+  ('RatProg', 'Equal'): 'EQUAL',
+  # ml_translator has an Eval of its own -- the judgement that a
+  # HOL term is the value of a piece of CakeML -- and ast has the
+  # Eval that is an operation of the source language
+  ('ml_translator', 'Eval'): 'ml_translator_Eval',
   ('word_cse', 'Less'): 'LESS',
   ('word_cse', 'Equal'): 'EQUAL',
   ('word_cse', 'Greater'): 'GREATER',
