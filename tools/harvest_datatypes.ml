@@ -31,7 +31,7 @@ let cake_dt_types spec =
          let cty = get_const_type (fst (hd alts)) in
          let res = itlist (fun _ t -> snd (dest_fun_ty t))
                           (snd (hd alts)) cty in
-         nm, length (snd (dest_type res)))
+         nm, (length (snd (dest_type res)), length alts))
       (parse_datatype_spec spec);;
 
 let cake_dt_cons spec =
@@ -50,13 +50,29 @@ let define_datatype spec =
   let old_rev = !reverse_interface_mapping in
   reverse_interface_mapping := false;
   p "SPEC"; p spec; p "ENDSPEC";
-  do_list (fun (n, a) -> p (Printf.sprintf "TYPE %s %d" n a))
+  do_list (fun (n, (a, k)) ->
+             p (Printf.sprintf "TYPE %s %d %d" n a k))
           (cake_dt_types spec);
   do_list (fun (c, ty) ->
              p ("CON " ^ c); p (string_of_type ty))
           (cake_dt_cons spec);
   p "INDUCT"; p (string_of_term (concl ith)); p "ENDTHM";
   p "RECURSION"; p (string_of_term (concl rth)); p "ENDTHM";
+  (* what define_type_raw leaves in HOL Light's own stores: the
+     distinctness and the injectivity of the constructors, which a
+     statement of the port asks for by the name of the type.  An
+     abstract states them and proves neither, so their statements
+     are recorded here like the other two *)
+  do_list (fun (n, _) ->
+             (try p ("DISTINCT " ^ n);
+                  p (string_of_term (concl (distinctness n)));
+                  p "ENDTHM"
+              with Failure _ -> ());
+             (try p ("INJECT " ^ n);
+                  p (string_of_term (concl (injectivity n)));
+                  p "ENDTHM"
+              with Failure _ -> ()))
+          (cake_dt_types spec);
   p "END";
   reverse_interface_mapping := old_rev;
   close_out f;

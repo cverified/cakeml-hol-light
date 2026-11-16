@@ -103,13 +103,29 @@ let cake_dt_pairs sep s =
   map (fun e -> let p = cake_dt_split ":" e in hd p, hd (tl p))
       (cake_dt_split sep s);;
 
+(* the fields after the fifth are the two stores: a count and then
+   that many pairs of a type name and a statement *)
+
+let rec cake_dt_store n l =
+  if n <= 0 then [], l else
+  let rest, l' = cake_dt_store (n - 1) (tl (tl l)) in
+  (hd l, hd (tl l)) :: rest, l';;
+
+let cake_dt_triples s =
+  if s = "" then [] else
+  map (fun e -> let p = cake_dt_split ":" e in
+                hd p, (int_of_string (el 1 p), int_of_string (el 2 p)))
+      (cake_dt_split "," s);;
+
 let cake_dt_line l =
   let f = cake_dt_split "\t" l in
-  if length f <> 5 then () else
-  let tys = map (fun (n, a) -> n, int_of_string a)
-                (cake_dt_pairs "," (el 1 f)) in
+  if length f < 6 then () else
+  let dis, r = cake_dt_store (int_of_string (el 5 f))
+                             (snd (chop_list 6 f)) in
+  let inj, _ = cake_dt_store (int_of_string (hd r)) (tl r) in
   Hashtbl.replace cake_dt_table (hd f)
-    (tys, cake_dt_pairs ";" (el 2 f), el 3 f, el 4 f);;
+    (cake_dt_triples (el 1 f), cake_dt_pairs ";" (el 2 f),
+     el 3 f, el 4 f, dis, inj);;
 
 let cake_dt_read file =
   let ic = open_in file in
@@ -120,8 +136,8 @@ let cake_dt_read file =
 (* the type and the constructors are made through the kernel, so
    that everything after the datatype sees what it would see *)
 
-let cake_dt_make (tys, cons, ind, rc) =
-  do_list (fun (n, a) ->
+let cake_dt_make (tys, cons, ind, rc, dis, inj) =
+  do_list (fun (n, (a, _)) ->
              if not (can get_type_arity n) then new_type (n, a)) tys;
   do_list (fun (c, ty) ->
              if not (can get_const_type c) then
@@ -129,6 +145,26 @@ let cake_dt_make (tys, cons, ind, rc) =
   let ith = mk_thm ([], parse_term ind) in
   let rth = mk_thm ([], parse_term rc) in
   register_rec_thm rth;
+  (* and the three stores that define_type_raw fills, which a
+     statement of the port may read by the name of the type:
+     ternaryComparisons proves ordering_distinct with
+     `distinctness "ordering"`, and OCaml evaluates that even
+     where the proof it is part of is thrown away.  Without them
+     an abstract reported ten statements as unread that a run
+     reads.  The statements are assumed, as everything else here
+     is: extend_rectype_net would prove them, which is the one
+     thing an abstract must not do *)
+  do_list (fun (n, (_, k)) ->
+             inductive_type_store :=
+               (n, (k, ith, rth)) :: !inductive_type_store) tys;
+  let note store (n, st) =
+    let th = mk_thm ([], parse_term st) in
+    store := (n, th) :: !store;
+    basic_rectype_net :=
+      itlist (net_of_thm true) (mk_rewrites false th [])
+             !basic_rectype_net in
+  do_list (note distinctness_store) dis;
+  do_list (note injectivity_store) inj;
   ith, rth;;
 
 let real_define_datatype = define_datatype;;

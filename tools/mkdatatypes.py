@@ -25,13 +25,22 @@ def records(lines):
       spec.append(lines[i]); i += 1
     i += 1
     tys, cons, ind, rec = [], [], '', ''
+    dis, inj = [], []
     while i < n and lines[i] != 'END':
       l = lines[i]
       if l.startswith('TYPE '):
-        _, nm, ar = l.split()
-        tys.append((nm, ar)); i += 1
+        f = l.split()
+        tys.append((f[1], f[2], f[3] if len(f) > 3 else '0')); i += 1
       elif l.startswith('CON '):
         cons.append((l[4:], lines[i + 1])); i += 2
+      elif l.startswith('DISTINCT ') or l.startswith('INJECT '):
+        kind, ty = l.split()[0], l.split()[1]
+        i += 1
+        body = []
+        while i < n and lines[i] != 'ENDTHM':
+          body.append(lines[i]); i += 1
+        i += 1
+        (dis if kind == 'DISTINCT' else inj).append((ty, ' '.join(body)))
       elif l in ('INDUCT', 'RECURSION'):
         kind = l; i += 1
         body = []
@@ -43,22 +52,26 @@ def records(lines):
       else:
         i += 1
     i += 1
-    yield '\n'.join(spec), tys, cons, ind, rec
+    yield '\n'.join(spec), tys, cons, ind, rec, dis, inj
 
 
 def main():
   lines = [l.rstrip('\n') for l in sys.stdin]
   n = 0
   seen = set()
-  for spec, tys, cons, ind, rec in records(lines):
+  for spec, tys, cons, ind, rec, dis, inj in records(lines):
     key = re.sub(r'\s+', '', spec)
     if not key or not ind or not rec or key in seen: continue
     seen.add(key)
     flat = lambda s: ' '.join(s.split())
-    print('\t'.join([key,
-                     ','.join('%s:%s' % t for t in tys),
-                     ';'.join('%s:%s' % (c, flat(t)) for c, t in cons),
-                     flat(ind), flat(rec)]))
+    row = [key,
+           ','.join('%s:%s:%s' % t for t in tys),
+           ';'.join('%s:%s' % (c, flat(t)) for c, t in cons),
+           flat(ind), flat(rec), str(len(dis))]
+    for ty, st in dis: row += [ty, flat(st)]
+    row.append(str(len(inj)))
+    for ty, st in inj: row += [ty, flat(st)]
+    print('\t'.join(row))
     n += 1
   print('%d datatypes' % n, file=sys.stderr)
 
