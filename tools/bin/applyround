@@ -1,0 +1,25 @@
+#!/bin/sh
+# applyround : the table of a resolution round into ml/, and the
+# abstract that says what it was worth.
+#
+# A round writes tools/resolved.txt (tools/bin/resolveround); this
+# writes the port with it, runs the checks that need no session,
+# and loads the whole port as an abstract.  About three quarters
+# of an hour, almost all of it the abstract.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C || exit 1
+. tools/holenv.sh > /dev/null 2>&1
+set -e
+echo "== the port"
+python3 -I tools/portall.py 2>&1 | grep -E 'files,|prefaces'
+python3 -I tools/loadorder.py > tools/load.txt
+echo "== the checks that need no session"
+python3 -I tools/lines.py 2>&1 | tail -1
+python3 -I tools/nohol4.py 2>&1 | tail -2
+echo "== the abstract"
+TIMEOUT=${TIMEOUT:-7200} absfast > tmp/absfast.out 2>&1 || true
+head -1 tmp/absfast.out
+echo "== against the round before"
+echo "files that fail: $(grep -c . tmp/abs.out)"
+echo "statements unread: $(grep -c . tmp/abs-unstated.txt)"
