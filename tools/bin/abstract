@@ -46,8 +46,21 @@ for f in $(cat $C/tools/load.txt); do
     python3 -I $C/tools/tolerant.py "$g" $C/tmp/abstract-$s.ml \
       > /dev/null
     h=$C/tmp/abstract-$s.ml; }
-  TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$h\";;" \
-    2>&1 | grep -E "Exception|Error in" | sed "s|^|$f: |"
+  out=$(TIMEOUT=${TIMEOUT:-300} repl-step $s "loadt \"$h\";;" 2>&1 |
+        grep -E "Exception|Error in")
+  [ -n "$out" ] && printf '%s\n' "$out" | sed "s|^|$f: |"
+  # a file that dies never reaches its own unhide_overloads, so
+  # the interface stays cut down to its ancestors and every file
+  # after it is read in a scope that no report describes: one
+  # failure then looks like fifty.  This is what tools/bin/checkseq
+  # does for a run, and without it the report of an abstract is
+  # not the report of a run -- which is the one thing an abstract
+  # has to be
+  [ -n "$out" ] && {
+    repl-step $s "unhide_overloads ();;" > /dev/null 2>&1
+    # and the constants it reads as variables are constants again
+    u=$(python3 -I $C/tools/unhidden.py "$g")
+    [ -n "$u" ] && repl-step $s "$u" > /dev/null 2>&1; }
   # the file was loaded under the name of the instrumented copy,
   # so it is registered under its own name, or a needs of it would
   # load it a second time
