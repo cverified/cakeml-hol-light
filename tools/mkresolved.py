@@ -22,7 +22,11 @@ whose lines are
 
 and the port turns the theory back into the name it gives that
 theory's constant.  A block that used two of them for one name is
-no answer for that name and is left out, with a line on stderr.
+no answer for that name and is left out, with a line on stderr --
+and `tools/resolved-both.txt' is that list, sorted, because those
+blocks are the ones where the port's one choice per name cannot be
+right for both and nothing else finds them (ISSUES.md, "A
+statement that means another theory's constant").
 """
 import sys, os, collections
 
