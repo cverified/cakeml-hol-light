@@ -211,11 +211,20 @@ head of an application, and as the **overload** everywhere else.
 holBoolSyntax the second, which is why one file gets the lambda
 and five get `ast_Fun`.
 
-Changing it means asking `ctx.overloads` for an application head
-too.  That is the hottest path of the translator -- every
-application of the port goes through it -- so it wants a
-`tools/dryport.py` and a reading of the diff before it is kept,
-not a one-line edit at the end of a session.
+Asking `ctx.overloads` for an application head too was **tried
+and does not do it** (2026-11-17).  The port keeps its 2
+`PORT FAILED` and 46 files change, but `compute_syntax` is not
+among them: it still writes `ast_Fun` eleven times.  So the head
+of the application that fails is not reached by that branch --
+either `Fun` is not the head there (it is applied through
+something else) or the id of the head is not an `id` node by the
+time the printer sees it.  The change was reverted: 46 files of
+different output for none of the intended effect is not a change
+to keep.
+
+Where to look next is the failing statement itself, not the
+printer in general: `compute_syntax`'s eleven `ast_Fun` and what
+node shape each of them sits in.
 
 That reporting found a class of its own: **82 overloads are
 dropped** over the port and nothing said so before --
