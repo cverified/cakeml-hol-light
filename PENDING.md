@@ -173,6 +173,37 @@ each.
   `tools/nohol4.py` checks that every pointer points at what it
   says.
 
+# holBoolSyntax: a statement that reads everywhere but there
+
+`holBoolSyntax` heads the largest group of the files that still
+fail to load, with
+
+    holSyntax_Var has type mlstring->type->holSyntax_term, it
+    cannot be used with type mlstring->type->mlstring
+
+and four files behind it (`holAxiomsSyntax`, `holAxioms`,
+`holBool`, `backendProps`).  Three things are known, and none of
+them is what it looks like:
+
+- the **statement is fine**.  `TrueDef`'s body parses in a
+  session that holds the whole port, and prints back as the term
+  the source says.
+- the **scope is fine**.  Declaring that file's own scope
+  (`cake_theory "holBoolSyntax" ["holSyntax"; "holSyntaxExtra"]`)
+  and parsing `implode s`, `(===) x y` and `holSyntax_Abs x y`
+  gives `implode s`, `x === y` and `holSyntax_Abs x y`.
+- the **constants are fine**: `===` and `holSyntax_Abs` are
+  `holSyntax_term->holSyntax_term->holSyntax_term`, `implode` is
+  `(char)list->mlstring`.
+
+So a resolution round cannot help -- `Var` is not ambiguous here,
+the port already writes `holSyntax_Var`, and a round confirms it
+(it logged eighteen constants for the file and the table took
+none).  What is left to look at is the state the file is loaded
+*in*: something between `holSyntaxExtra` and this file leaves the
+session reading `holSyntax_Abs`'s argument as an `mlstring`, and
+that is where the next session should start.
+
 # The Silver machine model
 
 `tools/excluded.txt` leaves `ag32` and `ag32_target` out, because
