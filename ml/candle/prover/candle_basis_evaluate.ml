@@ -12,6 +12,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "candle/prover/ast_extras.ml";;
 needs "candle/prover/candle_kernelProg.ml";;
+needs "candle/prover/candle_kernel_vals.ml";;
 needs "candle/prover/candle_prover_evaluate.ml";;
 needs "candle/prover/candle_prover_inv.ml";;
 needs "candle/prover/perms.ml";;
@@ -76,7 +77,12 @@ add_simp simple_dec_Dlet;;
 (* HOL4 candle_basis_evaluateScript.sml:81-91: a theorem that HOL4 states as
    the value of an ML expression: simple_dec_simps *)
 
-(* HOL4 candle_basis_evaluateScript.sml:93-97: the definition *)
+let post_state_ok_def = new_definition
+  `post_state_ok s <=>
+     (!n. n IN kernel_types ==> semanticPrimitives_state_next_type_stamp s
+       <= n) /\
+     (!loc. loc IN kernel_locs ==> LENGTH (semanticPrimitives_state_refs
+       s) <= loc)`;;
 
 let evaluate_post_state_mono = prove
  (`evaluate s env xs = (s',res) /\

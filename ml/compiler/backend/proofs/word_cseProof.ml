@@ -123,7 +123,9 @@ let sem_inv_def = new_definition
             (!r. wordSem_evaluate (word_Inst (asm_Mem op r (Addr a
               ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
 
-(* HOL4 word_cseProofScript.sml:89-92: the definition *)
+let data_inv_def = new_definition
+  `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
+     wf_data (:'a) data /\ sem_inv data s`;;
 
 let canonicalRegs_correct = prove
  (`!data r s. data_inv data s ==> wordSem_get_var (canonicalRegs data r) s =

@@ -68,7 +68,14 @@ let apply_oracle_def = new_definition
   `apply_oracle oracle' x =
      (oracle' (0:num) x,misc_shift_seq 1 oracle')`;;
 
-(* HOL4 targetSemScript.sml:52-58: the definition *)
+let encoded_bytes_in_mem_def = new_definition
+  `encoded_bytes_in_mem c pc' m md <=>
+     (?i k. k * (2 EXP asm_config_code_alignment c) < LENGTH
+       (asm_config_encode c i) /\
+       bytes_in_memory pc'
+         (DROP (k * (2 EXP asm_config_code_alignment c)) (asm_config_encode
+           c i))
+         m md)`;;
 
 let read_ffi_bytearray_def = new_definition
   `read_ffi_bytearray mc ptr_reg' len_reg' ms =

@@ -227,14 +227,22 @@ let inst_ok_less_def = new_definition
      | (_,_) -> T`;;
 
 (*** Instructions have distinct targets and read vars -- set by SSA form ***)
-(* HOL4 wordConvsScript.sml:267-279: the definition *)
+let distinct_tar_reg_def = new_definition
+  `distinct_tar_reg x1' =
+     match x1' with
+       asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = asm_Reg r1)
+     | asm_Arith (asm_Shift l r1 r2 ri) -> ~(ri = asm_Reg r1)
+     | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> ~(r1 = r3) /\ ~(r1 = r4)
+     | asm_Arith (asm_AddOverflow r1 r2 r3 r4) -> ~(r1 = r3)
+     | asm_Arith (asm_SubOverflow r1 r2 r3 r4) -> ~(r1 = r3)
+     | _ -> T`;;
 
 (***
   Instructions are 2 register code for arith ok
   Currently no two_reg for Mul and Div ***)
 let two_reg_inst_def = new_definition
-  `two_reg_inst x1' =
-     match x1' with
+  `two_reg_inst x1'' =
+     match x1'' with
        asm_Arith (asm_Binop bop r1 r2 ri) -> (r1 = r2)
      | asm_Arith (asm_Shift l r1 r2 ri) -> (r1 = r2)
      | asm_Arith (asm_AddCarry r1 r2 r3 r4) -> (r1 = r2)
@@ -306,8 +314,8 @@ let wf_names_def = new_definition
    what the port found for it *)
 let wf_cutsets_def,wf_cutsets_ind = define_wf
   `MEASURE (\x0. word_prog_size (\x. 0) x0)`
-  `wf_cutsets x1'' =
-     match x1'' with
+  `wf_cutsets x1''' =
+     match x1''' with
        word_Alloc n s -> wf_names s
      | word_Install _ _ _ _ s -> wf_names s
      | word_Call ret dest args h ->
@@ -333,8 +341,8 @@ let wf_cutsets_def,wf_cutsets_ind = define_wf
 
 (*** Conventions for args to instructions ***)
 let inst_arg_convention_def = new_definition
-  `inst_arg_convention x1''' =
-     match x1''' with
+  `inst_arg_convention x1'''' =
+     match x1'''' with
        asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
      | asm_Arith (asm_Shift _ _ _ (asm_Reg r)) -> r = 8
      // Note: these are not necessary
@@ -405,8 +413,8 @@ let post_alloc_conventions_def = new_definition
    what the port found for it *)
 let extract_labels_def,extract_labels_ind = define_wf
   `MEASURE (\x0. word_prog_size (\x. 0) x0)`
-  `wordConvs_extract_labels x1'''' =
-     match x1'''' with
+  `wordConvs_extract_labels x1''''' =
+     match x1''''' with
        word_Call ret dest args h ->
        (match ret with
          NONE -> []
@@ -445,8 +453,8 @@ let max_var_intro = prove
    what the port found for it *)
 let get_code_labels_def,get_code_labels_ind = define_wf
   `MEASURE (\x0. word_prog_size (\x. 0) x0)`
-  `wordConvs_get_code_labels x1''''' =
-     match x1''''' with
+  `wordConvs_get_code_labels x1'''''' =
+     match x1'''''' with
        word_Call r d a h ->
        (match d with SOME x -> {x} | _ -> {}) UNION
        (match r with SOME (_,_,x,_,_) -> wordConvs_get_code_labels x | _ ->
@@ -485,7 +493,12 @@ let good_handlers_def,good_handlers_ind = define_wf
      | _ -> T`;;
 add_simp good_handlers_def;;
 
-(* HOL4 wordConvsScript.sml:525-530: the definition *)
+let good_code_labels_def = new_definition
+  `wordConvs_good_code_labels p elabs <=>
+   ALL (\(n,m,pp). good_handlers n pp) p /\
+   (UNIONS (set_of_list (MAP (\(n,m,pp). (wordConvs_get_code_labels pp))
+     p))) SUBSET
+   (set_of_list (MAP FST p) UNION elabs)`;;
 
 (*** not_created_subprogs ***)
 

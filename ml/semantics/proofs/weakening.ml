@@ -32,7 +32,8 @@ let weak_tenvE_def = new_definition
        (tveLookup n inc tenv' = SOME (tvs,t)) <=>
        (tveLookup n inc tenv = SOME (tvs,t))))`;;
 
-(* HOL4 weakeningScript.sml:19-21: the definition *)
+let weakS_def = new_definition
+  `weakS tenvS tenvS' <=> tenvS' SUBMAP tenvS`;;
 
 let weak_tenvE_refl = prove
  (`!tenvE. weak_tenvE tenvE tenvE`,
@@ -161,7 +162,8 @@ let gt_0 = prove
  (`!(x:num). x >= 0`,
   CHEAT_TAC);;
 
-(* HOL4 weakeningScript.sml:333-335: the definition *)
+let weakCT_def = new_definition
+  `weakCT cenv_impl cenv_spec <=> cenv_spec SUBMAP cenv_impl`;;
 
 (* [local] *)
 let weak_ctMap_lookup = prove

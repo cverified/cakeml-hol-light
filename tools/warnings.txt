@@ -1,6 +1,5 @@
 location	Overload end_locn
 location	Overload unknown_locn
-location	locsle_def: its body is ML that the port does not have
 comparison	Overload Less
 comparison	Overload Equal
 comparison	Overload Greater
@@ -9,8 +8,6 @@ comparison	Overload pair_cmp
 comparison	Overload num_cmp
 sptree	Overload isEmpty
 sptree	Overload add_pause
-lprefix_lub	lprefix_chain_def: its body is ML that the port does not have
-lprefix_lub	lprefix_lub_def: its body is ML that the port does not have
 ASCIInumbers	Overload toString
 ASCIInumbers	Overload toNum
 binary_ieee	Overload tc
@@ -20,16 +17,11 @@ binary_ieee	Overload precision
 binary_ieee	Overload bias
 binary_ieee	Overload f2r
 peg	Overload EOF
-peg	wfG_def: its body is ML that the port does not have
 pegexec	Overload OME
 pegexec	Overload EOF
-grammar	valid_ptree_def: its body is ML that the port does not have
-grammar	valid_lptree_def: its body is ML that the port does not have
 grammar	Overload derives
 NTproperties	Overload nullableNT
 simpleSexp	Overload nil
-balanced_map	isSubmapOfBy_def: its body is ML that the port does not have
-balanced_map	balanced_def: its body is ML that the port does not have
 walkstar	line 3 is 81 characters
 unifDef	line 3 is 80 characters
 collapse	line 3 is 81 characters
@@ -48,7 +40,6 @@ cv_type	Overload Pair
 cv_std	Overload Num
 cv_std	Overload Pair
 errorLogMonad	Overload emret
-precparser	isFinal_def: its body is ML that the port does not have
 misc	ML code skipped: fun drule th =   first_assum(mp_tac o MATCH_MP (ONCE_REWRITE
 misc	Overload LLOOKUP
 misc	derive LLOOKUP_def: no listTheory.oEL_def
@@ -58,20 +49,17 @@ misc	derive LLOOKUP_DROP: no listTheory.oEL_DROP
 misc	derive LLOOKUP_TAKE_IMP: no listTheory.oEL_TAKE_E
 misc	derive LLOOKUP_LUPDATE: no listTheory.oEL_LUPDATE
 misc	ML code skipped: val anub_ind = theorem"anub_ind"
-misc	between_def: its body is ML that the port does not have
 misc	ML code skipped: val _ = augment_srw_ss [rewrites [map_some_eq,map_some_eq_ap
 misc	derive LASTN_TL: no LASTN_CONS
 misc	derive NOT_MEM_findi: rule EQ_IMP_RULE/0
 misc	derive w2n_lt_256: no w2n_lt
-misc	list_set_eq_def: its body is ML that the port does not have
 misc	derive option_eq_some: no OPTION_IGNORE_BIND_EQUALS_OPTION
 misc	ML code skipped: val is_subseq_ind = theorem"is_subseq_ind";
-misc	steps_rel_def: its body is ML that the port does not have
 misc	ML code skipped: val steps_rel_ind = theorem"steps_rel_ind";
 misc	ML code skipped: val LESS4 = DECIDE ``n < 4 <=> (n = 0) \/ (n = 1) \/ (n = 2)
 misc	line 49 is 102 characters
 misc	line 118 is 80 characters
-misc	line 1888 is 92 characters
+misc	line 1890 is 92 characters
 mllist	derive LENGTH_AUX_THM: not a name
 mllist	line 28 is 80 characters
 mlstring	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
@@ -81,16 +69,12 @@ mlstring	Overload toString
 mlstring	ML code skipped: val splitl_aux_ind = theorem"splitl_aux_ind";
 mlstring	ML code skipped: val tokens_aux_ind = theorem"tokens_aux_ind";
 mlstring	derive TOKENS_eq_tokens_sym: rule Q.AP_TERM/1
-mlstring	mlstring_le_def: its body is ML that the port does not have
-mlstring	mlstring_ge_def: its body is ML that the port does not have
 mlstring	ML code skipped: val flip_ord_def = ternaryComparisonsTheory.invert_compariso
 mlstring	Overload flip_ord
 mlstring	Overload size_limit
 mlstring	line 28 is 81 characters
 mlstring	line 48 is 89 characters
 mlstring	line 49 is 84 characters
-namespace	nsAll2_def: its body is ML that the port does not have
-ast	every_exp_def: its body is ML that the port does not have
 ast	line 109 is 82 characters
 ast	line 199 is 85 characters
 backend_common	ML code skipped: val _ = set_fixity "▷" (Infixl 480);
@@ -100,12 +84,10 @@ backend_common	line 88 is 80 characters
 backend_common	line 89 is 80 characters
 backend_common	line 94 is 80 characters
 closLang	ML code skipped: val exp_size_def = definition"exp_size_def";
-closLang	pure_def: its body is ML that the port does not have
 bvi	Overload mk_unit
 bvi	Overload mk_elem_at
 bvi	Overload TailCall
 bvi	line 62 is 81 characters
-bvi_inline	wrapper_ok_def: its body is ML that the port does not have
 bvi_inline	a MEASURE override that a run does not bear out: remove_ticks_exp_def
 bvi_tailrec	derive from_op_thm: '=> EVAL ``fr'
 bvi_tailrec	ML code skipped: val test1_tm = ``Let [] (Call 0 (SOME 0) [] NONE)``
@@ -117,7 +99,6 @@ bvi_tailrec	ML code skipped: val opt_tm = ``   Let [Op (IntOp (Const 0)) []]    
 bvi_tailrec	ML code skipped: val aux_tm = ``Let [Var 0; Op (BlockOp (Cons 0)) []] ^opt_tm
 bvi_tailrec	line 501 is 83 characters
 bvi_tailrec	line 502 is 80 characters
-bvi_tmc	wf_vars_def: its body is ML that the port does not have
 bvi_tmc	line 7 is 81 characters
 bvi_tmc	line 66 is 80 characters
 bvi_tmc	line 108 is 87 characters
@@ -125,7 +106,7 @@ bvi_tmc	line 168 is 124 characters
 bvi_tmc	line 169 is 102 characters
 bvi_tmc	line 170 is 137 characters
 bvi_tmc	line 217 is 94 characters
-bvi_tmc	line 532 is 98 characters
+bvi_tmc	line 533 is 98 characters
 bvl	Overload mk_unit
 bvl	Overload mk_elem_at
 bvl_const	ML code skipped: val tm = (SmartOp2_quotation |>    map (fn QUOTE s => Portab
@@ -153,9 +134,8 @@ clos_ticks	ML code skipped: val remove_ticks_ind = theorem "remove_ticks_ind";
 clos_known	ML code skipped: val get_size_aux_ind = theorem "get_size_aux_ind";
 clos_known	ML code skipped: val val_approx_size_def = definition "val_approx_size_def"
 clos_known	derive merge_def: '++ ETA_ss) ['
-clos_known	isGlobal_def: its body is ML that the port does not have
-clos_known	line 457 is 87 characters
-clos_known	line 458 is 80 characters
+clos_known	line 461 is 87 characters
+clos_known	line 462 is 80 characters
 clos_mti	ML code skipped: val collect_args_ind = theorem "collect_args_ind";
 clos_mti	ML code skipped: val collect_apps_ind = theorem "collect_apps_ind";
 clos_mti	ML code skipped: val intro_multi_ind = theorem "intro_multi_ind";
@@ -189,7 +169,6 @@ stackLang	Overload const_inst
 stackLang	Overload load_inst
 stackLang	Overload store_inst
 wordLang	Overload ShiftN
-wordLang	every_name_def: its body is ML that the port does not have
 wordLang	Overload shift
 word_bignum	derive all_code_defs: '!code_defs)'
 word_bignum	ML code skipped: val _ = (max_print_depth := 25);
@@ -277,10 +256,8 @@ mlint	Overload toString
 mlint	ML code skipped: val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 mlint	ML code skipped: val fromChars_ind = theorem"fromChars_ind"
 mlint	derive fromChars_range_lemma: not a name
-lab_to_target	sec_ok_light_def: its body is ML that the port does not have
 lab_to_target	Overload all_enc_ok_light
 lab_to_target	ML code skipped: val prog_to_bytes_ind = theorem"prog_to_bytes_ind";
-mlsexp	is_safe_char_def: its body is ML that the port does not have
 mlsexp	line 131 is 81 characters
 mlsexp	line 136 is 82 characters
 mlsexp	line 138 is 82 characters
@@ -336,7 +313,6 @@ parmove	ML code skipped: fun replace_quote from to (QUOTE s) = QUOTE(Portable.re
 parmove	ML code skipped: val _ = add_infix("step",450,NONASSOC);
 parmove	ML code skipped: val _ = set_fixity"\226\150\183"(Infix(NONASSOC,450));
 parmove	ML code skipped: val _ = set_fixity "\226\150\183*" (Infix(NONASSOC,450));
-parmove	wf_def: its body is ML that the port does not have
 parmove	Overload ⊢
 parmove	ML code skipped: val seqsem_ind = theorem"seqsem_ind";
 parmove	ML code skipped: val _ = set_fixity"\226\137\161"(Infix(NONASSOC,450));
@@ -379,17 +355,12 @@ bviSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 bviSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 gram	ML code skipped: val tokmap0 =     List.foldl (fn ((s,t), acc) => Binarymap.i
 gram	ML code skipped: val ginfo = { tokmap = tokmap,               tokty = ``:toke
-gram	validMultSym_def: its body is ML that the port does not have
 gram	Overload mkNT
 gram	Overload NN
 gram	Overload TK
 gram	ML code skipped: val ast =   ``let mkI = λn. Ndl (mkNT nEbase) [Ndl (mkNT nEl
 gram	ML code skipped: val check_results =     time (SIMP_CONV (srw_ss())          
 gram	ML code skipped: val _ = if aconv (rhs (concl check_results)) T then print "v
-tokenUtils	isWhitespaceT_def: its body is ML that the port does not have
-tokenUtils	isCharT_def: its body is ML that the port does not have
-tokenUtils	isWordT_def: its body is ML that the port does not have
-tokenUtils	isLongidT_def: its body is ML that the port does not have
 cmlPEG	Overload monad_bind
 cmlPEG	Overload assert
 cmlPEG	ML code skipped: val distinct_ths = let   val ntlist = TypeBase.constructors_
@@ -499,7 +470,6 @@ unify	ML code skipped: fun tcallify_th fixedvs th =   let val (l,r) = dest_eq (c
 unify	ML code skipped: val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_t
 unify	cvwalk_code_def: PENDING (tcallify_th makes it with ML code)
 unify	derive tcvwalk_thm: rule Once/0
-unify	cocl_def: its body is ML that the port does not have
 unify	derive coc_thm': no coc_thm
 unify	derive kcoc_thm: no contify_cwc
 unify	derive kcocl_thm: no contify_cwc
@@ -531,13 +501,12 @@ unify	derive cunifywl0: no dfkcunifyl_thm
 unify	derive kcunifywl_thm: no cunifywl0
 unify	ML code skipped: val cunify_code = DefnBase.one_line_ify NONE kcunifywl_thm |
 unify	cunify_code_def: PENDING (tcallify_th makes it with ML code)
-unify	kcunifywlR_def: its body is ML that the port does not have
 unify	Overload kcuR
 unify	derive svwalk_result_encodable': rule INST_TYPE/1
 unify	derive tcunify_thm: rule Once/0
 unify	derive t_vwalk_ind: rule UNDISCH/3
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
-unify	line 1512 is 91 characters
+unify	line 1522 is 91 characters
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
 infer	derive constrain_op_case_def: conv patternMatchesLib.PMATCH_ELIM_CONV
@@ -626,11 +595,10 @@ cfHeapsBase	ML code skipped: val rew_heap = full_simp_tac bool_ss rew_heap_thms
 cfHeapsBase	line 114 is 100 characters
 cfHeaps	ML code skipped: fun sing x = [x]
 cfStore	ML code skipped: val tac_store2heap_IN =   Induct THENL [all_tac, Cases] \\ f
-cfApp	io_prefix_def: its body is ML that the port does not have
 cfApp	ML code skipped: val dec_clock_def = evaluateTheory.dec_clock_def val evaluat
-cfApp	line 237 is 82 characters
-cfApp	line 241 is 85 characters
-cfApp	line 265 is 90 characters
+cfApp	line 242 is 82 characters
+cfApp	line 246 is 85 characters
+cfApp	line 270 is 90 characters
 cf	ML code skipped: val pat_bindings_def = astTheory.pat_bindings_def
 cf	ML code skipped: fun NETA_CONV t = let     val (params, body) = strip_abs t  
 cf	ML code skipped: val cf_defs = [   cf_def,   cf_lit_def,   cf_con_def,   cf_v
@@ -1411,7 +1379,6 @@ basisProg	Theorem print_pp_spec: the ML expression ^(fetch_v "print_pp" (get_ml_
 basisProg	ML code skipped: val basis_st = get_ml_prog_state ();
 basisProg	ML code skipped: val basis_prog = basis_st |> remove_snocs |> ml_progLib.get_
 basisProg	derive basis_Decls_thm: no basis_st
-panLexer	isLexErrorT_def: its body is ML that the port does not have
 panPEG	derive FDOM_pancake_peg: no finite_mapTheory.FRANGE_FUPDATE_DOMSUB
 panPEG	ML code skipped: val pancake_peg_nt_thm =     pegexecTheory.peg_nt_thm       
 panPEG	ML code skipped: fun mk_rule_app peg n =   SIMP_CONV (srw_ss())             [
@@ -1488,10 +1455,8 @@ copying_gc	ML code skipped: val th =   fetch "-" "gc_move_loop_ind" |> Q.SPEC `(
 copying_gc	ML code skipped: val lemma = prove(th |> concl |> dest_imp |> fst,   rpt stri
 copying_gc	ML code skipped: val th = MP th lemma |> SIMP_RULE std_ss []          |> Q.SP
 copying_gc	derive gc_move_loop_ok: no th
-semantics	can_type_prog_def: its body is ML that the port does not have
-semantics	line 50 is 86 characters
+semantics	line 55 is 86 characters
 dataSem	ML code skipped: val s = ``(s:('c,'ffi) dataSem$state)`` val vs = ``(vs:dataS
-dataSem	no_thunks_in_refs_def: its body is ML that the port does not have
 dataSem	Overload add_space_safe
 dataSem	Overload heap_peak
 dataSem	Overload add_space_safe_args
@@ -1506,7 +1471,7 @@ dataSem	Overload do_app_peak
 dataSem	ML code skipped: val evaluate_ind = theorem"evaluate_ind";
 dataSem	derive case_eq_thms: not a name
 dataSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
-dataSem	line 409 is 85 characters
+dataSem	line 411 is 85 characters
 flatSem	ML code skipped: val s = ``s:('c,'ffi) flatSem$state``
 flatSem	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 flatSem	derive case_eq_thms: no eqs
@@ -1523,15 +1488,12 @@ wordSem	ML code skipped: val state_component_equality = theorem"state_component_
 wordSem	ML code skipped: val s = ``(s:('a,'c,'ffi) wordSem$state)``
 wordSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 wordSem	line 1221 is 86 characters
-targetSem	encoded_bytes_in_mem_def: its body is ML that the port does not have
 targetSem	line 62 is 86 characters
-targetSem	line 549 is 83 characters
+targetSem	line 556 is 83 characters
 labSem	Overload read_reg
 labSem	line 51 is 205 characters
 stackSem	ML code skipped: val _ = map delete_binding ["evaluate_AUX_def", "evaluate_pr
 stackSem	line 952 is 86 characters
-wordConvs	distinct_tar_reg_def: its body is ML that the port does not have
-wordConvs	good_code_labels_def: its body is ML that the port does not have
 wordConvs	derive not_created_subprogs_P_def: '=> GEN (hd ('
 wordConvs	ML code skipped: val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 wordConvs	derive no_alloc_def: no not_created_subprogs_P_def
@@ -1545,7 +1507,7 @@ wordConvs	Overload word_get_code_labels
 wordConvs	Overload word_good_handlers
 wordConvs	Overload word_good_code_labels
 wordConvs	line 159 is 102 characters
-wordConvs	line 401 is 101 characters
+wordConvs	line 409 is 101 characters
 word_elim	ML code skipped: val find_word_ref_ind = theorem "find_word_ref_ind";
 ml_pmatch	ML code skipped: val write_def = ml_progTheory.write_def;
 ml_pmatch	ML code skipped: val Pmatch_ind = theorem"Pmatch_ind"
@@ -1593,7 +1555,6 @@ monadic_enc32	ML code skipped: val hash_tab_32_manip = el 1 arr_manip;
 monadic_enc32	derive hash_tab_32_accessor: no hash_tab_32_manip
 monadic_enc32	ML code skipped: val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_ret
 monadic_enc32	line 154 is 104 characters
-num_list_enc_dec	dec_ok_def: its body is ML that the port does not have
 num_list_enc_dec	Overload CUT
 num_list_enc_dec	Overload SHIFT
 num_tree_enc_dec	derive num_tree_dec'_ind: no num_tree_dec'_ind
@@ -1655,17 +1616,14 @@ holSyntax	Overload Fun
 holSyntax	Overload Bool
 holSyntax	ML code skipped: fun type_rec_tac proj = (WF_REL_TAC(`measure (type_size o `@
 holSyntax	Overload Equal
-holSyntax	ACONV_def: its body is ML that the port does not have
 holSyntax	ML code skipped: val VARIANT_PRIMES_def = new_specification   ("VARIANT_PRIME
 holSyntax	Overload is_instance
 holSyntax	Overload tysof
 holSyntax	Overload tmsof
-holSyntax	hypset_ok_def: its body is ML that the port does not have
 holSyntax	Overload sigof
 holSyntax	Overload axsof
 holSyntax	Overload tysof
 holSyntax	Overload tmsof
-holSyntax	theory_ok_def: its body is ML that the port does not have
 holSyntax	Overload type_list
 holSyntax	Overload tysof
 holSyntax	Overload const_list
@@ -1677,7 +1635,6 @@ holSyntax	Overload axioms_of_upd
 holSyntax	Overload axiom_list
 holSyntax	Overload axsof
 holSyntax	Overload thyof
-holSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSyntaxExtra	ML code skipped: val cpn_distinct = TypeBase.distinct_of ``:ordering`` val cp
 holSyntaxExtra	derive type_ind: a term
 holSyntaxExtra	Theorem type1_size_append: the auxiliary size function type1_size
@@ -1728,8 +1685,6 @@ holBoolSyntax	ML code skipped: val Defs = [TrueDef_def, AndDef_def, ImpliesDef_d
 holBoolSyntax	ML code skipped: val ConstDef_tac =   pop_assum(assume_tac o REWRITE_RULE[GSY
 holBoolSyntax	ML code skipped: fun pull_tac () =   REWRITE_TAC[Once RTC_CASES1] >> disj2_ta
 holBoolSyntax	ML code skipped: val sigs = [is_true_sig_def, is_false_sig_def, is_implies_si
-holBoolSyntax	is_bool_sig_def: its body is ML that the port does not have
-holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
 holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holBoolSyntax	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holBoolSyntax	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
@@ -2221,13 +2176,7 @@ parserProg	ML code skipped: val _ = translate (RW [monad_unitbind_assert] parse_
 parserProg	derive parse_prog_side_lemma: '"-" "parse_p'
 parserProg	ML code skipped: val _ = ml_translatorLib.ml_prog_update (ml_progLib.close_mo
 parserProg	ML code skipped: val _ = (ml_translatorLib.clean_on_exit := true);
-caml_lex	isOctDigit_def: its body is ML that the port does not have
-caml_lex	isBinDigit_def: its body is ML that the port does not have
-caml_lex	isDelim_def: its body is ML that the port does not have
 caml_lex	ML code skipped: val PMCONV = patternMatchesLib.PMATCH_ELIM_CONV;
-camlPEG	validOpChar_def: its body is ML that the port does not have
-camlPEG	validShiftOp_def: its body is ML that the port does not have
-camlPEG	identUpperLower_def: its body is ML that the port does not have
 camlPEG	ML code skipped: val rules_t = “camlPEG.rules”; fun ty2frag ty = let   open s
 camlPEG	ML code skipped: val rules = SIMP_CONV (bool_ss ++ ty2frag ``:(α,β,γ,δ)peg``)
 camlPEG	derive FDOM_camlPEG: no finite_mapTheory.FRANGE_FUPDATE_DOMSUB
@@ -2250,8 +2199,8 @@ camlPEG	derive PEG_exprs: no peg_range
 camlPEG	derive parse_Start_total: no pegexecTheory.peg_exec_total
 camlPEG	derive coreloop_Start_total: no pegexecTheory.coreloop_total
 camlPEG	derive owhile_Start_total: no coreloop_Start_total
-camlPEG	line 1101 is 80 characters
-camlPEG	line 1102 is 81 characters
+camlPEG	line 1109 is 80 characters
+camlPEG	line 1110 is 81 characters
 camlPtreeConversion	ML code skipped: val sum_monadinfo : monadinfo = {   bind = “bind”,   ignoreb
 camlPtreeConversion	unknown monad sum
 camlPtreeConversion	Overload psize
@@ -3078,11 +3027,9 @@ ag32Prog	ML code skipped: val _ = (ml_translatorLib.clean_on_exit := true);
 clFFI	ML code skipped: val decode_encode_name = "decode_encode"; val decode_encode 
 fsFFI	Overload isFile
 fsFFI	ML code skipped: val IO_fs_component_equality = theorem"IO_fs_component_equal
-fsFFI	validFD_def: its body is ML that the port does not have
 fsFFI	ML code skipped: val decode_encode_name = "decode_encode"; val decode_encode 
-fsFFI	line 133 is 80 characters
 fsFFI	line 134 is 80 characters
-basis_ffi	is_basis_ffi_name_def: its body is ML that the port does not have
+fsFFI	line 135 is 80 characters
 basis_ffi	ML code skipped: val iobuff_loc_num =   TextIOProgTheory.iobuff_loc_def   |> 
 basis_ffi	derive IOFS_precond: '\\\\ rw[set_se'
 basis_ffi	derive STDIO_precond: '>>\n  qexists'
@@ -3094,20 +3041,20 @@ basis_ffi	derive basis_ffi_length_thms: no ffi_write_length
 basis_ffi	ML code skipped: val _ = translation_extends "TextIOProg"; val st_f = get_ml_
 basis_ffi	ML code skipped: val ref_eq_nil_pat = “_ = [] : v store_v list”
 basis_ffi	derive basis_refs_eqs: '"refs_def"\n '
-basis_ffi	line 189 is 81 characters
-basis_ffi	line 190 is 80 characters
-basis_ffi	line 193 is 81 characters
-basis_ffi	line 223 is 101 characters
-basis_ffi	line 225 is 101 characters
-basis_ffi	line 231 is 96 characters
-basis_ffi	line 232 is 95 characters
-basis_ffi	line 234 is 83 characters
-basis_ffi	line 272 is 99 characters
-basis_ffi	line 273 is 93 characters
-basis_ffi	line 274 is 89 characters
-basis_ffi	line 275 is 92 characters
-basis_ffi	line 276 is 92 characters
-basis_ffi	line 325 is 90 characters
+basis_ffi	line 194 is 81 characters
+basis_ffi	line 195 is 80 characters
+basis_ffi	line 198 is 81 characters
+basis_ffi	line 228 is 101 characters
+basis_ffi	line 230 is 101 characters
+basis_ffi	line 236 is 96 characters
+basis_ffi	line 237 is 95 characters
+basis_ffi	line 239 is 83 characters
+basis_ffi	line 277 is 99 characters
+basis_ffi	line 278 is 93 characters
+basis_ffi	line 279 is 89 characters
+basis_ffi	line 280 is 92 characters
+basis_ffi	line 281 is 92 characters
+basis_ffi	line 330 is 90 characters
 compiler32Prog	ML code skipped: open preamble; open compilerTheory      exportTheory      ml
 compiler32Prog	ML code skipped: val _ = translation_extends "ag32Prog"; val _ = ml_translato
 compiler32Prog	ML code skipped: val _ = ml_translatorLib.ml_prog_update (ml_progLib.open_mod
@@ -3968,7 +3915,6 @@ compiler64Prog	ML code skipped: val r = translate parse_cakeml_syntax_def; val r
 compiler64Prog	ML code skipped: val _ = (next_ml_names := ["init_next_string"]); val res = t
 compiler64Prog	ML code skipped: Quote add_cakeml: fun start_repl (cl,s1) =   let     val par
 compiler64Prog	ML code skipped: Quote add_cakeml: fun run_interactive_repl cl =   let     va
-compiler64Prog	has_repl_flag_def: its body is ML that the port does not have
 compiler64Prog	ML code skipped: val _ = (next_ml_names := ["compiler_has_repl_flag"]); val r
 compiler64Prog	ML code skipped: val res = translate (has_pancake_flag_def |> SIMP_RULE (srw_
 compiler64Prog	ML code skipped: Quote add_cakeml:   fun main u =   let     val cl = CommandL
@@ -4605,8 +4551,6 @@ candle_kernel_vals	ML code skipped: fun get_typestamp_num th =   th |> concl |> 
 candle_kernel_vals	Overload type_stamp_n
 candle_kernel_vals	Overload term_stamp_n
 candle_kernel_vals	Overload thm_stamp_n
-candle_kernel_vals	STRING_TYPE_HEAD_def: its body is ML that the port does not have
-candle_kernel_vals	INT_HEAD_def: its body is ML that the port does not have
 candle_kernel_vals	ML code skipped: val s = “s:α semanticPrimitives$state”
 candle_kernel_vals	ML code skipped: val safe_error_goal =     “∃k. s' = ((s:α semanticPrimitives
 candle_kernel_vals	ML code skipped: val prove_head_tac =   rewrite_tac[kernel_funs_v_def]   \\ T
@@ -4652,7 +4596,6 @@ candle_prover_evaluate	ML code skipped: Resume evaluate_v_ok[decs_Dlocal]:   rw 
 candle_prover_evaluate	ML code skipped: Finalise evaluate_v_ok;
 candle_basis_evaluate	derive simple_exp_simps: not a name
 candle_basis_evaluate	derive simple_dec_simps: not a name
-candle_basis_evaluate	post_state_ok_def: its body is ML that the port does not have
 candle_basis_evaluate	ML code skipped: local   val ind_thm =     full_evaluate_ind     |> Q.SPECL [
 candle_basis_evaluate	Theorem evaluate_basis_v_ok: the ML expression ^(evaluate_basis_v_ok ()...), which the port cannot evaluate
 candle_basis_evaluate	ML code skipped: Resume evaluate_basis_v_ok[Nil]:   rw [evaluate_def] QED
@@ -4801,7 +4744,6 @@ compute	Overload failwith
 compute	Overload handle
 evaluate_skip	derive v_rel_def: not a name
 evaluate_skip	derive env_rel_def: rule Once/0
-evaluate_skip	match_res_rel_def: its body is ML that the port does not have
 evaluate_skip	ML code skipped: local   val ind_thm =     full_evaluate_ind     |> Q.SPECL [
 evaluate_skip	Theorem evaluate_update: the ML expression ^(evaluate_update ()...), which the port cannot evaluate
 evaluate_skip	ML code skipped: Resume evaluate_update[Nil]:   rw [evaluate_def]   \\ first_
@@ -4837,12 +4779,7 @@ evaluate_skip	ML code skipped: Resume evaluate_update[decs_Dmod]:   rw [evaluate
 evaluate_skip	ML code skipped: Resume evaluate_update[decs_Dlocal]:   rw [evaluate_decs_def
 evaluate_skip	ML code skipped: Finalise evaluate_update;
 evaluate_skip	line 236 is 80 characters
-evaluate_skip	line 652 is 80 characters
-evaluate_init	state_ok_def: its body is ML that the port does not have
-evaluate_init	env_ok_def: its body is ML that the port does not have
-evaluate_init	v_ok_def: its body is ML that the port does not have
-evaluate_init	ref_ok_def: its body is ML that the port does not have
-evaluate_init	stamp_ok_def: its body is ML that the port does not have
+evaluate_skip	line 659 is 80 characters
 evaluate_init	ML code skipped: local   val ind_thm =     full_evaluate_ind     |> Q.SPECL [
 evaluate_init	Theorem evaluate_ok: the ML expression ^(evaluate_ok ()...), which the port cannot evaluate
 evaluate_init	ML code skipped: Resume evaluate_ok[Nil]:   rw [evaluate_def] \\ gs [] QED
@@ -4883,10 +4820,6 @@ fmap_cv	ML code skipped: val _ = cv_trans char_lt_def; val _ = cv_trans string_l
 fmap_cv	ML code skipped: val _ = cv_trans str_insert_def; val str_insert_cv_thm = fet
 fmap_cv	ML code skipped: val _ = cv_trans test_def; val res = fetch "-" "cv_test_thm"
 setSpec	ML code skipped: val mem = ``mem:'U->'U->bool``
-setSpec	is_separation_def: its body is ML that the port does not have
-setSpec	is_power_def: its body is ML that the port does not have
-setSpec	is_union_def: its body is ML that the port does not have
-setSpec	is_set_theory_def: its body is ML that the port does not have
 setSpec	Overload Pow
 setSpec	Overload ∅
 setSpec	Overload Unit
@@ -4904,41 +4837,30 @@ setSpec	Overload Abstract
 setSpec	derive axiom_of_choice: '>>\n  qexists'
 setSpec	ML code skipped: val indset = ``indset:'U`` val ch = ``ch:'U->'U`` val s = ``
 setSpec	Overload M
-setSpec	is_model_def: its body is ML that the port does not have
 setSpec	Overload tuple
 setSpec	Overload bigcross
 holSemantics	ML code skipped: val mem = ``mem:'U->'U->bool``
 holSemantics	ML code skipped: fun type_rec_tac proj = (WF_REL_TAC(`measure (type_size o `@
 holSemantics	Overload inhabited
 holSemantics	Overload is_type_assignment
-holSemantics	is_type_valuation_def: its body is ML that the port does not have
 holSemantics	Overload is_type_valuation
-holSemantics	is_term_assignment_def: its body is ML that the port does not have
 holSemantics	Overload is_term_assignment
-holSemantics	is_term_valuation_def: its body is ML that the port does not have
 holSemantics	Overload is_term_valuation
 holSemantics	Overload tyaof
 holSemantics	Overload tmaof
 holSemantics	Overload tyvof
 holSemantics	Overload tmvof
-holSemantics	is_valuation_def: its body is ML that the port does not have
 holSemantics	Overload is_valuation
 holSemantics	ML code skipped: val instance_def = new_specification("instance_def",["instan
 holSemantics	Overload termsem
-holSemantics	is_interpretation_def: its body is ML that the port does not have
 holSemantics	Overload is_interpretation
 holSemantics	Overload is_std_type_assignment
 holSemantics	Overload interprets
 holSemantics	Definition is_std_interpretation_def: unparsed input at 137: '\\'
 holSemantics	Overload is_std_interpretation
-holSemantics	models_def: its body is ML that the port does not have
-holSemantics	entails_def: its body is ML that the port does not have
-holSemantics	is_structure_def: its body is ML that the port does not have
 holSemantics	Overload is_structure
 holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
-holSemantics	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
-holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	ML code skipped: val mem = ``mem:'U->'U->bool``
 holSemanticsExtra	Theorem typesem_inhabited: binder expected at 36: "'d"
 holSemanticsExtra	Theorem typesem_Fun: binder expected at 5: "'d"
@@ -4979,23 +4901,15 @@ holBool	Overload x
 holBool	Overload FAx
 holBool	ML code skipped: val sigs = [is_true_sig_def, is_false_sig_def, is_implies_si
 holBool	Overload Boolrel
-holBool	is_true_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_true_interpretation
-holBool	is_and_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_and_interpretation
 holBool	Overload is_implies_interpretation
-holBool	is_forall_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_forall_interpretation
-holBool	is_exists_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_exists_interpretation
-holBool	is_or_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_or_interpretation
-holBool	is_false_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_false_interpretation
-holBool	is_not_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_not_interpretation
 holBool	ML code skipped: val ints = [is_true_interpretation_def,is_and_interpretation
-holBool	is_bool_interpretation_def: its body is ML that the port does not have
 holBool	Overload is_bool_interpretation
 holBool	ML code skipped: val Defs = [TrueDef_def, AndDef_def, ImpliesDef_def, ForallD
 holBool	ML code skipped: fun init_tac q =   fs[models_def] >>   first_x_assum(qspec_t
@@ -5010,7 +4924,6 @@ holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt
 holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
 holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holExtension	ML code skipped: val mem = ``mem:'U->'U->bool``
-holExtension	sound_update_def: its body is ML that the port does not have
 holExtension	Overload sound_update
 holExtension	ML code skipped: val _ = delete_const"eqsh"
 holAxioms	Overload A
@@ -5104,7 +5017,6 @@ bviProps	derive case_elim_thms: not a name
 bviProps	derive case_eq_thms: a term
 bviProps	derive evaluate_LENGTH: no evaluate_LENGTH
 bviProps	derive get_code_labels_def: '++ETA_ss)[]'
-bviProps	good_code_labels_def: its body is ML that the port does not have
 bvi_inlineProof	ML code skipped: Resume evaluate_inline[CONS]:   Cases_on `es1`   >- gvs []  
 bvi_inlineProof	ML code skipped: Resume evaluate_inline[Var]:   gvs [evaluate_def, AllCaseEqs
 bvi_inlineProof	ML code skipped: Resume evaluate_inline[If]:   gvs []   >> qpat_x_assum `eval
@@ -5130,9 +5042,7 @@ bvi_inlineProof	ML code skipped: Resume evaluate_remove_ticks_mutual[Return]:   
 bvi_inlineProof	ML code skipped: Resume evaluate_remove_ticks_mutual[NIL]:   gvs [remove_tick
 bvi_inlineProof	ML code skipped: Resume evaluate_remove_ticks_mutual[CONS]:   qpat_x_assum `e
 bvi_inlineProof	ML code skipped: Finalise evaluate_remove_ticks_mutual;
-namespaceProps	alistSub_def: its body is ML that the port does not have
 namespaceProps	ML code skipped: val _ = DefnBase.export_cong "alistSub_cong";
-namespaceProps	nsSub_compute_def: its body is ML that the port does not have
 semanticPrimitivesProps	ML code skipped: val eqs = LIST_CONJ (map TypeBase.case_eq_of   [``:op``, ``:
 semanticPrimitivesProps	derive do_app_cases: '++COND_elim_'
 semanticPrimitivesProps	Overload SFV
@@ -5143,40 +5053,24 @@ evaluateProps	ML code skipped: val evaluate_decs_lemmas   = BODY_CONJUNCTS is_cl
 evaluateProps	derive evaluate_case_eqs: no result_case_eq
 evaluateProps	ML code skipped: val evaluate_set_clock_lemmas   = (BODY_CONJUNCTS is_clock_i
 evaluateProps	ML code skipped: val evaluate_minimal_lemmas = BODY_CONJUNCTS is_clock_io_mon
-typeSoundInvariants	tenv_abbrev_ok_def: its body is ML that the port does not have
-typeSoundInvariants	tenv_ctor_ok_def: its body is ML that the port does not have
-typeSoundInvariants	tenv_val_ok_def: its body is ML that the port does not have
-typeSoundInvariants	tenv_ok_def: its body is ML that the port does not have
-typeSoundInvariants	tenv_val_exp_ok_def: its body is ML that the port does not have
-typeSoundInvariants	type_sv_def: its body is ML that the port does not have
-typeSoundInvariants	good_ctMap_def: its body is ML that the port does not have
-typeSoundInvariants	consistent_ctMap_def: its body is ML that the port does not have
-typeSoundInvariants	type_all_env_def: its body is ML that the port does not have
-typeSoundInvariants	type_sound_invariant_def: its body is ML that the port does not have
-typeSoundInvariants	line 166 is 80 characters
+typeSoundInvariants	line 187 is 80 characters
 typeSysProps	ML code skipped: val find_recfun_def = semanticPrimitivesTheory.find_recfun_d
 typeSysProps	ML code skipped: val _ = export_rewrites [   "typeSystem.Tarray_def",   "type
-typeSysProps	type_pes_def: its body is ML that the port does not have
 typeSysProps	ML code skipped: val op_thms = { nchotomy = op_nchotomy, case_def = op_case_d
 typeSysProps	derive type_op_cases: '++DNF_ss) [\n'
 typeSysProps	ML code skipped: val type_subst_lem1 = (GEN_ALL o  SIMP_RULE (srw_ss()++ARITH
-weakening	weakS_def: its body is ML that the port does not have
-weakening	weakCT_def: its body is ML that the port does not have
 typeSound	ML code skipped: val type_num_defs = LIST_CONJ [     Tarray_num_def,     Tboo
 typeSound	ML code skipped: val type_v_exn = SIMP_RULE (srw_ss()) [] (Q.prove (         
 typeSound	ML code skipped: val pat_sound_tac =  CCONTR_TAC >>  full_simp_tac(srw_ss())[
 typeSound	ML code skipped: val let_tac =   rw []   >> Cases_on `r1`   >> fs []   >> rw 
 semanticsProps	ML code skipped: val tac1 =     metis_tac[semanticPrimitivesTheory.result_11,
 semanticsProps	ML code skipped: val tac2 = every_case_tac >> rfs[] >> first_x_assum (qspec_t
-semanticsProps	state_invariant_def: its body is ML that the port does not have
-semanticsProps	implements'_def: its body is ML that the port does not have
 dataProps	ML code skipped: val s = ``s:('c,'ffi) dataSem$state``
 dataProps	ML code skipped: fun cases_on_op_fs q = Cases_on q \\ full_simp_tac(srw_ss())
 dataProps	ML code skipped: val do_app_swap_tac =    Count.apply (strip_tac    \\ cases_
 dataProps	ML code skipped: val full_fs = fs[ get_var_def, set_var_def                  
 dataProps	ML code skipped: val full_cases = fs [ list_case_eq,option_case_eq           
 dataProps	ML code skipped: val basic_tac = fs [evaluate_def]                       \\ r
-dataProps	good_code_labels_def: its body is ML that the port does not have
 dataProps	ML code skipped: val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_a
 dataProps	ML code skipped: val basics_tac = fs [evaluate_def]                  \\ every
 dataProps	line 673 is 82 characters
@@ -5264,8 +5158,6 @@ bvi_tailrecProof	ML code skipped: val v_ty_cases = TypeBase.case_eq_of ``:v_ty``
 bvi_tailrecProof	ML code skipped: val s1 = mk_var("s",   type_of ``bviSem$evaluate`` |> strip_
 bvi_tailrecProof	ML code skipped: fun cases_on_op q = Cases_on q   >>> TRY_LT (SELECT_LT_THEN 
 bvi_tailrecProof	Overload in_ns_2
-bvi_tailrecProof	free_names_def: its body is ML that the port does not have
-bvi_tailrecProof	namespace_rel_def: its body is ML that the port does not have
 bvi_tailrecProof	ML code skipped: Resume evaluate_rewrite_tail[NIL]:      (fs [evaluate_def] \
 bvi_tailrecProof	ML code skipped: Resume evaluate_rewrite_tail[CONS]:    (simp [evaluate_def] 
 bvi_tailrecProof	ML code skipped: Resume evaluate_rewrite_tail[Var]:    (simp [evaluate_def]  
@@ -5283,11 +5175,6 @@ bvi_tailrecProof	ML code skipped: Resume evaluate_rewrite_tail[LetCall]:    (sim
 bvi_tailrecProof	ML code skipped: Finalise evaluate_rewrite_tail;
 bvi_tmcProof	ML code skipped: val s = “s : (num # γ, 'ffi) bviSem$state”;
 bvi_tmcProof	Overload in_ns_3
-bvi_tmcProof	no_mutcons_op_def: its body is ML that the port does not have
-bvi_tmcProof	free_names_def: its body is ML that the port does not have
-bvi_tmcProof	namespace_rel_def: its body is ML that the port does not have
-bvi_tmcProof	eor_rel_def: its body is ML that the port does not have
-bvi_tmcProof	holes_still_not_finalised_def: its body is ML that the port does not have
 bvi_tmcProof	ML code skipped: Resume do_app_op_rel[IntOp]:   Cases_on ‘i’   >~ [‘Const i’]
 bvi_tmcProof	ML code skipped: Resume do_app_op_rel[WordOp]:   gvs [do_app_def, do_app_aux_
 bvi_tmcProof	ML code skipped: Resume do_app_op_rel[Label]:   gvs [AllCaseEqs (), v_rel_cas
@@ -5352,7 +5239,7 @@ bvi_tmcProof	ML code skipped: >> first_assum $ qspecl_then [‘[exp]’, ‘dec_
 bvi_tmcProof	ML code skipped: >> qmatch_asmsub_rename_tac                ‘evaluate ([body'
 bvi_tmcProof	ML code skipped: Resume evaluate_rewrite_tmc[return]:   gvs [evaluate_def]   
 bvi_tmcProof	ML code skipped: Finalise evaluate_rewrite_tmc;
-bvi_tmcProof	line 1862 is 82 characters
+bvi_tmcProof	line 1885 is 82 characters
 bvl_handleProof	derive evaluate_GENLIST: '++ETA_ss)[TA'
 bvl_handleProof	derive ALOOKUP_MAPi_SWAP: '\\\\ fs [o_DEF'
 bvl_handleProof	derive ALOOKUP_MAPi_APPEND2: '\\\\ fs [o_DEF'
@@ -5395,10 +5282,6 @@ bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Force]:   REPEAT ST
 bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Tick]:   REPEAT STRIP_TAC   \\ f
 bvl_to_bviProof	ML code skipped: Resume compile_exps_correct[Call]:   REPEAT STRIP_TAC   \\ f
 bvl_to_bviProof	ML code skipped: Finalise compile_exps_correct;
-closProps	contains_App_SOME_def: its body is ML that the port does not have
-closProps	every_Fn_SOME_def: its body is ML that the port does not have
-closProps	every_Fn_vs_NONE_def: its body is ML that the port does not have
-closProps	every_Fn_vs_SOME_def: its body is ML that the port does not have
 closProps	derive v_ind: a term
 closProps	ML code skipped: val evaluate_LENGTH_ind =   evaluate_ind   |> Q.SPEC `\(xs,s
 closProps	ML code skipped: val evaluate_LENGTH = prove(evaluate_LENGTH_ind |> concl |> 
@@ -5410,16 +5293,12 @@ closProps	ML code skipped: val evaluate_code_lemma = prove(   evaluate_code_ind 
 closProps	ML code skipped: fun cases_on_op q = Cases_on q   >>> SELECT_LT_THEN (Q.RENAM
 closProps	derive EVERY_pure_correct: '>> simp[pure'
 closProps	derive pure_correct: no EVERY_pure_correct
-closProps	is_closure_def: its body is ML that the port does not have
-closProps	rec_clo_ok_def: its body is ML that the port does not have
-closProps	check_closures_def: its body is ML that the port does not have
 closProps	ML code skipped: val case_eq_thms = pair_case_eq::bool_case_eq::list_case_eq:
 closProps	ML code skipped: val s = ``s:('c,'ffi) closSem$state``;
 closProps	ML code skipped: val lemma = DECIDE``¬(x < y - z) ⇒ ((a:num) + x - (y - z) = 
 closProps	ML code skipped: val tac =   imp_res_tac evaluate_add_to_clock >> rev_full_si
 closProps	ML code skipped: val _ = export_rewrites ["closLang.exp_size_def"]
 closProps	derive vsgc_free_def: '++ ETA_ss) ['
-closProps	rsgc_free_def: its body is ML that the port does not have
 closProps	derive esgc_free_def: '++ ETA_ss) ['
 closProps	ML code skipped: fun case_constant typ =   prove_case_const_thm {case_def = T
 closProps	derive v_case_const: a term
@@ -5432,9 +5311,7 @@ closProps	ML code skipped: let     val ERR = mk_HOL_ERR "TYPE_CASE_TAC"     fun 
 closProps	ML code skipped: val evaluate_add_to_clock_io_events_mono_alt =   evaluate_ad
 closProps	ML code skipped: val do_app_lemma =   simple_val_rel_do_app   |> Q.GENL [`vr`
 closProps	ML code skipped: val do_app_lemma =   simple_val_rel_do_app   |> Q.GENL [`vr`
-closProps	obeys_max_app_def: its body is ML that the port does not have
 closProps	derive obeys_max_app_def: '++ETA_ss)[MA'
-closProps	no_Labels_def: its body is ML that the port does not have
 closProps	derive no_Labels_def: '++ETA_ss)[MA'
 closProps	Overload call_dests
 closProps	Overload app_dests
@@ -5455,15 +5332,10 @@ clos_annotateProof	ML code skipped: val code_tac =     imp_res_tac evaluate_code
 clos_annotateProof	ML code skipped: val IF_MAP_EQ = MAP_EQ_f |> SPEC_ALL |> EQ_IMP_RULE |> snd;
 clos_callProof	ML code skipped: val PUSH_EXISTS_IMP = SPEC_ALL RIGHT_EXISTS_IMP_THM;
 clos_callProof	ML code skipped: val evaluate_add_clock =   evaluate_add_to_clock   |> SIMP_R
-clos_callProof	every_refv_def: its body is ML that the port does not have
-clos_callProof	wfg'_def: its body is ML that the port does not have
-clos_callProof	recclosure_wf_def: its body is ML that the port does not have
 clos_callProof	ML code skipped: val v_rel_ind = theorem"v_rel_ind";
-clos_callProof	wfv_def: its body is ML that the port does not have
 clos_callProof	ML code skipped: val wfv_ind = theorem"wfv_ind";
 clos_callProof	ML code skipped: val insert_each'_ind = theorem"insert_each'_ind";
 clos_callProof	ML code skipped: fun pairmaparg_tac (g as (asl,w)) =   (tryfind     (Lib.part
-clos_callProof	syntax_ok_def: its body is ML that the port does not have
 clos_callProof	ML code skipped: fun asm_exists_pat_conj_tac0 pat = first_assum (part_match_e
 clos_callProof	ML code skipped: val asm_exists_pat_tac = Q_TAC (fn pat => first_assum (part_
 clos_callProof	ML code skipped: val t0 = ``t0:('c,'ffi) closSem$state``;
@@ -5471,7 +5343,6 @@ clos_callProof	ML code skipped: fun say0 pfx s g = (print (pfx ^ ": " ^ s ^ "\n"
 clos_fvsProof	derive v_rel_simps: '\\\\ fs [Boolv'
 clos_knownProps	ML code skipped: val va_case_eq = TypeBase.case_eq_of ``:val_approx``
 clos_knownProps	ML code skipped: val _ = set_fixity "◁" (Infix(NONASSOC,450))
-clos_knownProps	better_definedg_def: its body is ML that the port does not have
 clos_letopProof	ML code skipped: fun bump_assum pat = qpat_x_assum pat assume_tac;
 clos_letopProof	Overload let_op
 clos_letopProof	Overload var_list
@@ -5498,11 +5369,8 @@ clos_knownProof	ML code skipped: val v_caseT = v_case_eq |> INST_TYPE [alpha |->
 clos_knownProof	derive loptrel_arg1_SOME: no opt_caseT
 clos_knownProof	derive loptrel_arg1_NONE: no opt_caseT
 clos_knownProof	ML code skipped: val say = say0 "known_correct0";
-clos_knownProof	syntax_ok_def: its body is ML that the port does not have
 clos_knownProof	Overload fvs_compile
 clos_knownProof	ML code skipped: val fvs_inc = ``clos_fvs$compile_inc : clos_prog -> clos_pro
-clos_knownProof	val_approx_every_Fn_SOME_def: its body is ML that the port does not have
-clos_knownProof	val_approx_every_Fn_vs_NONE_def: its body is ML that the port does not have
 clos_knownProof	ML code skipped: fun trivial x = x               |> concl               |> st
 clos_knownProof	derive val_approx_no_Labels_simp: rule filter/1
 clos_knownProof	line 42 is 80 characters
@@ -5620,7 +5488,6 @@ data_to_word_memoryProof	ML code skipped: val EVERY2_EQ_EL = LIST_REL_EL_EQN
 data_to_word_memoryProof	ML code skipped: val EVERY2_IMP_EL = METIS_PROVE[EVERY2_EQ_EL]   ``!xs ys P. 
 data_to_word_memoryProof	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 data_to_word_memoryProof	ML code skipped: val v_ind =   TypeBase.induction_of``:v``   |> Q.SPECL[`P`,`
-data_to_word_memoryProof	gc_inline_def: its body is ML that the port does not have
 data_to_word_memoryProof	derive IN_reachable_addresses: rule Once/0
 data_to_word_memoryProof	ML code skipped: fun unlength_tac thms =   fs ([heap_length_def, el_length_de
 data_to_word_memoryProof	derive v_inv_Thunk_insert: no PULL_FORALL
@@ -5646,7 +5513,7 @@ data_to_word_memoryProof	ML code skipped: val list_copy_bwd_alias_def = list_cop
 data_to_word_memoryProof	ML code skipped: val memory_rel_copy_array_NONE_lemma =   memory_rel_RefByte_
 data_to_word_memoryProof	line 180 is 94 characters
 data_to_word_memoryProof	line 393 is 81 characters
-data_to_word_memoryProof	line 1948 is 81 characters
+data_to_word_memoryProof	line 1951 is 81 characters
 word_bignumProof	ML code skipped: val good_dimindex_def = miscTheory.good_dimindex_def; val en
 word_bignumProof	ML code skipped: val shift_def = backend_commonTheory.word_shift_def
 word_bignumProof	ML code skipped: val raw_eval_cases = eval_cases;
@@ -5799,16 +5666,12 @@ wordConvsProof	line 176 is 81 characters
 wordConvsProof	line 177 is 81 characters
 wordConvsProof	line 182 is 98 characters
 wordConvsProof	line 183 is 107 characters
-reg_allocProof	has_edge_def: its body is ML that the port does not have
-reg_allocProof	undirected_def: its body is ML that the port does not have
 reg_allocProof	ML code skipped: val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_ret
 reg_allocProof	ML code skipped: val get_eqns = [get_dim_def, get_unavail_moves_wl_def,get_av
 reg_allocProof	ML code skipped: val set_eqns = [set_dim_def, set_unavail_moves_wl_def,set_av
 reg_allocProof	ML code skipped: val add_eqns = [add_freeze_wl_def,add_unavail_moves_wl_def,a
 reg_allocProof	ML code skipped: val all_eqns = get_eqns @ set_eqns @ add_eqns @ msimps;
 reg_allocProof	derive case_eq_thms: not a name
-reg_allocProof	is_clique_def: its body is ML that the port does not have
-reg_allocProof	is_subgraph_def: its body is ML that the port does not have
 reg_allocProof	ML code skipped: val drule = FREEZE_THEN drule
 reg_allocProof	ML code skipped: fun first_prove_imp thms =   (first_assum(fn x => sg `^(fst(
 linear_scanProof	ML code skipped: val _ = disable_tyabbrev_printing "type_ident" val _ = disab
@@ -5868,9 +5731,7 @@ word_allocProof	ML code skipped: Resume clash_tree_colouring_ok[Loop]:   fs[wf_c
 word_allocProof	ML code skipped: Resume clash_tree_colouring_ok[Break]:   every_case_tac>>fs[
 word_allocProof	ML code skipped: Resume clash_tree_colouring_ok[Continue]:   every_case_tac>>
 word_allocProof	ML code skipped: Finalise clash_tree_colouring_ok;
-word_allocProof	even_starting_locals_def: its body is ML that the port does not have
 word_allocProof	ML code skipped: fun rm_let tm = tm|> SIMP_RULE std_ss [LET_THM];
-word_allocProof	nlive_store_def: its body is ML that the port does not have
 word_allocProof	ML code skipped: Resume evaluate_remove_dead[Move]:   gvs[evaluate_def,remove
 word_allocProof	ML code skipped: Resume evaluate_remove_dead[Inst]:   gvs[evaluate_def,remove
 word_allocProof	ML code skipped: Resume evaluate_remove_dead[Get]:   gvs[evaluate_def,remove_
@@ -5913,7 +5774,6 @@ word_allocProof	ML code skipped: Resume ssa_cc_trans_props[Continue]:   fs[ssa_c
 word_allocProof	ML code skipped: Finalise ssa_cc_trans_props;
 word_allocProof	ML code skipped: val exp_tac2 =     (last_x_assum kall_tac>>     exists_tac>>
 word_allocProof	ML code skipped: val setup_tac = Cases_on`word_exp st expr`>>full_simp_tac(sr
-word_allocProof	lt_ok_def: its body is ML that the port does not have
 word_allocProof	ML code skipped: Resume ssa_cc_trans_correct[Skip]:     exists_tac QED
 word_allocProof	ML code skipped: Resume ssa_cc_trans_correct[Move]:     last_x_assum kall_tac
 word_allocProof	ML code skipped: `ssa_locals_rel (na + 4 * LENGTH l) ssa'' st1 st2` by (     
@@ -5988,7 +5848,6 @@ word_copyProof	ML code skipped: let           val cong = TypeBase.case_cong_of (
 word_copyProof	ML code skipped: Resume copy_prop_correct[Loop]:   rpt gen_tac >> strip_tac >
 word_copyProof	ML code skipped: Finalise copy_prop_correct;
 word_copyProof	line 553 is 83 characters
-word_cseProof	data_inv_def: its body is ML that the port does not have
 word_cseProof	ML code skipped: Resume word_cse_wf_data[Move]:   gvs [word_cse_def, wf_canon
 word_cseProof	ML code skipped: Resume word_cse_wf_data[Inst]:   gvs [word_cse_def]   \\ Cas
 word_cseProof	ML code skipped: Resume word_cse_wf_data[Get]:   gvs [word_cse_def]   \\ ‘wf_
@@ -6028,7 +5887,7 @@ word_cseProof	ML code skipped: Resume comp_correct[StoreConsts]:   rpt gen_tac \
 word_cseProof	ML code skipped: Resume comp_correct[ShareInst]:   rpt gen_tac \\ strip_tac  
 word_cseProof	ML code skipped: Resume comp_correct[Loop]:   rpt gen_tac >> strip_tac >>   g
 word_cseProof	ML code skipped: Finalise comp_correct;
-word_cseProof	line 415 is 80 characters
+word_cseProof	line 417 is 80 characters
 word_elimProof	ML code skipped: val get_stack_ind = theorem "get_stack_ind";
 word_elimProof	ML code skipped: Resume word_removal_lemma[Skip]:   simp[wordSemTheory.evalua
 word_elimProof	ML code skipped: Resume word_removal_lemma[Install]:   fs[no_install_def] QED
@@ -6176,7 +6035,6 @@ clos_interpProof	ML code skipped: val evaluate_Var =   SIMP_CONV std_ss [evaluat
 clos_interpProof	ML code skipped: val evaluate_TagLenEq =   SIMP_CONV (srw_ss()) [evaluate_def
 clos_interpProof	ML code skipped: val init0_tac =   simp [to_constant_def,make_const_def,Boolv
 clos_interpProof	ML code skipped: val init_tac =   init0_tac   \\ qpat_x_assum ‘evaluate ([_],
-clos_interpProof	v_ok_def: its body is ML that the port does not have
 flatProps	ML code skipped: val s =  ``s:('c,'ffi) state`` val st = ``st:('c,'ffi) state
 flatProps	derive esgc_free_def: '++ ETA_ss) ['
 flatProps	ML code skipped: val v_conss = TypeBase.nchotomy_of ``: v``   |> concl |> des
@@ -6211,27 +6069,16 @@ flat_to_closProof	ML code skipped: Resume compile_correct[decs_cons]:   rw []   
 flat_to_closProof	ML code skipped: Finalise compile_correct;
 flat_to_closProof	ML code skipped: val props_defs = [closPropsTheory.contains_App_SOME_def,    
 labProps	ML code skipped: val extract_labels_ind = theorem"extract_labels_ind";
-labProps	sec_ends_with_label_def: its body is ML that the port does not have
 labProps	derive case_eq_thms: not a name
-labProps	line_ok_pre_def: its body is ML that the port does not have
-labProps	sec_ok_pre_def: its body is ML that the port does not have
 labProps	Overload all_enc_ok_pre
-labProps	sec_labels_ok_def: its body is ML that the port does not have
 lab_filterProof	ML code skipped: val all_skips_evaluate_0 = all_skips_evaluate |>SIMP_RULE st
 lab_filterProof	ML code skipped: val same_inst_tac =   full_simp_tac(srw_ss())[asm_fetch_def,
 lab_filterProof	ML code skipped: val upd_pc_tac =   first_assum(qspec_then`0` assume_tac)>>fu
 lab_filterProof	ML code skipped: val share_mem_load_filter_correct_tac =   qexists `t1 with  
 lab_filterProof	ML code skipped: val share_mem_store_filter_correct_tac =   qexists `t1 with 
 stackProps	derive case_eq_thms: not a name
-stackProps	addr_ok_def: its body is ML that the port does not have
-stackProps	reg_name_def: its body is ML that the port does not have
-stackProps	reg_imm_name_def: its body is ML that the port does not have
-stackProps	addr_name_def: its body is ML that the port does not have
-stackProps	reg_bound_exp_def: its body is ML that the port does not have
-stackProps	stack_good_code_labels_def: its body is ML that the port does not have
-stackProps	stack_good_handler_labels_def: its body is ML that the port does not have
-stackProps	line 886 is 80 characters
-stackProps	line 1003 is 81 characters
+stackProps	line 904 is 80 characters
+stackProps	line 1037 is 81 characters
 stack_removeProof	ML code skipped: val word_shift_def = backend_commonTheory.word_shift_def
 stack_removeProof	Overload num_stubs
 stack_removeProof	ML code skipped: val write_fun2set2 = write_fun2set |> SIMP_RULE std_ss [GSYM
@@ -6248,7 +6095,6 @@ lab_to_targetProof	ML code skipped: val has_io_name_ind = theorem"has_io_name_in
 lab_to_targetProof	ML code skipped: val line_ok_ind = theorem"line_ok_ind";
 lab_to_targetProof	ML code skipped: val all_enc_ok_ind = theorem"all_enc_ok_ind";
 lab_to_targetProof	ML code skipped: val pos_val_ind = theorem"pos_val_ind";
-lab_to_targetProof	good_code_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val prog_to_bytes_lemma = prog_to_bytes_lemma   |> Q.SPECL [
 lab_to_targetProof	ML code skipped: val s1 = ``s1:('a,lab_to_target$config,'ffi) labSem$state``;
 lab_to_targetProof	ML code skipped: val case_eq_thms0 = map TypeBase.case_eq_of [``:lab``, ``:'a
@@ -6257,31 +6103,15 @@ lab_to_targetProof	ML code skipped: val IMP_IMP2 = METIS_PROVE [] ``a /\ (a /\ b
 lab_to_targetProof	ML code skipped: val list_add_if_fresh_simp = Q.SPECL [`n`,`s`] list_add_if_f
 lab_to_targetProof	ML code skipped: val enc_lines_again_simp_ind = theorem"enc_lines_again_simp_
 lab_to_targetProof	Overload all_encd0
-lab_to_targetProof	line_length_leq_def: its body is ML that the port does not have
 lab_to_targetProof	Overload all_length_leq
-lab_to_targetProof	label_one_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val line_encd_ind = theorem"line_encd_ind";
-lab_to_targetProof	lines_encd_def: its body is ML that the port does not have
-lab_to_targetProof	all_encd_def: its body is ML that the port does not have
-lab_to_targetProof	sec_label_prefix_zero_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val line_enc_with_nop_ind = theorem"line_enc_with_nop_ind";
-lab_to_targetProof	lines_enc_with_nop_def: its body is ML that the port does not have
-lab_to_targetProof	all_enc_with_nop_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val all_enc_with_nop_ind = theorem"all_enc_with_nop_ind";
-lab_to_targetProof	lab_len_pos_ok_def: its body is ML that the port does not have
-lab_to_targetProof	all_lab_len_pos_ok_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val all_lab_len_pos_ok_ind = theorem"all_lab_len_pos_ok_ind"
-lab_to_targetProof	lines_offset_ok_def: its body is ML that the port does not have
-lab_to_targetProof	offset_ok_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val offset_ok_ind = theorem"offset_ok_ind";
-lab_to_targetProof	line_labs_exist_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val line_labs_exist_ind = theorem "line_labs_exist_ind";
-lab_to_targetProof	sec_labs_exist_def: its body is ML that the port does not have
 lab_to_targetProof	Overload all_labs_exist
-lab_to_targetProof	even_labels_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: val even_labels_ind = theorem"even_labels_ind";
-lab_to_targetProof	lines_even_labels_def: its body is ML that the port does not have
-lab_to_targetProof	even_labels_strong_def: its body is ML that the port does not have
 lab_to_targetProof	ML code skipped: fun map_first_cj t =   let     fun gen_list n =       case t
 lab_to_targetProof	ML code skipped: val enc_is_valid_mapped_access_tac =     fs[is_valid_mapped_
 lab_to_targetProof	ML code skipped: fun share_mem_load_compile_correct_tac ffi_name new_t1 nb ne
@@ -6349,13 +6179,13 @@ lab_to_targetProof	ML code skipped: \\ spose_not_then assume_tac >> gvs[NOT_LESS
 lab_to_targetProof	ML code skipped: Resume IMP_state_rel_make_init[ISR17]:   drule_then (drule_t
 lab_to_targetProof	ML code skipped: Finalise IMP_state_rel_make_init;
 lab_to_targetProof	derive semantics_make_init: no PULL_EXISTS
-lab_to_targetProof	line 3148 is 92 characters
-lab_to_targetProof	line 3189 is 84 characters
-lab_to_targetProof	line 4410 is 93 characters
-lab_to_targetProof	line 4573 is 89 characters
-lab_to_targetProof	line 4576 is 81 characters
-lab_to_targetProof	line 4633 is 89 characters
-lab_to_targetProof	line 4636 is 81 characters
+lab_to_targetProof	line 3247 is 92 characters
+lab_to_targetProof	line 3288 is 84 characters
+lab_to_targetProof	line 4509 is 93 characters
+lab_to_targetProof	line 4672 is 89 characters
+lab_to_targetProof	line 4675 is 81 characters
+lab_to_targetProof	line 4732 is 89 characters
+lab_to_targetProof	line 4735 is 81 characters
 flat_elimProof	ML code skipped: val find_v_globals_ind = theorem "find_v_globals_ind";
 flat_elimProof	ML code skipped: val find_refs_globals_ind = theorem "find_refs_globals_ind";
 flat_elimProof	ML code skipped: val find_result_globals_ind = theorem "find_result_globals_i
@@ -6424,7 +6254,6 @@ source_to_flatProof	derive v_rel_more_eqns: not a name
 source_to_flatProof	derive v_rel_global_eqn: rule Once/0
 source_to_flatProof	ML code skipped: val s_i1 = ``s_i1 : ('f_orac_st, 'ffi) flatSem$state``; val 
 source_to_flatProof	ML code skipped: val result_rel_imp = hd (RES_CANON result_rel_cases);
-source_to_flatProof	orac_config_envs_subspt_def: its body is ML that the port does not have
 source_to_flatProof	ML code skipped: val s = mk_var("s",   ``evaluate$evaluate`` |> type_of |> st
 source_to_flatProof	derive v_rel_eqns_non_global: no v_rel_eqns
 source_to_flatProof	ML code skipped: val extend_env_v_empty =   ``extend_env <| c := c; v := nsEm
@@ -6670,14 +6499,10 @@ inferProps	ML code skipped: val success_eqns =   LIST_CONJ [st_ex_return_success
 inferProps	derive success_eqns: no success_eqns
 inferProps	ML code skipped: val check_t_more_0 =   check_t_more2 |> CONJUNCT1 |> Q.SPECL
 inferProps	ML code skipped: val check_t_more_1 =   check_t_more3 |> CONJUNCT1 |> SPEC_AL
-inferProps	ienv_ok_def: its body is ML that the port does not have
 inferProps	derive t_ind: no t_induction
 inferProps	ML code skipped: val ts_tid_rename_ind = theorem"ts_tid_rename_ind";
 inferProps	ML code skipped: val set_tids_ind = theorem"set_tids_ind";
 inferProps	ML code skipped: val unconvert_t_ind = theorem"unconvert_t_ind"
-inferProps	inf_set_tids_ienv_def: its body is ML that the port does not have
-inferProps	inf_set_tids_subst_def: its body is ML that the port does not have
-inferProps	prim_tids_def: its body is ML that the port does not have
 inferProps	ML code skipped: val let_tac =    old_drule (CONJUNCT1 infer_e_check_t)    >>
 inferProps	line 463 is 84 characters
 envRel	ML code skipped: val infer_t_induction = infer_tTheory.infer_t_induction;
@@ -6704,9 +6529,8 @@ infer_eComplete	ML code skipped: val extend_uvar_tac = Q_TAC extend_uvar_tac;
 infer_eComplete	ML code skipped: fun TRY1 tac = TRY (tac >> NO_TAC)
 infer_eSound	ML code skipped: val binop_tac =  imp_res_tac infer_e_wfs >>  imp_res_tac t_u
 infer_eSound	ML code skipped: val log_tac =  ( (* Log *)    imp_res_tac t_unify_wfs    >> 
-type_dCanon	set_tids_tenv_def: its body is ML that the port does not have
 type_dCanon	ML code skipped: val ast_t_ind = ast_t_induction   |> Q.SPECL[`P`,`EVERY P`] 
-type_dCanon	line 605 is 81 characters
+type_dCanon	line 610 is 81 characters
 type_eDeterm	line 143 is 87 characters
 inferComplete	ML code skipped: val t_ind = t_induction   |> Q.SPECL[`P`,`EVERY P`]   |> UND
 inferComplete	ML code skipped: fun str_assums strs = ConseqConv.DISCH_ASM_CONSEQ_CONV_TAC  
@@ -6748,7 +6572,6 @@ pegComplete	ML code skipped: val list_case_eq = TypeBase.case_eq_of ``:'a list``
 pegComplete	ML code skipped: fun hasc cnm t = #1 (dest_const t) = cnm handle HOL_ERR _ =>
 pegComplete	ML code skipped: val pmap_cases =   rpt ((rename [`(_,_) = (_ ## _) pair`] >>
 pegComplete	ML code skipped: val loseRK = loseC “NT_rank”
-compilerProof	config_ok_def: its body is ML that the port does not have
 Word8ArrayProof	ML code skipped: val _ = translation_extends "Word8ArrayProg";
 Word8ArrayProof	ML code skipped: val basis_st = get_ml_prog_state;
 Word8ArrayProof	ML code skipped: fun prove_array_spec op_name =   rpt strip_tac \\   xcf op_n
@@ -6769,7 +6592,6 @@ CommandLineProof	ML code skipped: fun prove_hprop_inj_tac thm =     rw[HPROP_INJ
 RuntimeProof	ML code skipped: val st = get_ml_prog_state();
 RuntimeProof	Theorem Runtime_abort_spec: the ML expression ^(fetch_v "Runtime.abort" st...), which the port cannot evaluate
 fsFFIProps	Overload hasFreeFD
-fsFFIProps	liveFS_def: its body is ML that the port does not have
 fsFFIProps	Overload all_lines_inode
 fsFFIProps	Overload hard_link
 TextIOProof	ML code skipped: val filename_tac = metis_tac[FILENAME_def,EqualityType_NUM_B
@@ -6924,7 +6746,6 @@ compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\
 compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 compute_evalProof	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
-compute_execProof	eqs_ok_def: its body is ML that the port does not have
 compute_execProof	derive exec_lemma: no listTheory.LIST_TO_SET
 x64_targetProof	ML code skipped: val () = wordsLib.guess_lengths()
 x64_targetProof	Overload reg

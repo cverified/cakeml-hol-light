@@ -389,7 +389,9 @@ let submap'_def = new_definition
         | (lt,SOME y,gt) -> f x y /\ submap' cmp f l lt /\ submap' cmp f
           r gt)`;;
 
-(* HOL4 balanced_mapScript.sml:800-802: the definition *)
+let isSubmapOfBy_def = new_definition
+  `isSubmapOfBy cmp f t1 t2 <=> balanced_map__size t1 <= balanced_map__size
+  t2 /\ submap' cmp f t1 t2`;;
 
 let isSubmapOf_def = new_definition
   `isSubmapOf cmp t1 t2 <=> isSubmapOfBy cmp (=) t1 t2`;;
@@ -403,7 +405,8 @@ let to_fmap_def,to_fmap_ind = define_rec
       (FUNION (balanced_map_to_fmap cmp l) (balanced_map_to_fmap cmp
           r)) |+ (key_set cmp k,v))`;;
 
-(* HOL4 balanced_mapScript.sml:838-840: the definition *)
+let balanced_def = new_definition
+  `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
 
 let structure_size_def,structure_size_ind = define_rec
   `(structure_size Tip = 0) /\

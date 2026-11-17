@@ -11,13 +11,19 @@
 let _ = cake_library ();;
 (* HOL4 ancestors outside the port: list rich_list llist pred_set option *)
 
-(* HOL4 lprefix_lubScript.sml:171-174: the definition *)
+let lprefix_chain_def = new_definition
+  `lprefix_chain ls <=>
+     (!ll1 ll2. ll1 IN ls /\ ll2 IN ls ==> LPREFIX ll1 ll2 \/ LPREFIX ll2
+       ll1)`;;
 
 let lprefix_chain_nth_def = new_definition
   `lprefix_chain_nth n ls =
      some (\x. ?l. l IN ls /\ LNTH n l = SOME x)`;;
 
-(* HOL4 lprefix_lubScript.sml:306-310: the definition *)
+let lprefix_lub_def = new_definition
+  `lprefix_lub ls lub <=>
+     (!ll. ll IN ls ==> LPREFIX ll lub) /\
+     (!ub. (!ll. ll IN ls ==> LPREFIX ll ub) ==> LPREFIX lub ub)`;;
 
 let build_lprefix_lub_f_def = new_definition
   `build_lprefix_lub_f ls n =

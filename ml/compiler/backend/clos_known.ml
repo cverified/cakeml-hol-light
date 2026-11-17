@@ -381,7 +381,11 @@ let globalOpt_INDUCT,globalOpt_RECURSION = define_datatype
    | gO_NullTuple num
    | gO_None";;
 
-(* HOL4 clos_knownScript.sml:438-441: the definition *)
+let isGlobal_def = new_definition
+  `isGlobal x1 =
+     match x1 with
+       clos_GlobOp (clos_Global _) -> T
+     | _ -> F`;;
 
 let isGlobal_pmatch = prove
  (`!op.
@@ -392,8 +396,8 @@ let isGlobal_pmatch = prove
   CHEAT_TAC);;
 
 let gO_destApx_def = new_definition
-  `gO_destApx x1 =
-     match x1 with
+  `gO_destApx x1' =
+     match x1' with
        clos_known_Int i -> gO_Int i
      | clos_known_Tuple tag args -> if NULL args then gO_NullTuple tag
                               else gO_None

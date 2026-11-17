@@ -98,7 +98,8 @@ let camlPEG_pnt_def = new_definition
 let validCoreOpChar_def = new_definition
   `validCoreOpChar c = MEM c "$&*+-/=>@^|"`;;
 
-(* HOL4 camlPEGScript.sml:101-103: the definition *)
+let validOpChar_def = new_definition
+  `validOpChar c <=> MEM c "!?%<:." \/ validCoreOpChar c`;;
 
 let camlPEG_validPrefixSym_def = new_definition
   `camlPEG_validPrefixSym s <=> ~(s = "") /\
@@ -133,7 +134,10 @@ let validRelOp_def = new_definition
      2 <= LENGTH s /\
      ALL validOpChar (TL s)`;;
 
-(* HOL4 camlPEGScript.sml:146-150: the definition *)
+let validShiftOp_def = new_definition
+  `validShiftOp s <=>
+     IS_PREFIX s "**" /\
+     ALL validOpChar (TL (TL s))`;;
 
 let validCatOp_def = new_definition
   `validCatOp s <=> ~(s = "") /\
@@ -149,7 +153,11 @@ let idChar_def = new_definition
  * least one of those need to be lowercase.
  *)
 
-(* HOL4 camlPEGScript.sml:169-175: the definition *)
+let identUpperLower_def = new_definition
+  `identUpperLower s <=> ~(s = "") /\
+     isUpper (HD s) /\
+     idChar isLower (TL s) /\
+     EX isLower (TL s)`;;
 
 (* Names of values according to HOL light are all combinations of identifier
  * characters (alphanumerics, underscore and tick) _except_ those that are

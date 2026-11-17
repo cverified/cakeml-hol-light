@@ -67,7 +67,13 @@ let tenv_ok_empty = prove
   CHEAT_TAC);;
 add_simp tenv_ok_empty;;
 
-(* HOL4 typeSysPropsScript.sml:113-120: the definition *)
+let type_pes_def = new_definition
+  `type_pes tvs tvs' tenv tenvE pes t1 t2 <=>
+     (RES_FORALL (set_of_list pes) (\(p,e).
+       ?bindings.
+         ALL_DISTINCT (ast_pat_bindings p) /\
+         type_p tvs tenv p t1 bindings /\
+         type_e tenv (bind_var_list tvs' bindings tenvE) e t2))`;;
 
 let type_pes_cons = prove
  (`!tvs tvs' tenv tenvE p e pes t1 t2.

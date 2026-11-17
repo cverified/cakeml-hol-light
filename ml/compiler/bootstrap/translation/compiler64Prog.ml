@@ -347,7 +347,9 @@ let init_next_string_def = new_definition
 
 (* HOL4 compiler64ProgScript.sml:616-624: ML code, not ported *)
 
-(* HOL4 compiler64ProgScript.sml:626-628: the definition *)
+let has_repl_flag_def = new_definition
+  `has_repl_flag cl <=> ag32_MEM (implode "--repl") cl \/ ag32_MEM (implode
+  "--candle") cl`;;
 
 (* HOL4 compiler64ProgScript.sml:630-631: ML code, not ported *)
 

@@ -2,7 +2,7 @@
 (*  holSyntaxLib: ported from HOL4's
     candle/syntax-lib/holSyntaxLibScript.sml
     A definition theory, with 11 definitions, 1 datatype and 37
-    theorems.  Needed by 18 files of the port.  *)
+    theorems.  Needed by 19 files of the port.  *)
 (* ======================================================== *)
 
 (*

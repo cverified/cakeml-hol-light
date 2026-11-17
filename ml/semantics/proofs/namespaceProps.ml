@@ -411,7 +411,8 @@ let alist_rel_restr_thm = prove
         = SOME v2 /\ R' k v1 v2))`,
   CHEAT_TAC);;
 
-(* HOL4 namespacePropsScript.sml:768-770: the definition *)
+let alistSub_def = new_definition
+  `alistSub R' e1 e2 <=> alist_rel_restr R' e1 e2 (MAP FST e1)`;;
 
 let alistSub_cong = prove
  (`!l1 l2 l1' l2' R' R'.
@@ -422,7 +423,18 @@ let alistSub_cong = prove
 
 (* HOL4 namespacePropsScript.sml:785: ML code, not ported *)
 
-(* HOL4 namespacePropsScript.sml:787-801: the definition *)
+(* the termination relation that HOL4 gives is
+     MEASURE (\(p,r,env,_). namespace_size (\x. 0) (\x. 0) (\x. 0) env)
+   which is not one that HOL Light takes here, so the
+   port lets its own machinery find one *)
+(* HOL4 namespacePropsScript.sml:791-801: the tactic that proves the
+   termination *)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let nsSub_compute_def,nsSub_compute_ind = define_guess_cheat
+  `nsSub_compute path R' (Bind e1V e1M) (Bind e2V e2M) <=>
+     alistSub (\k v1 v2. R' (mk_id (REVERSE path) k) v1 v2) e1V e2V /\
+     alistSub (\k v1 v2. nsSub_compute (CONS k path) R' v1 v2) e1M e2M`;;
 
 let nsLookup_FOLDR_nsLift = prove
  (`!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e (Short k)`,

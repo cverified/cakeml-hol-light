@@ -877,7 +877,11 @@ let constrain_op_check_s = prove
     check_s tvs (count (infer_st_next_uvar st')) (infer_st_subst st')`,
   CHEAT_TAC);;
 
-(* HOL4 inferPropsScript.sml:1930-1935: the definition *)
+let ienv_ok_def = new_definition
+  `ienv_ok uvars ienv <=>
+     ienv_val_ok uvars (inf_env_inf_v ienv) /\
+     tenv_ctor_ok (inf_env_inf_c ienv) /\
+     tenv_abbrev_ok (inf_env_inf_t ienv)`;;
 
 let ienv_ok_more = prove
  (`!uv uv' ienv. ienv_ok (count uv) ienv /\ uv <= uv' ==> ienv_ok (count uv')
@@ -1073,11 +1077,22 @@ let inf_set_tids_unconvert = prove
   CHEAT_TAC);;
 
 (* all the tids used in a tenv *)
-(* HOL4 inferPropsScript.sml:2611-2616: the definition *)
+let inf_set_tids_ienv_def = new_definition
+  `inf_set_tids_ienv tids (ienv:inf_env) <=>
+   nsAll (\i (ls,t). inf_set_tids_subset tids (unconvert_t t))
+     (inf_env_inf_t ienv) /\
+   nsAll (\i (ls,ts,tid). ALL (\t. inf_set_tids_subset tids (unconvert_t t))
+     ts /\ tid IN tids) (inf_env_inf_c ienv) /\
+   nsAll (\i (n,t). inf_set_tids_subset tids t) (inf_env_inf_v ienv)`;;
 
-(* HOL4 inferPropsScript.sml:2618-2621: the definition *)
+let inf_set_tids_subst_def = new_definition
+  `inf_set_tids_subst tids subst <=>
+   (!t. t IN FRANGE subst ==> inf_set_tids_subset tids t)`;;
 
-(* HOL4 inferPropsScript.sml:2623-2626: the definition *)
+let prim_tids_def = new_definition
+  `prim_tids contain' tids <=>
+     ALL (\x. x IN tids <=> contain') (CONS Tlist_num (CONS Tbool_num
+       prim_type_nums))`;;
 
 let set_tids_subset_type_name_subst = prove
  (`!tenvt t tids.

@@ -210,7 +210,9 @@ let size_of_heap_def = new_definition
        ((s:('c,'ffi)dataSem_state))) LN in
        n`;;
 
-(* HOL4 dataSemScript.sml:185-187: the definition *)
+let no_thunks_in_refs_def = new_definition
+  `no_thunks_in_refs refs <=> (!k e v. ~(sptree_lookup k refs = SOME
+  (bvlSem_Thunk e v)))`;;
 
 (* HOL4 dataSemScript.sml:189-192: the overload add_space_safe, which the
    port expands *)

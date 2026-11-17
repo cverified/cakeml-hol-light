@@ -260,7 +260,19 @@ let pure_op_def = new_definition
      | _ -> T)`;;
 
 (* pure e means e can neither raise an exception nor side-effect the state *)
-(* HOL4 closLangScript.sml:196-218: the definition *)
+let pure_def,pure_ind = define_shaped_rec
+  "nested"
+  `(pure (clos_Var _ _) <=> T) /\
+   (pure (clos_If _ e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3) /\
+   (pure (clos_Let _ es e2) <=> ALL pure es /\ pure e2) /\
+   (pure (clos_Raise _ _) <=> F) /\
+   (pure (clos_Handle _ e1 e2) <=> pure e1) /\
+   (pure (clos_Tick _ _) <=> F) /\
+   (pure (clos_Call _ _ _ _) <=> F) /\
+   (pure (clos_App _ _ _ _) <=> F) /\
+   (pure (clos_Fn _ _ _ _ _) <=> T) /\
+   (pure (clos_Letrec _ _ _ _ x) <=> pure x) /\
+   (pure (clos_Op _ opn es) <=> ALL pure es /\ clos_pure_op opn)`;;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = new_definition

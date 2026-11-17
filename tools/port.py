@@ -2568,8 +2568,12 @@ class Porter:
     # the Definition as ^e, and the port was writing `e' -- a
     # definition of a free variable, which says nothing and says
     # it silently.  There is nothing to write, so the port points
-    # at the source, as it does for any ML it cannot follow
-    if '=' not in hol4.strip_comments(body):
+    # at the source, as it does for any ML it cannot follow.
+    # The test looks for HOL4's iff as well as its equals: a body
+    # written `mlstring_le s1 s2 \u21d4 ...' has no = in it at all,
+    # and reading it as ML cost two definitions of mlstring and
+    # every file that needs them
+    if not re.search('[=\u21d4]', hol4.strip_comments(body)):
       self.warn.append('%s: its body is ML that the port does not'
                        ' have' % b.name)
       self.out.append(self.at(b, 'the definition'))

@@ -1503,7 +1503,11 @@ let clos_knownProof_compile_LENGTH = prove
  (`clos_known_compile kc es = (kc',es') ==> LENGTH es' = LENGTH es`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:5003-5008: the definition *)
+let clos_knownProof_syntax_ok_def = new_definition
+  `clos_knownProof_syntax_ok xs <=>
+     every_Fn_vs_NONE xs /\
+     BAG_ALL_DISTINCT (closProps_elist_globals xs) /\
+     ALL closProps_esgc_free xs`;;
 
 (* HOL4 clos_knownProofScript.sml:5010: the overload fvs_compile, which the
    port expands *)
@@ -1635,7 +1639,18 @@ let every_Fn_vs_NONE_mk_Ticks = prove
   t tc n e]`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:5260-5268: the definition *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 clos_knownProofScript.sml:5264-5268: the tactic that proves the
+   termination *)
+let val_approx_every_Fn_SOME_def,val_approx_every_Fn_SOME_ind = define_wf
+  `MEASURE val_approx_size`
+  `val_approx_every_Fn_SOME x1 =
+     match x1 with
+       clos_known_Tuple _ vs -> ALL val_approx_every_Fn_SOME vs
+     | clos_known_Clos _ _ b _ -> every_Fn_SOME [b]
+     | _ -> T`;;
+add_simp val_approx_every_Fn_SOME_def;;
 
 let val_approx_every_Fn_SOME_merge = prove
  (`!a b. val_approx_every_Fn_SOME a /\ val_approx_every_Fn_SOME b ==>
@@ -1672,7 +1687,18 @@ let known_every_Fn_SOME = prove
     globals_approx_every_Fn_SOME (SND (known a b c d))`,
   CHEAT_TAC);;
 
-(* HOL4 clos_knownProofScript.sml:5379-5387: the definition *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 clos_knownProofScript.sml:5383-5387: the tactic that proves the
+   termination *)
+let val_approx_every_Fn_vs_NONE_def,val_approx_every_Fn_vs_NONE_ind = define_wf
+  `MEASURE val_approx_size`
+  `val_approx_every_Fn_vs_NONE x1' =
+     match x1' with
+       clos_known_Tuple _ vs -> ALL val_approx_every_Fn_vs_NONE vs
+     | clos_known_Clos _ _ b _ -> every_Fn_vs_NONE [b]
+     | _ -> T`;;
+add_simp val_approx_every_Fn_vs_NONE_def;;
 
 let val_approx_every_Fn_vs_NONE_merge = prove
  (`!a b. val_approx_every_Fn_vs_NONE a /\ val_approx_every_Fn_vs_NONE b ==>
@@ -1716,8 +1742,8 @@ let known_every_Fn_vs_NONE = prove
    the names that the port gives the constants *)
 let val_approx_no_Labels_def,val_approx_no_Labels_ind = define_wf
   `MEASURE val_approx_size`
-  `val_approx_no_Labels x1 =
-     match x1 with
+  `val_approx_no_Labels x1'' =
+     match x1'' with
        clos_known_ClosNoInline m n -> T
      | clos_known_Clos m n e s -> no_Labels e
      | clos_known_Tuple tag vas -> ALL val_approx_no_Labels vas

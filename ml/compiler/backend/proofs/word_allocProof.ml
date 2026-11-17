@@ -962,7 +962,9 @@ let clash_tree_colouring_ok = prove
 (* HOL4 word_allocProofScript.sml:3301: a proof *)
 
 (*Actually, it should probably be exactly 0,2,4,6...*)
-(* HOL4 word_allocProofScript.sml:3304-3307: the definition *)
+let even_starting_locals_def = new_definition
+  `even_starting_locals (locs:('a word_loc) spt) <=>
+     (!x. x IN sptree_domain locs ==> is_phy_var x)`;;
 
 (* HOL4 word_allocProofScript.sml:3309: ML code, not ported *)
 
@@ -1052,7 +1054,21 @@ let live_store_rel_FLOOKUP_store = prove
    FLOOKUP tstore s = FLOOKUP sstore s`,
   CHEAT_TAC);;
 
-(* HOL4 word_allocProofScript.sml:3516-3527: the definition *)
+make_size "word_exp";;
+(* the termination relation is not in the HOL4 source; this one is
+   what the port found for it *)
+let nlive_store_def,nlive_store_ind = define_wf
+  `MEASURE (\(x0,x1). word_exp_size (\x. 0) x1)`
+  `nlive_store nlive x2 =
+     match x2 with
+       word_Op _ ls ->
+         ALL (nlive_store nlive) ls
+     | word_Lookup s -> ~(s IN set_of_list nlive)
+     | word_Load e ->
+       nlive_store nlive e
+     | word_Shift _ e1 e2 ->
+       nlive_store nlive e1 /\ nlive_store nlive e2
+     | _ -> T`;;
 
 (* [local] *)
 let strong_locals_rel_I_get_var = prove
@@ -2154,7 +2170,11 @@ let evaluate_ssa_reconcile = prove
        (wordSem_state_locals cst'))`,
   CHEAT_TAC);;
 
-(* HOL4 word_allocProofScript.sml:6708-6713: the definition *)
+let lt_ok_def = new_definition
+  `lt_ok lt <=>
+     ALL (\(tgt_ssa,names,exit_names).
+       INJ (option_lookup tgt_ssa) (sptree_domain names) UNIV /\
+       INJ (option_lookup tgt_ssa) (sptree_domain exit_names) UNIV) lt`;;
 
 (* [local] *)
 let foldr_insert_const_swap = prove

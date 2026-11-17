@@ -14,6 +14,7 @@ needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/typeSound.ml";;
+needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 
 (* the theory of this file, and the ones its statements read *)
@@ -69,7 +70,13 @@ let semantics_prog_Diverge_not_Fail = prove
     semantics_prog s e p = {ffi_Diverge y}`,
   CHEAT_TAC);;
 
-(* HOL4 semanticsPropsScript.sml:165-170: the definition *)
+let state_invariant_def = new_definition
+  `state_invariant st <=>
+   (?ctMap tenvS.
+     FRANGE ((SND o SND) o_f ctMap) SUBSET semantics_state_type_ids st /\
+     type_sound_invariant (semantics_state_sem_st st)
+       (semantics_state_sem_env st) ctMap tenvS {} (semantics_state_tenv
+       st))`;;
 
 (* [local] *)
 let clock_lemmas = prove
@@ -105,7 +112,9 @@ let implements_def = new_definition
   `implements x y <=>
      (~(ffi_Fail IN y) ==> x SUBSET extend_with_resource_limit y)`;;
 
-(* HOL4 semanticsPropsScript.sml:224-226: the definition *)
+let implements'_def = new_definition
+  `implements' precise x y <=> ~(ffi_Fail IN y) ==> x SUBSET
+  extend_with_resource_limit' precise y`;;
 
 let extend_with_resource_limit_not_fail = prove
  (`x IN extend_with_resource_limit y /\ ~(ffi_Fail IN y) ==> ~(x = ffi_Fail)`,

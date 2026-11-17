@@ -2,7 +2,7 @@
 (*  ast: ported from HOL4's
     semantics/astScript.sml
     A definition theory, with 6 definitions, 16 datatypes and no
-    theorems.  Needed by 121 files of the port.  *)
+    theorems.  Needed by 122 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -291,7 +291,45 @@ let pat_bindings_def,pat_bindings_ind = define_rec
    (ast_pats_bindings (CONS p ps) = APPEND (ast_pats_bindings ps)
     (ast_pat_bindings p))`;;
 
-(* HOL4 astScript.sml:264-293: the definition *)
+let every_exp_def,every_exp_ind = define_shaped_rec_clauses
+  "nested"
+  [`ast_every_exp p (ast_Raise e) <=>
+                 p ((ast_Raise e:ast_exp)) /\ ast_every_exp p e`;
+   `ast_every_exp p (ast_Handle e pes) <=>
+                 p ((ast_Handle e pes:ast_exp)) /\ ast_every_exp p e
+                     /\ ALL (\(pat,e). ast_every_exp p e) pes`;
+   `ast_every_exp p (ast_Lit l) <=>
+                 p (ast_Lit l)`;
+   `ast_every_exp p (ast_Con cn es) <=>
+                 p ((ast_Con cn es:ast_exp)) /\ ALL (ast_every_exp p)
+                     es`;
+   `ast_every_exp p (ast_Var v) <=>
+                 p ((ast_Var v:ast_exp))`;
+   `ast_every_exp p (ast_Fun x e) <=>
+                 p ((ast_Fun x e:ast_exp)) /\ ast_every_exp p e`;
+   `ast_every_exp p (ast_App op es) <=>
+                 p ((ast_App op es:ast_exp)) /\ ALL (ast_every_exp p)
+                     es`;
+   `ast_every_exp p (ast_Log lop e1 e2) <=>
+                 p (ast_Log lop e1 e2) /\ ast_every_exp p e1
+                     /\ ast_every_exp p e2`;
+   `ast_every_exp p (ast_If e1 e2 e3) <=>
+                 p ((ast_If e1 e2 e3:ast_exp)) /\ ast_every_exp p e1
+                     /\ ast_every_exp p e2 /\ ast_every_exp p e3`;
+   `ast_every_exp p (ast_Mat e pes) <=>
+                 p ((ast_Mat e pes:ast_exp)) /\ ast_every_exp p e
+                     /\ ALL (\(pat,e). ast_every_exp p e) pes`;
+   `ast_every_exp p (ast_Let x e1 e2) <=>
+                 p ((ast_Let x e1 e2:ast_exp)) /\ ast_every_exp p e1
+                     /\ ast_every_exp p e2`;
+   `ast_every_exp p (ast_Tannot e a) <=>
+                 p (ast_Tannot e a) /\ ast_every_exp p e`;
+   `ast_every_exp p (ast_Lannot e a) <=>
+                 p (ast_Lannot e a) /\ ast_every_exp p e`;
+   `ast_every_exp p (ast_Letrec funs e) <=>
+                 p ((ast_Letrec funs e:ast_exp)) /\ ast_every_exp p e
+                     /\ ALL (\(n,v,e). ast_every_exp p e) funs`];;
+add_simp every_exp_def;;
 
 let seqs_def,seqs_ind = define_rec
   `(ast_Seqs [] = ast_Con NONE []) /\

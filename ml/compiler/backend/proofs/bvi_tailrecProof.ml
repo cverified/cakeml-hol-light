@@ -367,7 +367,9 @@ let compile_each_LENGTH = prove
  (`!n prog. LENGTH (SND (bvi_tailrec_compile_each n prog)) >= LENGTH prog`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tailrecProofScript.sml:690-692: the definition *)
+let free_names_def = new_definition
+  `bvi_tailrecProof_free_names n (name:num) <=> (!k. ~(n +
+  bvl_to_bvi_namespaces * k = name))`;;
 
 (* [local] *)
 let more_free_names = prove
@@ -508,7 +510,15 @@ let compile_prog_ALL_DISTINCT = prove
    ALL (bvi_tailrecProof_free_names n1 o FST) ys`,
   CHEAT_TAC);;
 
-(* HOL4 bvi_tailrecProofScript.sml:1013-1018: the definition *)
+let namespace_rel_def = new_definition
+  `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
+     (!n. n IN sptree_domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
+       bvl_to_bvi_namespaces = 2) n then ~(n IN sptree_domain c1) else n IN
+       sptree_domain c1)) /\
+     (!n. n IN sptree_domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
+       bvl_to_bvi_namespaces = 2) n)) /\
+     (!n. n IN sptree_domain c2 /\ n < bvl_num_stubs ==> n IN
+       sptree_domain c1)`;;
 
 let input_condition_def = new_definition
   `bvi_tailrecProof_input_condition next' prog <=>

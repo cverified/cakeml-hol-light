@@ -138,11 +138,15 @@ let isAtom_in_group_def = new_definition
 let isAlphaNumOrWild_def = new_definition
   `isAlphaNumOrWild c <=> isAlphaNum c \/ c = (CHR 95)`;;
 
-(* HOL4 panLexerScript.sml:65-68: the definition *)
+let isLexErrorT_def = new_definition
+  `isLexErrorT x1 =
+     match x1 with
+       panLexer_LexErrorT _ -> T
+     | _ -> F`;;
 
 let dest_lexErrorT_def = new_definition
-  `destLexErrorT x1 =
-     match x1 with
+  `destLexErrorT x1' =
+     match x1' with
        panLexer_LexErrorT msg -> SOME msg
      | _ -> NONE`;;
 

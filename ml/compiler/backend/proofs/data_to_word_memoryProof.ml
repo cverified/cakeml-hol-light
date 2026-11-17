@@ -700,7 +700,10 @@ let gc_heap_inline_rel = cake_inductive
        gc_heap_inline_rel inline h1 (DataElement xs n d) (DataElement ys
          n d))`;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:898-902: the definition *)
+let gc_inline_def = new_definition
+  `gc_inline inline (r1,h1) (r2,h2) <=>
+     ALL2 (gc_inline_rel inline h1) r1 r2 /\
+     ALL2 (gc_heap_inline_rel inline h1) h1 h2`;;
 
 let gc_related_roots_heap_def = new_definition
   `gc_related_roots_heap f (r1,h1) (r2,h2) <=>

@@ -41,7 +41,21 @@ let _ = cake_theory "compilerProof"
    "pegComplete"; "pegSound"; "semantics"; "targetSem"; "typeSound";
    "typeSoundInvariants"];;
 
-(* HOL4 compilerProofScript.sml:15-26: the definition *)
+let config_ok_def = new_definition
+  `config_ok (cc:'a compiler_config) mc <=>
+     envRel_env_rel prim_tenv (compiler_config_inferencer_config cc) /\
+     inf_set_tids_ienv prim_type_ids (compiler_config_inferencer_config cc)
+       /\
+     // TODO: ok?
+     ~(compiler_config_input_is_sexp cc) /\
+     ~(compiler_config_exclude_prelude cc) /\
+     ~(compiler_config_skip_type_inference cc) /\
+     ~(compiler_config_only_print_types cc) /\
+     ~(compiler_config_only_print_sexp cc) /\
+     backend_config_ok (compiler_config_asm_config cc)
+       (compiler_config_backend_config cc) /\
+     mc_conf_ok mc /\ mc_init_ok (compiler_config_asm_config cc)
+       (compiler_config_backend_config cc) mc`;;
 
 let initial_condition_def = new_definition
   `initial_condition (st:'ffi semantics_state) (cc:'a compiler_config) mc <=>

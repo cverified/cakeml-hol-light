@@ -358,7 +358,8 @@ let test2_str_tree_to_strs = prove
    Pretty printing of sexp
  *--------------------------------------------------------------*)
 
-(* HOL4 mlsexpScript.sml:352-354: the definition *)
+let is_safe_char_def = new_definition
+  `is_safe_char c <=> ~(MEM c "()\"\000") /\ ~(isSpace c)`;;
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

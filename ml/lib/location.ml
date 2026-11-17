@@ -51,7 +51,9 @@ let locnle_def = new_definition
      (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\ locncol l1 <
        locncol l2)`;;
 
-(* HOL4 locationScript.sml:94-96: the definition *)
+let locsle_def = define_general
+  `locsle (Locs l1 _) (Locs l2 _) <=> locnle l1 l2`;;
+add_simp locsle_def;;
 
 let merge_locs_def = define_general
   `merge_locs (Locs l1 l2) (Locs l3 l4) = Locs l1 l4`;;

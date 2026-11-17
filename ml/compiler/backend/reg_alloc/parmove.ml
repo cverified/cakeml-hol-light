@@ -103,7 +103,14 @@ let NoRead_path = prove
     (\mu dn. ~(MEM dn (MAP SND mu))) (TL sigma) (FST (HD sigma))`,
   CHEAT_TAC);;
 
-(* HOL4 parmoveScript.sml:120-128: the definition *)
+let parmove_wf_def = new_definition
+  `parmove_wf (mu,sigma,tau) <=>
+     windmill (APPEND mu sigma) /\
+     ALL IS_SOME (MAP FST mu) /\
+     ALL IS_SOME (MAP SND mu) /\
+     (~(NULL sigma) ==> ALL IS_SOME (MAP SND (BUTLAST sigma))) /\
+     ALL IS_SOME (MAP FST sigma) /\
+     parmove_path sigma`;;
 (* HOL4 parmoveScript.sml:129: the overload ⊢, which the port expands *)
 
 let wf_init = prove

@@ -283,7 +283,17 @@ let is_exists_sig_def = new_definition
   "bool") [])) (holSyntax_Tyapp (implode "bool") []))`;;
 (* HOL4 holBoolSyntaxScript.sml:166-167: ML code, not ported *)
 
-(* HOL4 holBoolSyntaxScript.sml:169-180: the definition *)
+let is_bool_sig_def = new_definition
+  `is_bool_sig (sig:(mlstring,num)fmap#(mlstring,type)fmap) <=>
+   is_std_sig sig /\
+   is_true_sig (SND sig) /\
+   is_false_sig (SND sig) /\
+   is_implies_sig (SND sig) /\
+   is_and_sig (SND sig) /\
+   is_or_sig (SND sig) /\
+   is_not_sig (SND sig) /\
+   is_forall_sig (SND sig) /\
+   is_exists_sig (SND sig)`;;
 
 let bool_has_bool_sig = prove
  (`!ctxt.

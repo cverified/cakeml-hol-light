@@ -41,7 +41,8 @@ let canonical_wrapper_def = new_definition
         rvs = REVERSE (list_of_seq bvi_Var rets)
      | _ -> F`;;
 
-(* HOL4 bvi_inlineScript.sml:39-41: the definition *)
+let wrapper_ok_def = new_definition
+  `wrapper_ok name arity body <=> canonical_wrapper name arity body`;;
 
 (* [cs] is a cache of code-table entries.  The correctness invariant
    needed for a hit is that the cached label, arity, and body correspond

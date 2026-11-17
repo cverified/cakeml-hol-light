@@ -15,6 +15,7 @@ needs "basis/pure/mlstring.ml";;
 needs "candle/set-theory/setSpec.ml";;
 needs "candle/standard/syntax/holSyntax.ml";;
 needs "candle/standard/syntax/holSyntaxExtra.ml";;
+needs "candle/syntax-lib/holSyntaxLib.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "holSemantics"
@@ -57,7 +58,9 @@ let is_type_assignment_def = new_definition
 (* HOL4 holSemanticsScript.sml:44: the type abbreviation tyval, which the
    port expands *)
 
-(* HOL4 holSemanticsScript.sml:46-48: the definition *)
+let is_type_valuation_def = new_definition
+  `is_type_valuation0 (mem':'U->'U->bool) (tau:mlstring->'U) <=> (!x. (\s.
+  ?x. (mem':'U->'U->bool) x s) (tau x))`;;
 
 (* HOL4 holSemanticsScript.sml:50: the overload is_type_valuation, which the
    port expands *)
@@ -77,7 +80,15 @@ let typesem_def,typesem_ind = define_guess
 (* HOL4 holSemanticsScript.sml:66: the type abbreviation tmass, which the
    port expands *)
 
-(* HOL4 holSemanticsScript.sml:68-75: the definition *)
+let is_term_assignment_def = new_definition
+  `is_term_assignment0 (mem':'U->'U->bool) tmsig delta' (gamma:mlstring->'U
+  list->'U) <=>
+     FEVERY
+       (\(name,ty).
+         !tau. (is_type_valuation0 mem') tau ==> (mem':'U->'U->bool) (gamma
+           name (MAP tau (MAP implode (STRING_SORT (MAP explode
+           (holSyntax_tyvars ty)))))) (typesem delta' tau ty))
+       tmsig`;;
 
 (* HOL4 holSemanticsScript.sml:77: the overload is_term_assignment, which
    the port expands *)
@@ -89,7 +100,11 @@ let typesem_def,typesem_ind = define_guess
 (* HOL4 holSemanticsScript.sml:83: the type abbreviation tmval, which the
    port expands *)
 
-(* HOL4 holSemanticsScript.sml:85-88: the definition *)
+let is_term_valuation_def = new_definition
+  `is_term_valuation0 (mem':'U->'U->bool) tysig delta' tau
+  (sigma:mlstring#type->'U) <=>
+     (!v ty. type_ok tysig ty ==> (mem':'U->'U->bool) (sigma (v,ty))
+       (typesem delta' tau ty))`;;
 
 (* HOL4 holSemanticsScript.sml:90: the overload is_term_valuation, which the
    port expands *)
@@ -110,7 +125,13 @@ let typesem_def,typesem_ind = define_guess
 (* HOL4 holSemanticsScript.sml:100: the overload tmvof, which the port
    expands *)
 
-(* HOL4 holSemanticsScript.sml:102-106: the definition *)
+let is_valuation_def = new_definition
+  `is_valuation0 (mem':'U->'U->bool) tysig delta' v <=>
+     (is_type_valuation0 mem')
+       ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v) /\
+     (is_term_valuation0 mem') tysig delta'
+       ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v)
+       ((SND:(mlstring->'U)#(mlstring#type->'U)->mlstring#type->'U) v)`;;
 
 (* HOL4 holSemanticsScript.sml:108: the overload is_valuation, which the
    port expands *)
@@ -171,7 +192,15 @@ let satisfies_def = new_definition
 (* A interpretation of a theory is a pair of assignments to the constants and
    types in the theory. *)
 
-(* HOL4 holSemanticsScript.sml:161-165: the definition *)
+let is_interpretation_def = new_definition
+  `is_interpretation0 (mem':'U->'U->bool)
+  (sig:(mlstring,num)fmap#(mlstring,type)fmap) int' <=>
+     (is_type_assignment0 mem') (FST sig) ((FST:(mlstring->'U
+       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int') /\
+     (is_term_assignment0 mem') (SND sig) ((FST:(mlstring->'U
+       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int')
+       ((SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
+       list->'U) int')`;;
 
 (* HOL4 holSemanticsScript.sml:167: the overload is_interpretation, which
    the port expands *)
@@ -206,19 +235,41 @@ let interprets_def = new_definition
 (* A model of a theory is a standard interpretation that satisfies all the
    axioms. *)
 
-(* HOL4 holSemanticsScript.sml:210-215: the definition *)
+let models_def = new_definition
+  `models0 (mem':'U->'U->bool) i
+  (thy:((mlstring,num)fmap#(mlstring,type)fmap)#(holSyntax_term->bool)) <=>
+     (is_interpretation0 mem') (FST thy)
+       i /\
+     (is_std_interpretation0 mem') i /\
+     (!p. p IN (SND thy) ==>
+       satisfies0 mem' i (FST thy,[],p))`;;
 (* HOL4 holSemanticsScript.sml:218: the overload models, which the port
    expands *)
 
 (* Validity of sequents. *)
 
-(* HOL4 holSemanticsScript.sml:222-230: the definition *)
+let entails_def = new_definition
+  `entails0 (mem':'U->'U->bool) (thy,h) c <=>
+     theory_ok thy /\
+     ALL (holSyntax_term_ok (FST thy)) (CONS c h) /\
+     ALL (\p. has_type p (holSyntax_Tyapp (implode "bool") [])) (CONS c h)
+       /\
+     hypset_ok h /\
+     (!i.
+         models0 mem' i thy ==> satisfies0 mem' i
+           (FST thy,h,c))`;;
 (* HOL4 holSemanticsScript.sml:233: the overload |=, which the port expands *)
 
 (* Collect standard signature, standard interpretation and valuation up in one
    predicate *)
 
-(* HOL4 holSemanticsScript.sml:238-244: the definition *)
+let is_structure_def = new_definition
+  `is_structure0 (mem':'U->'U->bool) sig int' val' <=>
+     is_std_sig sig /\
+     (is_std_interpretation0 mem') int' /\
+     (is_interpretation0 mem') sig int' /\
+     (is_valuation0 mem') (FST sig) ((FST:(mlstring->'U
+       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) int') val'`;;
 
 (* HOL4 holSemanticsScript.sml:246: the overload is_structure, which the
    port expands *)

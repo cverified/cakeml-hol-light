@@ -516,7 +516,10 @@ let bviProps_get_code_labels_def,bviProps_get_code_labels_ind =
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the value
    of an ML expression: get_code_labels_def *)
 
-(* HOL4 bviPropsScript.sml:723-726: the definition *)
+let bviProps_good_code_labels_def = new_definition
+  `bviProps_good_code_labels p elabs <=>
+     UNIONS (set_of_list (MAP (bviProps_get_code_labels o SND o SND) p))
+       SUBSET set_of_list (MAP FST p) UNION elabs`;;
 
 (* --- switching a compiler pass off --------------------------------------
 

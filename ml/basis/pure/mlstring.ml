@@ -593,12 +593,14 @@ let mlstring_compare_def = new_definition
 let mlstring_lt_def = new_definition
   `mlstring_lt s1 s2 <=> (mlstring_compare s1 s2 = LESS)`;;
 
-(* HOL4 mlstringScript.sml:943-945: the definition *)
+let mlstring_le_def = new_definition
+  `mlstring_le s1 s2 <=> (~(mlstring_compare s1 s2 = GREATER))`;;
 
 let mlstring_gt_def = new_definition
   `mlstring_gt s1 s2 <=> (mlstring_compare s1 s2 = GREATER)`;;
 
-(* HOL4 mlstringScript.sml:951-953: the definition *)
+let mlstring_ge_def = new_definition
+  `mlstring_ge s1 s2 <=> (~(mlstring_compare s1 s2 = LESS))`;;
 
 let compare_thm = prove
  (`mlstring_compare s1 s2 =

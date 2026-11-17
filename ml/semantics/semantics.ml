@@ -17,6 +17,7 @@ needs "semantics/gram.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* the theory of this file, and the ones its statements read *)
 let _ = cake_theory "semantics"
@@ -38,7 +39,11 @@ let semantics_state_FIELDS = define_record "semantics_state"
    "sem_st","'ffi semanticPrimitives_state";
    "sem_env","semanticPrimitives_v sem_env"];;
 
-(* HOL4 semanticsScript.sml:30-35: the definition *)
+let can_type_prog_def = new_definition
+  `can_type_prog state prog <=>
+     (?new_tids new_tenv.
+       DISJOINT (semantics_state_type_ids state) new_tids /\
+       type_ds T (semantics_state_tenv state) prog new_tids new_tenv)`;;
 
 let evaluate_prog_with_clock_def = new_definition
   `evaluate_prog_with_clock st env k prog =

@@ -228,7 +228,8 @@ let bvi_to_cb_aux_def,bvi_to_cb_aux_ind = assume_definition_rec_clauses
                  SOME (CONS h bs2,INR cb')
            | _ -> NONE)`];;
 
-(* HOL4 bvi_tmcScript.sml:274-276: the definition *)
+let wf_vars_def = new_definition
+  `wf_vars n (vs:num list) <=> ALL (\v. v < n) vs`;;
 
 let wf_vars_empty = prove
  (`!n.

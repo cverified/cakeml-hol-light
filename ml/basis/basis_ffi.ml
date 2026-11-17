@@ -87,7 +87,12 @@ let basis_ffi_oracle_def = new_definition
           bytes)`;;
 
 (* the FFI names that basis_ffi_oracle answers itself *)
-(* HOL4 basis_ffiScript.sml:63-67: the definition *)
+let is_basis_ffi_name_def = new_definition
+  `is_basis_ffi_name name' <=>
+     name' IN {(implode "write"),(implode "read"),(implode
+       "get_arg_count"),(implode "get_arg_length"),(implode "get_arg"),
+             (implode "open_in"),(implode "open_out"),(implode
+               "close"),(implode "exit")}`;;
 
 let basis_ffi_oracle_ext = prove
  (`~(is_basis_ffi_name nm) ==>

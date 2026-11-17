@@ -93,7 +93,9 @@ let nsSub_def = new_definition
 let nsAll_def = new_definition
   `nsAll f env <=> (!id v. nsLookup env id = SOME v ==> f id v)`;;
 
-(* HOL4 namespaceScript.sml:97-100: the definition *)
+let nsAll2_def = new_definition
+  `nsAll2 r env1 env2 <=>
+     nsSub r env1 env2 /\ nsSub (\x y z. r x z y) env2 env1`;;
 
 let nsDom_def = new_definition
   `nsDom (env:('m,'n,'v)namespace) =

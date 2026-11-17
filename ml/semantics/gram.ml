@@ -24,7 +24,8 @@ let _ = cake_theory "gram"
 
 (* HOL4 gramScript.sml:60-63: ML code, not ported *)
 
-(* HOL4 gramScript.sml:65-67: the definition *)
+let validMultSym_def = new_definition
+  `validMultSym s <=> "/" <<= s \/ "*" <<= s \/ "%" <<= s \/ "&" <<= s`;;
 
 let validAddSym_def = new_definition
   `validAddSym s <=> ~(s = "") /\ HD s IN {(CHR 43),(CHR 45),(CHR 94)} \/
