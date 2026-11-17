@@ -25,12 +25,19 @@ CAKE_UNSTATED=abs-unstated.txt CAKE_MARK=abs-mark.txt \
 t0=$(date +%s)
 repl-kill $s > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
-repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
+TIMEOUT=300 repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
   echo "absfast: cannot clone the template"; exit 1; }
-repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" > /dev/null 2>&1
-# a file to load over the abstract before the port
-[ -n "$CAKE_EXTRA" ] && repl-step $s "loadt \"$CAKE_EXTRA\";;" \
+# fast.ml reads ml/lib/datatypes.txt and takes minutes on a busy
+# machine.  Without a timeout of its own repl-step gives up after
+# its default and the driver is sent on top of a session that is
+# still loading, which comes back in two minutes saying that
+# nothing failed and nothing is unread -- a report of a run that
+# never happened
+TIMEOUT=1800 repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" \
   > /dev/null 2>&1
+# a file to load over the abstract before the port
+[ -n "$CAKE_EXTRA" ] && TIMEOUT=900 repl-step $s \
+  "loadt \"$CAKE_EXTRA\";;" > /dev/null 2>&1
 TIMEOUT=${TIMEOUT:-7200} repl-step $s \
   "loadt \"$C/tmp/drvabs/driver.ml\";;" > tmp/abs-raw.out 2>&1
 t1=$(date +%s)

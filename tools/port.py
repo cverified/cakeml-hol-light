@@ -2494,6 +2494,39 @@ class Porter:
       b.body = re.sub(r"\b%s\b(?!')" % re.escape(nm),
                       nm + ' ' + args, b.body)
 
+  # a definition whose body is one antiquotation of an ML
+  # expression: `max_heap_limit_32 c = ^(...)'.  HOL4 computes
+  # the right hand side out of another theorem, and the port
+  # computes it the same way, as it does for a theorem whose
+  # statement the ML of a source computes (tools/derive.py).
+  # Without this the port reads the ML as a term and says
+  # "expected ')' but found '|>'"
+  ANTIQ_BODY = re.compile(r"^\s*(?P<lhs>[^=]+?)\s*=\s*\^\s*"
+                          r"\((?P<ml>.*)\)\s*$", re.S)
+
+  def antiq_definition(self, b, body, bind):
+    """write a definition whose right hand side the ML computes,
+       or say why not.  True when it wrote one"""
+    m = self.ANTIQ_BODY.match(body)
+    if not m: return False
+    e, why = derive.translate(m.group('ml'), self.resolve_thm,
+                              lambda t: self.term(t, defn=False),
+                              self.evalconv, self.evaldefs)
+    if not e:
+      self.warn.append('%s: the ML of its body: %s' % (b.name, why))
+      return False
+    try:
+      lhs = self.term(m.group('lhs'), defn=True)
+    except Exception as ex:
+      self.warn.append('%s: the left hand side: %s' % (b.name, ex))
+      return False
+    self.out.append(
+      '(* the right hand side is the one that the ML of the source\n'
+      '   computes, computed the same way *)\n'
+      'let %s = new_definition\n  (mk_eq(`%s`,\n   %s));;\n'
+      % (bind, lhs, e))
+    return True
+
   def definition(self, b):
     self.schematic(b)
     name = ocaml_name(b.name)
@@ -2524,6 +2557,8 @@ class Porter:
     bind = self.bindname(b.name)
     dbmod.bind_thm(self.db, self.thy, b.name, bind)
     self.ctx.defining = set(dbmod.definition_names(body))
+    if '^' in body and self.antiq_definition(b, body, bind):
+      return
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
     self.intargs = (set(overrides.INT_ARGS.get(key, []))

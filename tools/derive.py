@@ -109,6 +109,14 @@ LIST_FN = {
   'hd': 'hd', 'tl': 'tl', 'last': 'last', 'rev': 'rev',
   'List.last': 'last', 'List.rev': 'rev', 'List.hd': 'hd',
   'List.tl': 'tl',
+  # the steps that take a term out of a theorem and a term
+  # apart, which the two systems also share.  A chain that ends
+  # in one of these is a *term* and not a theorem, which is what
+  # a source antiquotes into the body of a definition
+  # (to_word64Prog's int_to_words is the right hand side of the
+  # first clause of data_to_word's part_to_words)
+  'concl': 'concl', 'rhs': 'rhs', 'lhs': 'lhs',
+  'rand': 'rand', 'rator': 'rator', 'dest_neg': 'dest_neg',
 }
 
 # the same, where HOL4 puts the simpset in front of the list
