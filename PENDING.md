@@ -173,36 +173,37 @@ each.
   `tools/nohol4.py` checks that every pointer points at what it
   says.
 
-# holBoolSyntax: a statement that reads everywhere but there
+# An overload expanded inside a binder
 
 `holBoolSyntax` heads the largest group of the files that still
-fail to load, with
+fail, and the cause is found.  The failing block is `ExistsDef`,
+and the port writes a lambda whose **binders are terms**:
 
-    holSyntax_Var has type mlstring->type->holSyntax_term, it
-    cannot be used with type mlstring->type->mlstring
+    (\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
+       ty (holSyntax_Var (implode "p") ...). ...)
 
-and four files behind it (`holAxiomsSyntax`, `holAxioms`,
-`holBool`, `backendProps`).  Three things are known, and none of
-them is what it looks like:
+with `holSyntax_Var (holSyntax_Var (implode "x") ...) ty` inside
+it -- a `Var` whose name argument is a `Var`, which is exactly
+the error the file reports (`holSyntax_Var ... cannot be used
+with type mlstring->type->mlstring`).
 
-- the **statement is fine**.  `TrueDef`'s body parses in a
-  session that holds the whole port, and prints back as the term
-  the source says.
-- the **scope is fine**.  Declaring that file's own scope
-  (`cake_theory "holBoolSyntax" ["holSyntax"; "holSyntaxExtra"]`)
-  and parsing `implode s`, `(===) x y` and `holSyntax_Abs x y`
-  gives `implode s`, `x === y` and `holSyntax_Abs x y`.
-- the **constants are fine**: `===` and `holSyntax_Abs` are
-  `holSyntax_term->holSyntax_term->holSyntax_term`, `implode` is
-  `(char)list->mlstring`.
+The source (`holBoolSyntaxScript.sml:18`) has
 
-So a resolution round cannot help -- `Var` is not ambiguous here,
-the port already writes `holSyntax_Var`, and a round confirms it
-(it logged eighteen constants for the file and the table took
-none).  What is left to look at is the state the file is loaded
-*in*: something between `holSyntaxExtra` and this file leaves the
-session reading `holSyntax_Abs`'s argument as an `mlstring`, and
-that is where the next session should start.
+    Overload Exists = "\x ty p. Comb (Const <<?>> ...) (Abs (Var x ty) p)"
+
+and the same file overloads the names `x` and `p` themselves
+(`:24-33`).  The port expands an overload wherever the name
+stands -- including where it is the **binder** of a lambda, which
+is not a name to resolve at all.  So the fix is in the
+translation: a bound variable is bound, and no table speaks for
+it.
+
+What was ruled out first, so that nobody looks there again: the
+statement of `TrueDef` parses in a session that holds the whole
+port, in one that is stopped in front of the file, and under the
+file's own `cake_theory` scope; `===`, `holSyntax_Abs` and
+`implode` all have the types they should in all three.  The first
+four blocks of the file load; it is the fifth that does not.
 
 # The Silver machine model
 
