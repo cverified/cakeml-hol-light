@@ -484,7 +484,7 @@ let ALOOKUP_anub = prove
   CHEAT_TAC);;
 
 let anub_eq_nil = prove
- (`anub x y = [] <=> ALL (hol4_C MEM y) (MAP FST x)`,
+ (`anub x y = [] <=> ALL (\z. MEM z y) (MAP FST x)`,
   CHEAT_TAC);;
 
 let EVERY_anub_suff = prove
@@ -592,7 +592,7 @@ let OPTREL_trans = prove
   CHEAT_TAC);;
 
 let UPDATE_LIST_def = new_definition
-  `UPDATE_LIST = FOLDL (hol4_C (UNCURRY UPDATE))`;;
+  `UPDATE_LIST = FOLDL (\s p. UNCURRY UPDATE p s)`;;
 
 (* HOL4 miscScript.sml:1038: the overload =++, which the port writes as an
    application of UPDATE_LIST *)
@@ -1266,7 +1266,7 @@ let ALL_DISTINCT_APPEND_APPEND_IMP = prove
   CHEAT_TAC);;
 
 let GSPEC_o = prove
- (`hol4_GSPEC f o g = {x | ?y. (g x,T) = f y}`,
+ (`{x | ?y. (x,T) = f y} o g = {x | ?y. (g x,T) = f y}`,
   CHEAT_TAC);;
 
 

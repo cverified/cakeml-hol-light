@@ -108,9 +108,8 @@ let paireq = prove
 
 (* [local] *)
 let GSPEC_INTER = prove
- (`hol4_GSPEC f INTER Q =
-     hol4_GSPEC (hol4_S ((,) o FST o f) (hol4_S ((/\) o SND o f) (Q o FST
-       o f)))`,
+ (`{x | ?y. (x,T) = f y} INTER Q = {x | ?y. x = FST (f y) /\ SND (f y)
+   /\ Q x}`,
   CHEAT_TAC);;
 
 (* [local] *)

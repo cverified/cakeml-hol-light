@@ -149,10 +149,10 @@ let map_match_eq_case = prove
 (* pmatch_append *)
 let flatProps_pmatch_append = prove
  (`(!(s:('c,'ffi)flatSem_state) p v env pred_env.
-     map_match (hol4_C APPEND tail_env) (flatSem_pmatch s p v env) =
+     map_match (\l. APPEND l tail_env) (flatSem_pmatch s p v env) =
        flatSem_pmatch s p v (APPEND env tail_env)) /\
    (!(s:('c,'ffi)flatSem_state) ps vs env n.
-     map_match (hol4_C APPEND tail_env) (flatSem_pmatch_list s ps vs env) =
+     map_match (\l. APPEND l tail_env) (flatSem_pmatch_list s ps vs env) =
       flatSem_pmatch_list s ps vs (APPEND env tail_env))`,
   CHEAT_TAC);;
 

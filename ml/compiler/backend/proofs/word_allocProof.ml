@@ -105,7 +105,7 @@ let word_allocProof_INJ_less = prove
 
 (* [local] *)
 let LET_FORALL_ELIM' = prove
- (`LET f v <=> (!) (hol4_S ((==>) o (=) v) f)`,
+ (`LET f v <=> (!) (\x. v = x ==> f x)`,
   CHEAT_TAC);;
 (* TODO: can we have a global for this *)
 let word_allocProof_hide_def = new_definition

@@ -32,6 +32,12 @@ HOL4_SYMBOL = re.compile(u'[\u00ac\u2190-\u22ff\u27e8\u27e9'
                          u'\u2983\u2984\u00ab\u00bb\u27f0-\u27ff]')
 
 
+# a constant of the library layer whose name says that it is
+# HOL4's: one may stand in ml/lib, which is where the port says
+# what HOL4 has and HOL Light has not, but not in a statement
+HOL4_NAME = re.compile(r"\bhol4_[A-Za-z0-9_']*")
+
+
 # a line of a HOL4 script, which no line of the port can be
 HOL4_LINE = re.compile(
   r"^\s*(Theory|Ancestors|Libs|Theorem|Triviality|Proof|QED|End|"
@@ -214,6 +220,19 @@ def main():
           print('%s:%d: a symbol of HOL4 in a quotation: %r'
                 % (rel, code[:m.start()].count('\n') + 1,
                    ' '.join(m.group(1).split())[:40]))
+        # and a constant whose name says HOL4: the library layer
+        # has a few (the TL of HOL4 is total where the one of HOL
+        # Light is not), but a statement of the port is read as a
+        # HOL Light development and says the HOL Light thing --
+        # gcd(m,n) and not a curried gcd of its own, the lambda
+        # and not the C of combinTheory
+        if not rel.startswith('lib/'):
+          m2 = HOL4_NAME.search(m.group(1))
+          if m2:
+            bad += 1
+            print('%s:%d: a name of HOL4 in a quotation: %r'
+                  % (rel, code[:m.start()].count('\n') + 1,
+                     m2.group(0)))
       for i, l in enumerate(code.split('\n')):
         m = HOL4_LINE.match(l)
         if m:

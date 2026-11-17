@@ -1087,6 +1087,12 @@ ARGPERM = {
 # arguments
 UNCURRIED = set(['ZIP'])
 
+# and the mirror: a constant of HOL Light that takes its two
+# arguments as a pair where the one of HOL4 takes them one at a
+# time (gcd)
+
+TUPLED = set(['gcd'])
+
 
 def dtarg_texts(alt):
   """the texts of the argument types of one alternative of a HOL4
@@ -2415,6 +2421,9 @@ class Printer:
       # and so does a binder of HOL Light: HOL4's $LEAST P is
       # (minimal) P, because minimal x. P x is the applied form
       if n2 in BINDERS: return '(' + n2 + ')'
+      # a constant that takes its two arguments as a pair, standing
+      # on its own: mlint's num_gcd = gcd is (\x y. gcd(x,y))
+      if n2 in TUPLED: return '(\\x y. ' + n2 + '(x,y))'
       # HOL4's auxiliary size functions of a datatype family
       # (exp1_size, exp2_size, ...) number the types of the family
       # in another order than HOL Light does, so the port cannot
@@ -2589,6 +2598,27 @@ class Printer:
         self.numctx = old
         return self.paren('UNCURRY ' + self.ctx.name(hop.name) +
                           ' ' + self.pr(a, APP), PRE_APP, prec)
+      # a constant of HOL Light that takes the two as a pair where
+      # HOL4's takes them one at a time: gcd m n is gcd(m,n), and
+      # a partial application of one is the lambda that says the
+      # same
+      if hop.kind == 'id' and self.ctx.name(hop.name) in TUPLED:
+        nm = self.ctx.name(hop.name)
+        self.numctx = old
+        def bare(a):
+          # the parentheses of the source around an argument are
+          # the ones of an application and not of a pair, and the
+          # pair writes its own
+          while a.kind == 'paren': a = a.e
+          return self.pr(a, 0)
+        if len(args) >= 2:
+          s = nm + '(' + bare(args[0]) + ',' + bare(args[1]) + ')'
+          rest = [self.pr(a, APP) for a in args[2:]]
+          return self.paren(' '.join([s] + rest), PRE_APP, prec)
+        t = bare(args[0])
+        v = 'y'
+        while re.search(r'\b' + v + r'\b', t): v += "'"
+        return '(\\%s. %s(%s,%s))' % (v, nm, t, v)
       fn = self.pr(e.fn, PRE_APP)
       # a constant that the library layer declares as an infix of
       # HOL Light needs its parentheses where it is applied

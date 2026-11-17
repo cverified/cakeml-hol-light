@@ -94,8 +94,9 @@ NAME_MAP = {
   # filter the symbols with flip MEM)
   'flip': 'C',
   # the gcd of HOL4 takes its two arguments one at a time where
-  # the one of HOL Light takes a pair (ml/lib/hol4.ml)
-  'gcd': 'hol4_gcd',
+  # the one of HOL Light takes a pair, which the printer writes
+  # out (hterm.TUPLED)
+  'gcd': 'gcd',
   # HOL4's option theory overloads lift2 with OPTION_MAP2
   'lift2': 'OPTION_MAP2',
   # monadsyntax's unit bind, which the overloads of a source that
@@ -958,8 +959,11 @@ RENAME = {
   # the C of combinTheory, which relationTheory hides from HOL4's
   # parser: a statement that means the combinator writes combin$C
   # and one that writes a bare C means a variable of its own, so
-  # the qualified name is a constant of the library layer that the
-  # cake_hide of C does not touch
+  # the qualified name gets a name of its own.  The library layer
+  # has no constant of that name: HOL Light writes the lambda and
+  # so does the port (THM_PATCH).  The name is kept so that an
+  # occurrence no patch reaches is caught by tools/nohol4.py
+  # instead of being read as a variable
   ('combin', 'C'): 'hol4_C',
   ('sptree', 'fromList'): 'sptree_fromList',
   ('sptree', 'toList'): 'sptree_toList',
@@ -1356,15 +1360,17 @@ THM_NAMES = {
   ('misc', 'domain_rrestrict_subset'): {'domain': 'set_relation_domain'},
   ('misc', 'range_rrestrict_subset'): {'range': 'set_relation_range'},
   # HOL4's GSPEC takes a function to a pair of an element and a
-  # condition, where HOL Light's takes the predicate itself, so
-  # the library layer has HOL4's under a name of its own
+  # condition, where HOL Light writes the set abstraction itself:
+  # the statement is written with the abstraction (THM_PATCH) and
+  # the name is what catches an occurrence that no patch reaches
   ('misc', 'GSPEC_o'): {'GSPEC': 'hol4_GSPEC'},
   ('cmlNTProps', 'IMAGE_GSPEC1'): {'GSPEC': 'hol4_GSPEC'},
   ('cmlNTProps', 'BIGUNION_singletons'): {'GSPEC': 'hol4_GSPEC'},
   ('gramProps', 'GSPEC_INTER'):
     {'GSPEC': 'hol4_GSPEC', 'S': 'hol4_S'},
-  # the S of HOL4's combinTheory, which the port has under a name
-  # of its own because a source uses the name for a variable
+  # the S of HOL4's combinTheory, which the port writes as the
+  # lambda it stands for (THM_PATCH), under a name of its own
+  # because a source uses the name for a variable
   ('word_allocProof', "LET_FORALL_ELIM'"): {'S': 'hol4_S'},
   # exp2_size is the size function that HOL4 generates for a list
   # of the expressions of bvi, which the port calls bvi_exp_size1
@@ -13613,6 +13619,58 @@ DEF_NAMES = {
 # is not a definition, so it has a table of its own; what a patch
 # is and what happens when one does not apply is the same.
 THM_PATCH = {
+  # The combinators C and S of HOL4's combinTheory, which HOL
+  # Light has no constant for: where a source applies one, the
+  # port writes the lambda that says the same, which is what HOL
+  # Light writes.  The name the port gives the combinator
+  # (RENAME, RENAME_CONST) has no constant of the library layer
+  # any more, so an occurrence that these patches do not reach is
+  # caught by tools/nohol4.py and not read as a free variable.
+  ('clos_callProof', 'calls_fv1_subset'): [
+    ("(hol4_C fv1) y SUBSET (hol4_C fv1) x",
+     "(\\v. fv1 v y) SUBSET (\\v. fv1 v x)"),
+  ],
+  ('clos_callProof', 'calls_acc_0'): [
+    ("(hol4_C APPEND r)", "(\\l. APPEND l r)"),
+  ],
+  ('flatProps', 'pmatch_append'): [
+    ("map_match (hol4_C APPEND tail_env) (flatSem_pmatch s p v env)",
+     "map_match (\\l. APPEND l tail_env) (flatSem_pmatch s p v env)"),
+    ("map_match (hol4_C APPEND tail_env) (flatSem_pmatch_list s ps vs"
+     " env)",
+     "map_match (\\l. APPEND l tail_env) (flatSem_pmatch_list s ps vs"
+     " env)"),
+  ],
+  ('inferProps', 'build_ctor_tenv_FOLDR'): [
+    ("ITLIST (hol4_C nsAppend)", "ITLIST (\\x a. nsAppend a x)"),
+  ],
+  ('misc', 'anub_eq_nil'): [
+    ("ALL (hol4_C MEM y)", "ALL (\\z. MEM z y)"),
+  ],
+  ('word_allocProof', "LET_FORALL_ELIM'"): [
+    ("(!) (hol4_S ((==>) o (=) v) f)", "(!) (\\x. v = x ==> f x)"),
+  ],
+  # HOL4's GSPEC takes a function to a pair of an element and a
+  # condition where HOL Light has the set abstraction itself, so
+  # the port writes the abstraction
+  ('misc', 'GSPEC_o'): [
+    ("hol4_GSPEC f o g", "{x | ?y. (x,T) = f y} o g"),
+  ],
+  ('cmlNTProps', 'IMAGE_GSPEC1'): [
+    ("IMAGE f (hol4_GSPEC (\\a. (g a,P a))) = hol4_GSPEC (\\a. (f (g a),"
+     "P a))",
+     "IMAGE f {g a | P a} = {f (g a) | P a}"),
+  ],
+  ('cmlNTProps', 'BIGUNION_singletons'): [
+    ("UNIONS (hol4_GSPEC (\\a. {f a},P a)) = hol4_GSPEC (\\a. f a,P a)",
+     "UNIONS {{f a} | P a} = {f a | P a}"),
+  ],
+  ('gramProps', 'GSPEC_INTER'): [
+    ("hol4_GSPEC f INTER Q = hol4_GSPEC (hol4_S ((,) o FST o f)"
+     " (hol4_S ((/\\) o SND o f) (Q o FST o f)))",
+     "{x | ?y. (x,T) = f y} INTER Q ="
+     " {x | ?y. x = FST (f y) /\\ SND (f y) /\\ Q x}"),
+  ],
   # the same CROSS of setSpec, in the one theorem that writes it
   ('setSpec', 'mem_product'): [
     ("a (x * y)", "a (setSpec_product mem x y)"),
@@ -14607,6 +14665,16 @@ THM_PATCH = {
 # what the port does with the rest of it.  The port raises where
 # a patch does not apply, so a patch cannot go quietly stale.
 DEF_PATCH = {
+  # the C of combinTheory, which HOL Light has no constant for
+  # (THM_PATCH above)
+  ('misc', 'UPDATE_LIST_def'): [
+    ("FOLDL (hol4_C (UNCURRY UPDATE))",
+     "FOLDL (\\s p. UNCURRY UPDATE p s)"),
+  ],
+  ('ag32_basis_ffiProof', 'extract_writes_def'): [
+    ("MAP (hol4_C OPTION_BIND (extract_write fd)) oevents",
+     "MAP (\\x. OPTION_BIND x (extract_write fd)) oevents"),
+  ],
   # HOL4 writes Num (Num (ABS i)): the inner Num is integer's,
   # which takes an integer to a number, and the outer is
   # cfFFIType's, which takes a number to an FFI value.  One block

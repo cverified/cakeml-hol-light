@@ -102,8 +102,8 @@ let real_of_int_of_rat = prove
   CHEAT_TAC);;
 
 let rat_of_int_eq = prove
- (`hol4_gcd (num_of_int (abs n1)) d1 = 1 /\ ~(d1 = 0) /\
-   hol4_gcd (num_of_int (abs n2)) d2 = 1 /\ ~(d2 = 0) /\
+ (`gcd(num_of_int (abs n1),d1) = 1 /\ ~(d1 = 0) /\
+   gcd(num_of_int (abs n2),d2) = 1 /\ ~(d2 = 0) /\
    rat_of_int n1 / &d1 = rat_of_int n2 / &d2 ==>
    n1 = n2 /\ d1 = d2`,
   CHEAT_TAC);;
@@ -117,8 +117,7 @@ let real_to_rational_def = new_definition
   `real_to_rational (r:real) =
      let (n,d) = (@x. ?n d. x = (n,d) /\
                             r = real_of_int n / &d /\
-                            hol4_gcd (num_of_int (abs n)) d = 1 /\ ~(d = 0))
-                              in
+                            gcd(num_of_int (abs n),d) = 1 /\ ~(d = 0)) in
        RatPair n d`;;
 
 let real_to_str_def = new_definition
@@ -126,8 +125,8 @@ let real_to_str_def = new_definition
 
 let real_of_int_div_eq = prove
  (`!n d n' d'.
-     hol4_gcd (num_of_int (abs n')) d' = 1 /\ ~(d' = 0) /\
-     hol4_gcd (num_of_int (abs n)) d = 1 /\ ~(d = 0) ==>
+     gcd(num_of_int (abs n'),d') = 1 /\ ~(d' = 0) /\
+     gcd(num_of_int (abs n),d) = 1 /\ ~(d = 0) ==>
      (real_of_int n / &d = real_of_int n' / &d' <=> n = n' /\ d = d')`,
   CHEAT_TAC);;
 
@@ -145,15 +144,14 @@ let real_to_str_neg_num = prove
 let real_to_str_rat = prove
  (`real_to_str (&n / &d) =
    mlrat_toString (if d = 0 then real_to_rational (&n / &d)
-             else let k = hol4_gcd n d in RatPair (&(n DIV k)) (d DIV k))`,
+             else let k = gcd(n,d) in RatPair (&(n DIV k)) (d DIV k))`,
   CHEAT_TAC);;
 
 (* [compute] *)
 let real_to_str_neg_rat = prove
  (`real_to_str (--(&n) / &d) =
    mlrat_toString (if d = 0 then real_to_rational (--(&n) / &d)
-             else let k = hol4_gcd n d in RatPair (--(&(n DIV k))) (d DIV
-               k))`,
+             else let k = gcd(n,d) in RatPair (--(&(n DIV k))) (d DIV k))`,
   CHEAT_TAC);;
 
 let INT_FLOOR_real_of_int = prove

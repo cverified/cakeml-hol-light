@@ -42,7 +42,7 @@ let rat_of_int_def = new_definition
 
 let div_gcd_def = new_definition
   `rat_div_gcd a b =
-     let d = hol4_gcd (num_of_int a) b in
+     let d = gcd(num_of_int a,b) in
        if d = 0 \/ d = 1 then (a,b) else (a / &d,b DIV d)`;;
 
 let rat_expn_def,rat_expn_ind = define_guess

@@ -116,7 +116,7 @@ let fromchars_side_thm = prove
 (* HOL4 IntProgScript.sml:160-161: ML code, not ported *)
 
 let gcd_v_thm = prove
- (`(Arrow NUM (Arrow NUM NUM)) gcd int_gcd_v`,
+ (`(Arrow NUM (Arrow NUM NUM)) (\x y. gcd(x,y)) int_gcd_v`,
   CHEAT_TAC);;
 
 (* HOL4 IntProgScript.sml:178: ML code, not ported *)

@@ -1504,7 +1504,7 @@ let build_ctor_tenv_FOLDR = prove
  (`!tenvT tds ids.
      LENGTH tds = LENGTH ids ==>
      build_ctor_tenv tenvT tds ids =
-       ITLIST (hol4_C nsAppend)
+       ITLIST (\x a. nsAppend a x)
        (MAP (alist_to_ns o REVERSE)
           (MAP2 (\(tvs,tn,ctors) id. (MAP (\(cn,ts). (cn,tvs,MAP
             (type_name_subst tenvT) ts,id)) ctors))

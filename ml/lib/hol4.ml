@@ -53,30 +53,11 @@ let FOLDR_THM = prove
    (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
   REWRITE_TAC[FOLDR_def; ITLIST]);;
 
-(* HOL4's relationTheory hides the C of combinTheory from its
-   parser, so a statement that means that combinator writes
-   combin$C for it (misc's anub_eq_nil and two of clos_callProof),
-   and a statement that writes a bare C means a variable.  The
-   port reads the qualified name as this constant, which the
-   cake_hide of C does not touch *)
-
-let hol4_C = new_definition
-  `hol4_C (f:A->B->C) x y = f y x`;;
-
-(* the S of the same theory, whose name a source of CakeML uses
-   for a variable of its own (the state of word_copyProof's
-   CPstate_models, whose Ancestors line leaves combin out of its
-   grammar), so the port gives the combinator a name of its own
-   as it does with C *)
-
-let hol4_S = new_definition
-  `hol4_S (f:A->B->C) (g:A->B) x = f x (g x)`;;
-
-(* HOL4's gcd takes its two arguments one at a time where HOL
-   Light's takes a pair of them (gcdTheory against int.ml) *)
-
-let hol4_gcd = new_definition
-  `hol4_gcd a b = gcd (a,b)`;;
+(* The C and the S of HOL4's combinTheory are not here: HOL Light
+   has no combinator of its own and writes the lambda, so where a
+   source applies one the port writes that lambda
+   (overrides.THM_PATCH).  A constant for them would be a name of
+   HOL4 in a statement, which tools/nohol4.py rejects *)
 
 (* HOL4's cwc of cpsScript (the port does not have that
    theory): the combinator that gives a value to a continuation *)
@@ -542,10 +523,10 @@ let set_relation_range = new_definition
    {y | ?x. (x,y) IN r}`;;
 
 (* HOL4's GSPEC takes a function to a pair of an element and a
-   condition, where HOL Light's takes the predicate itself *)
-
-let hol4_GSPEC = new_definition
-  `hol4_GSPEC (f:B->A#bool) = {x | ?y. (x,T) = f y}`;;
+   condition where HOL Light writes the set abstraction itself,
+   so the four statements that use one are written with the
+   abstraction (overrides.THM_PATCH) and there is no constant
+   for it here *)
 
 let rrestrict = new_definition
   `rrestrict (r:(A#A)->bool) s =

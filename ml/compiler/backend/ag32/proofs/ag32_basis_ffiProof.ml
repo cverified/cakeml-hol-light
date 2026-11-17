@@ -434,8 +434,8 @@ let extract_write_def = new_definition
 
 let extract_writes_def = new_definition
   `extract_writes fd oevents =
-     FLAT (MAP (MAP (CHR o w2n) o THE) (FILTER IS_SOME (MAP (hol4_C
-       OPTION_BIND (extract_write fd)) oevents)))`;;
+     FLAT (MAP (MAP (CHR o w2n) o THE) (FILTER IS_SOME (MAP (\x. OPTION_BIND x
+       (extract_write fd)) oevents)))`;;
 
 (* [local] *)
 let no_ext_apply = prove

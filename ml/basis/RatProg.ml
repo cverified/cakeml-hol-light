@@ -34,7 +34,7 @@ let _ = do_list hide_constant ["ABS"];;
 
 let RatProg_div_gcd_def = new_definition
   `RatProg_div_gcd a b =
-     let d = hol4_gcd (ml_translator_num_of_int a) b in
+     let d = gcd(ml_translator_num_of_int a,b) in
        if d = 0 \/ d = 1 then RatPair a b else RatPair (a / &d) (b DIV d)`;;
 
 (* HOL4 RatProgScript.sml:25: ML code, not ported *)
@@ -51,8 +51,7 @@ let RatProg_div_gcd_def = new_definition
 let RAT_TYPE_def = new_definition
   `RAT_TYPE (r:rat) =
      (\v. ?(n:int) (d:num). (r = (rat_of_int n) / &d) /\
-                           hol4_gcd (num_of_int (abs n)) d = 1 /\ ~(d = 0)
-                             /\
+                           gcd(num_of_int (abs n),d) = 1 /\ ~(d = 0) /\
                            RATIONAL_TYPE (RatPair n d) v)`;;
 
 (* HOL4 RatProgScript.sml:44: the ML values that the definitions below
@@ -180,7 +179,7 @@ let rat_compare_def = new_definition
 
 (* [local] *)
 let gcd_LESS_EQ = prove
- (`!m n. ~(n = 0) ==> gcd m n <= n`,
+ (`!m n. ~(n = 0) ==> gcd(m,n) <= n`,
   CHEAT_TAC);;
 
 (* DIV_EQ_0 *)
@@ -189,7 +188,7 @@ let RatProg_DIV_EQ_0 = prove
   CHEAT_TAC);;
 
 let DIV_GCD_NONZERO = prove
- (`(0 < m ==> 0 < m DIV hol4_gcd m n) /\ (0 < n ==> 0 < n DIV hol4_gcd m n)`,
+ (`(0 < m ==> 0 < m DIV gcd(m,n)) /\ (0 < n ==> 0 < n DIV gcd(m,n))`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -327,7 +326,7 @@ let int_divides_ABS = prove
   CHEAT_TAC);;
 
 let gcd_RATND = prove
- (`hol4_gcd (num_of_int (abs n)) d = 1 /\ 0 < d ==>
+ (`gcd(num_of_int (abs n),d) = 1 /\ 0 < d ==>
    RATN (rat_of_int n / &d) = n /\
    RATD (rat_of_int n / &d) = d`,
   CHEAT_TAC);;

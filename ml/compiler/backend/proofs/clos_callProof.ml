@@ -503,7 +503,7 @@ let calls_wfg = prove
 
 let calls_fv1_subset = prove
  (`!xs g0 ys g. calls xs g0 = (ys,g) ==>
-    ALL2 (\x y. (hol4_C fv1) y SUBSET (hol4_C fv1) x) xs ys`,
+    ALL2 (\x y. (\v. fv1 v y) SUBSET (\v. fv1 v x)) xs ys`,
   CHEAT_TAC);;
 
 let calls_fv_imp = prove
@@ -595,7 +595,7 @@ let insert_each_pair_arg = prove
 (* [local] *)
 let calls_acc_0 = prove
  (`!xs tmp x r. APPEND x r = SND tmp ==>
-      calls xs tmp = (I ## I ## (hol4_C APPEND r)) (calls xs (FST tmp,x))`,
+      calls xs tmp = (I ## I ## (\l. APPEND l r)) (calls xs (FST tmp,x))`,
   CHEAT_TAC);;
 
 let calls_acc = prove

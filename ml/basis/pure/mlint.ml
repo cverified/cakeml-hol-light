@@ -351,7 +351,7 @@ let num_gcd_def,num_gcd_ind = define_wf
   `mlint_num_gcd a b = if a = 0 then b else mlint_num_gcd (b MOD a) a`;;
 
 let num_gcd_eq_gcd = prove
- (`mlint_num_gcd = hol4_gcd`,
+ (`mlint_num_gcd = (\x y. gcd(x,y))`,
   CHEAT_TAC);;
 
 let int_gcd_def = new_definition

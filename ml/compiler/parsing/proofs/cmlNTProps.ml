@@ -110,12 +110,12 @@ add_simp firstSet_nDecls;;
 
 (* [local] *)
 let IMAGE_GSPEC1 = prove
- (`IMAGE f (hol4_GSPEC (\a. (g a,P a))) = hol4_GSPEC (\a. (f (g a),P a))`,
+ (`IMAGE f {g a | P a} = {f (g a) | P a}`,
   CHEAT_TAC);;
 
 (* [local] *)
 let BIGUNION_singletons = prove
- (`UNIONS (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`,
+ (`UNIONS {{f a} | P a} = {f a | P a}`,
   CHEAT_TAC);;
 add_simp BIGUNION_singletons;;
 
