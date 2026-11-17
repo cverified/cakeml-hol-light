@@ -95,8 +95,8 @@ let init_axioms_alt = prove
 (* the right hand side is the one that the ML of the source
    computes, computed the same way *)
 let init_context_def = new_definition
-  (mk_eq(`init_context`,
-   rhs (concl init_ctxt_def)));;
+  (cake_def_of "init_context" []
+   (rhs (concl init_ctxt_def)));;
 
 
 (* HOL4 ml_hol_kernel_funsProgScript.sml:87-94: ML code, not ported *)

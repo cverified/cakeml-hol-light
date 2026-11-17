@@ -3,7 +3,7 @@
     src/sort/sortingScript.sml
     A HOL4 library theory, of which the port has the definitions and
     35 theorems that CakeML needs, all of them from LightCake.
-    Needed by 27 files of the port.  *)
+    Needed by 26 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

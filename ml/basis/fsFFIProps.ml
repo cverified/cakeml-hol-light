@@ -132,8 +132,7 @@ let live_numchars_def = new_definition
      ~(LFINITE ns) /\
      always (eventually (\ll. ?k. LHD ll = SOME k /\ ~(k = 0))) ns`;;
 
-let liveFS_def = new_definition
-  `liveFS fs <=> live_numchars (IO_fs_numchars fs)`;;
+(* HOL4 fsFFIPropsScript.sml:193-195: the definition *)
 
 (* each inode refered to by a filename has a content *)
 let consistentFS_def = new_definition

@@ -56,12 +56,9 @@ let _ = cake_theory "backend_enc_dec"
 
 (* HOL4 backend_enc_decScript.sml:127: ML code, not ported *)
 
-let backend_common_tra_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:129-131: the definition *)
 
-make_size "num_tree";;
-let backend_common_tra_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:133-147: the definition *)
 
 let backend_common_tra_enc'_thm = prove
  (`backend_common_tra_dec' (backend_common_tra_enc' x) = x`,
@@ -78,12 +75,9 @@ add_simp backend_common_tra_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:171: ML code, not ported *)
 
-make_size "const";;
-let closLang_const_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:173-177: the definition *)
 
-let closLang_const_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:179-191: the definition *)
 
 let closLang_const_enc'_thm = prove
  (`closLang_const_dec' (closLang_const_enc' x) = x`,
@@ -101,12 +95,9 @@ add_simp closLang_const_enc'_thm;;
 (* HOL4 backend_enc_decScript.sml:228-235: a theorem whose statement the
    port cannot state yet: MEM_exp_size *)
 
-make_size "clos_exp";;
-let closLang_exp_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:237-242: the definition *)
 
-let closLang_exp_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:244-258: the definition *)
 
 (* HOL4 backend_enc_decScript.sml:260-265: a theorem whose statement the
    port cannot state yet: bvl_MEM_exp_size *)
@@ -122,12 +113,9 @@ add_simp closLang_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:283: ML code, not ported *)
 
-make_size "bvl_exp";;
-let bvl_exp_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:285-290: the definition *)
 
-let bvl_exp_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:292-304: the definition *)
 
 let bvl_exp_enc'_thm = prove
  (`!x. bvl_exp_dec' (bvl_exp_enc' x) = x`,
@@ -143,12 +131,9 @@ add_simp bvl_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:327: ML code, not ported *)
 
-make_size "bvi_exp";;
-let bvi_exp_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:329-334: the definition *)
 
-let bvi_exp_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:336-352: the definition *)
 
 let bvi_exp_enc'_thm = prove
  (`!x. bvi_exp_dec' (bvi_exp_enc' x) = x`,
@@ -161,11 +146,9 @@ add_simp bvi_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:371: ML code, not ported *)
 
-let clos_known_val_approx_enc'_def = new_definition
-  `e`;;
+(* HOL4 backend_enc_decScript.sml:373-375: the definition *)
 
-let clos_known_val_approx_dec'_def = new_definition
-  `d`;;
+(* HOL4 backend_enc_decScript.sml:377-390: the definition *)
 
 let clos_known_val_approx_enc'_thm = prove
  (`!x. clos_known_val_approx_dec' (clos_known_val_approx_enc' x) = x`,

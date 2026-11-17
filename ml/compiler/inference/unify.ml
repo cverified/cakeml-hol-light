@@ -513,9 +513,7 @@ let tcwalk_correct = prove
  (`!s it. cwfs s ==> cwalk s it = tcwalk s it`,
   CHEAT_TAC);;
 
-let cocl_def,cocl_ind = define_rec
-  `(cocl s [] n <=> F) /\
-   (cocl s (CONS i is) n <=> coc s i n \/ cocl s is n)`;;
+(* HOL4 unifyScript.sml:855-858: the definition *)
 
 let cocl_EXISTS = prove
  (`cocl s its n <=> EX (\i. coc s i n) its`,
@@ -1048,15 +1046,7 @@ let FINITE_BAG_PFLAT = prove
   CHEAT_TAC);;
 add_simp FINITE_BAG_PFLAT;;
 
-let kcunifywlR_def = new_definition
-  `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list)) (s0,wl0)
-  <=>
-     cwfs s /\ cwfs s0 /\ sp2fm s0 SUBMAP sp2fm s /\
-     substvars (encode_infer_t o_f sp2fm s) UNION cplist_vars wl SUBSET
-     substvars (encode_infer_t o_f sp2fm s0) UNION cplist_vars wl0 /\
-     (mlt (walkstarR (sp2fm (sptree_map encode_infer_t s))) LEX (<))
-          (PFLAT wl,LENGTH wl)
-          (PFLAT wl0,LENGTH wl0)`;;
+(* HOL4 unifyScript.sml:1648-1657: the definition *)
 
 (* HOL4 unifyScript.sml:1659: the overload kcuR, which the port expands *)
 

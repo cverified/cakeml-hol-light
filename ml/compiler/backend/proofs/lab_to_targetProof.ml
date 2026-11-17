@@ -496,16 +496,7 @@ let pos_val_thm = prove
     | SOME x -> x))`,
   CHEAT_TAC);;
 
-let lab_to_targetProof_good_code_def = new_definition
-  `lab_to_targetProof_good_code c labs code <=>
-    ALL sec_ends_with_label code /\
-    ALL sec_labels_ok code /\
-    ALL_DISTINCT (MAP Section_num code) /\
-    ALL (ALL_DISTINCT o labProps_extract_labels o Section_lines) code /\
-    DISJOINT (sptree_domain labs) (set_of_list (MAP Section_num code)) /\
-    restrict_nonzero (labProps_get_labels code) SUBSET
-      labProps_get_code_labels code UNION labs_domain labs /\
-    (\c ls. ALL (sec_ok_pre c) ls) c code`;;
+(* HOL4 lab_to_targetProofScript.sml:669-678: the definition *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -2161,15 +2152,7 @@ let upd_lab_len_encd0 = prove
 (* invariant: annotated lengths are not too small *)
 (* this is a consequence of encd (below) and not treated separately much *)
 
-let line_length_leq_def = new_definition
-  `line_length_leq x1 =
-     match x1 with
-       lab_LabAsm _ _ bytes l ->
-       LENGTH bytes <= l
-     | lab_Asm _ bytes l ->
-       LENGTH bytes <= l
-     | _ -> T`;;
-add_simp line_length_leq_def;;
+(* HOL4 lab_to_targetProofScript.sml:3701-3707: the definition *)
 
 let sec_length_leq_def = define_general
   `sec_length_leq (Section _ ls) = ALL line_length_leq ls`;;
@@ -2180,12 +2163,7 @@ add_simp sec_length_leq_def;;
 
 (* invariant: label annotated lengths are 0 or 1 *)
 
-let label_one_def = new_definition
-  `label_one x1' =
-     match x1' with
-       lab_Label _ _ n -> n <= 1
-     | _ -> T`;;
-add_simp label_one_def;;
+(* HOL4 lab_to_targetProofScript.sml:3717-3720: the definition *)
 
 let sec_label_one_def = define_general
   `sec_label_one (Section _ ls) = ALL label_one ls`;;
@@ -2275,20 +2253,9 @@ let line_encd_def = new_definition
 
 (* HOL4 lab_to_targetProofScript.sml:3836: ML code, not ported *)
 
-let lines_encd_def,lines_encd_ind = define_rec
-  `(lines_encd enc labs ffis pos [] <=> T) /\
-   (lines_encd enc labs ffis pos (CONS l ls) <=>
-       line_encd enc labs ffis pos l /\
-       lines_encd enc labs ffis (pos + line_len l) ls)`;;
+(* HOL4 lab_to_targetProofScript.sml:3838-3843: the definition *)
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let all_encd_def,all_encd_ind = define_wf
-  `MEASURE (\(x0,x1,x2,x3,x4). list_size (sec_size (\x. 0)) x4)`
-  `(all_encd enc labs ffis pos [] <=> T) /\
-   (all_encd enc labs ffis pos (CONS (Section k ls) ss) <=>
-       lines_encd enc labs ffis pos ls /\
-       all_encd enc labs ffis (pos + SUM (MAP line_len ls)) ss)`;;
+(* HOL4 lab_to_targetProofScript.sml:3845-3850: the definition *)
 
 (* length_leq follows from encd *)
 
@@ -2484,9 +2451,7 @@ let label_prefix_zero_def = new_definition
       (!n. n < LENGTH ls /\ (!m. m <= n ==> is_Label (EL m ls)) ==>
          (!m. m <= n ==> line_len (EL m ls) = 0))`;;
 
-let sec_label_prefix_zero_def = define_general
-  `sec_label_prefix_zero (Section k ls) <=> label_prefix_zero ls`;;
-add_simp sec_label_prefix_zero_def;;
+(* HOL4 lab_to_targetProofScript.sml:4177-4179: the definition *)
 
 let label_prefix_zero_cons = prove
  (`(label_prefix_zero (CONS (lab_Label l1 l2 len) ls) <=> ((len = 0)
@@ -2563,8 +2528,8 @@ let label_zero_line_length_pad_section = prove
 (* invariant: lines encd with nops *)
 
 let line_enc_with_nop_def = new_definition
-  `line_enc_with_nop enc labs ffis pos x5 =
-     match x5 with
+  `line_enc_with_nop enc labs ffis pos x5' =
+     match x5' with
        lab_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
      | lab_LabAsm lab_Halt _ bytes len ->
@@ -2594,11 +2559,7 @@ let line_enc_with_nop_def = new_definition
 
 (* HOL4 lab_to_targetProofScript.sml:4357: ML code, not ported *)
 
-let lines_enc_with_nop_def,lines_enc_with_nop_ind = define_rec
-  `(lines_enc_with_nop enc labs ffis pos [] <=> T) /\
-   (lines_enc_with_nop enc labs ffis pos (CONS l ls) <=>
-       line_enc_with_nop enc labs ffis pos l /\
-       lines_enc_with_nop enc labs ffis (pos + line_length l) ls)`;;
+(* HOL4 lab_to_targetProofScript.sml:4359-4364: the definition *)
 
 let lines_enc_with_nop_append = prove
  (`!enc labs ffis pos l1 l2.
@@ -2607,16 +2568,7 @@ let lines_enc_with_nop_append = prove
    lines_enc_with_nop enc labs ffis (pos + SUM (MAP line_length l1)) l2`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let all_enc_with_nop_def,all_enc_with_nop_ind = define_guess_cheat
-  `(all_enc_with_nop enc labs ffis pos [] <=> T) /\
-   (all_enc_with_nop enc labs ffis pos (CONS (Section k []) xs) <=>
-       all_enc_with_nop enc labs ffis pos xs) /\
-   (all_enc_with_nop enc labs ffis pos (CONS (Section k (CONS y ys)) xs) <=>
-       line_enc_with_nop enc labs ffis pos y /\
-       all_enc_with_nop enc labs ffis (pos + line_length y) (CONS
-           (Section k ys) xs))`;;
+(* HOL4 lab_to_targetProofScript.sml:4375-4382: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:4384: ML code, not ported *)
 
@@ -2747,17 +2699,13 @@ let all_enc_with_nop_pad_code = prove
 (* invariant: label annotation correctly records alignment *)
 
 let line_lab_len_pos_ok_def = new_definition
-  `line_lab_len_pos_ok pos x2 =
-     match x2 with
+  `line_lab_len_pos_ok pos x2' =
+     match x2' with
        lab_Label _ _ l ->
         if EVEN pos then l = 0 else l = 1
      | _ -> T`;;
 
-let lab_len_pos_ok_def,lab_len_pos_ok_ind = define_rec
-  `(lab_len_pos_ok pos [] <=> T) /\
-   (lab_len_pos_ok pos (CONS l ls) <=>
-         line_lab_len_pos_ok pos l /\
-         lab_len_pos_ok (pos + line_len l) ls)`;;
+(* HOL4 lab_to_targetProofScript.sml:4690-4695: the definition *)
 
 let lab_len_pos_ok_append = prove
  (`!l1 pos l2.
@@ -2766,14 +2714,7 @@ let lab_len_pos_ok_append = prove
    lab_len_pos_ok (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let all_lab_len_pos_ok_def,all_lab_len_pos_ok_ind = define_wf
-  `MEASURE (\(x0,x1). list_size (sec_size (\x. 0)) x1)`
-  `(all_lab_len_pos_ok _ [] <=> T) /\
-   (all_lab_len_pos_ok pos (CONS (Section k ls) ss) <=>
-       lab_len_pos_ok pos ls /\
-       all_lab_len_pos_ok (pos + sec_length ls 0) ss)`;;
+(* HOL4 lab_to_targetProofScript.sml:4707-4712: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:4714: ML code, not ported *)
 
@@ -2848,11 +2789,7 @@ let line_offset_ok_def = new_definition
        w = get_jump_offset a ffis labs pos
      | _ -> T`;;
 
-let lines_offset_ok_def,lines_offset_ok_ind = define_rec
-  `(lines_offset_ok labs ffis pos [] <=> T) /\
-   (lines_offset_ok labs ffis pos (CONS l ls) <=>
-       line_offset_ok labs ffis pos l /\
-       lines_offset_ok labs ffis (pos + line_len l) ls)`;;
+(* HOL4 lab_to_targetProofScript.sml:4869-4874: the definition *)
 
 let lines_offset_ok_append = prove
  (`!labs ffis pos l1 l2.
@@ -2861,16 +2798,7 @@ let lines_offset_ok_append = prove
     lines_offset_ok labs ffis (pos + SUM (MAP line_len l1)) l2`,
   CHEAT_TAC);;
 
-(* the termination relation is not in the HOL4 source; this one is
-   what the port found for it *)
-let lab_to_targetProof_offset_ok_def,lab_to_targetProof_offset_ok_ind =
-  define_wf
-  `MEASURE (\(x0,x1,x2,x3). list_size (sec_size (\x. 0)) x3)`
-  `(lab_to_targetProof_offset_ok labs ffis pos [] <=> T) /\
-   (lab_to_targetProof_offset_ok labs ffis pos (CONS (Section k ls) ss) <=>
-       lines_offset_ok labs ffis pos ls /\
-       lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP line_len
-           ls)) ss)`;;
+(* HOL4 lab_to_targetProofScript.sml:4885-4890: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:4892: ML code, not ported *)
 
@@ -2912,19 +2840,11 @@ let offset_ok_pad_code = prove
 
 (* invariant: referenced labels exist *)
 
-let line_labs_exist_def = new_definition
-  `line_labs_exist labs x2 =
-     match x2 with
-       lab_LabAsm a _ _ _ ->
-       (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs = NONE))
-     | _ -> T`;;
-add_simp line_labs_exist_def;;
+(* HOL4 lab_to_targetProofScript.sml:4992-4996: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:4998: ML code, not ported *)
 
-let sec_labs_exist_def = define_general
-  `sec_labs_exist labs (Section _ ls) <=> ALL (line_labs_exist labs) ls`;;
-add_simp sec_labs_exist_def;;
+(* HOL4 lab_to_targetProofScript.sml:5000-5002: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:5004: the overload all_labs_exist,
    which the port expands *)
@@ -3056,22 +2976,11 @@ let labs_domain_compute_labels_alt = prove
 
 (* invariant: labels aligned at even positions *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let even_labels_def,even_labels_ind = define_guess_cheat
-  `(even_labels pos [] <=> T) /\
-   (even_labels pos (CONS (Section _ []) ls) <=> even_labels pos ls) /\
-   (even_labels pos (CONS (Section k (CONS y ys)) ls) <=>
-       (is_Label y ==> EVEN pos) /\
-       even_labels (pos + line_len y) (CONS (Section k ys) ls))`;;
+(* HOL4 lab_to_targetProofScript.sml:5221-5227: the definition *)
 
 (* HOL4 lab_to_targetProofScript.sml:5229: ML code, not ported *)
 
-let lines_even_labels_def,lines_even_labels_ind = define_rec
-  `(lines_even_labels pos [] <=> T) /\
-   (lines_even_labels pos (CONS y ys) <=>
-       (is_Label y ==> EVEN pos) /\
-       lines_even_labels (pos + line_len y) ys)`;;
+(* HOL4 lab_to_targetProofScript.sml:5231-5236: the definition *)
 
 let even_labels_alt = prove
  (`(even_labels pos [] <=> T) /\
@@ -3080,15 +2989,7 @@ let even_labels_alt = prove
     even_labels (pos + SUM (MAP line_len ls)) ss)`,
   CHEAT_TAC);;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let even_labels_strong_def,even_labels_strong_ind = define_guess_cheat
-  `(even_labels_strong pos [] <=> T) /\
-   (even_labels_strong pos (CONS (Section _ []) ls) <=>
-        EVEN pos /\ even_labels_strong pos ls) /\
-   (even_labels_strong pos (CONS (Section k (CONS y ys)) ls) <=>
-       (is_Label y ==> EVEN pos) /\
-       even_labels_strong (pos + line_len y) (CONS (Section k ys) ls))`;;
+(* HOL4 lab_to_targetProofScript.sml:5252-5259: the definition *)
 
 let even_labels_ends_imp_strong = prove
  (`!pos code.

@@ -2,7 +2,7 @@
 (*  typeSoundInvariants: ported from HOL4's
     semantics/proofs/typeSoundInvariantsScript.sml
     A proof theory, with 18 definitions, 1 datatype and no theorems.
-    Needed by 13 files of the port.  *)
+    Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -33,29 +33,15 @@ let store_t_INDUCT,store_t_RECURSION = define_datatype
 new_type_abbrev("tenv_store",`:(num,store_t)fmap`);;
 
 (* Check that the type names map to valid types *)
-let tenv_abbrev_ok_def = new_definition
-  `tenv_abbrev_ok tenvT <=> nsAll (\id (tvs,t). check_freevars 0 tvs t)
-  tenvT`;;
+(* HOL4 typeSoundInvariantsScript.sml:20-22: the definition *)
 
-let tenv_ctor_ok_def = new_definition
-  `tenv_ctor_ok tenvC <=> nsAll (\id (tvs,ts,tn). ALL (check_freevars 0 tvs)
-  ts) tenvC`;;
+(* HOL4 typeSoundInvariantsScript.sml:24-26: the definition *)
 
-let tenv_val_ok_def = new_definition
-  `tenv_val_ok tenvV <=> nsAll (\id (tvs,t). check_freevars tvs [] t) tenvV`;;
+(* HOL4 typeSoundInvariantsScript.sml:28-30: the definition *)
 
-let tenv_ok_def = new_definition
-  `tenv_ok tenv <=>
-     tenv_val_ok (type_env_v tenv) /\
-     tenv_ctor_ok (type_env_c tenv) /\
-     tenv_abbrev_ok (type_env_t tenv)`;;
+(* HOL4 typeSoundInvariantsScript.sml:32-37: the definition *)
 
-let tenv_val_exp_ok_def,tenv_val_exp_ok_ind = define_rec
-  `(tenv_val_exp_ok typeSystem_Empty <=> T) /\
-   (tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok tenv) /\
-   (tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
-        check_freevars (tvs + num_tvs tenv) [] t /\
-        tenv_val_exp_ok tenv)`;;
+(* HOL4 typeSoundInvariantsScript.sml:39-45: the definition *)
 
 (* Global constructor type environments keyed by constructor name and type
  * stamp. Contains the type variables, the type of the arguments, and
@@ -166,14 +152,7 @@ let type_v = cake_inductive
      ALL (\v. type_v tvs ctMap tenvS v t) vs ==>
      type_v tvs ctMap tenvS (semanticPrimitives_Vectorv vs) (Tvector t))`;;
 
-let type_sv_def = new_definition
-  `type_sv ctMap tenvS x3 x4 =
-     match (x3,x4) with
-       (semanticPrimitives_Refv v,Ref_t t) -> type_v 0 ctMap tenvS v t
-     | (semanticPrimitives_W8array v,W8array_t) -> T
-     | (semanticPrimitives_Varray vs,Varray_t t) ->
-       ALL (\v. type_v 0 ctMap tenvS v t) vs
-     | (_,_) -> F`;;
+(* HOL4 typeSoundInvariantsScript.sml:152-158: the definition *)
 
 
 (* The type of the store *)
@@ -215,41 +194,19 @@ let ctMap_has_bools_def = new_definition
      (!cn. ~(cn = (implode "True")) /\ ~(cn = (implode "False")) ==>
        FLOOKUP ctMap (TypeStamp cn bool_type_num) = NONE)`;;
 
-let good_ctMap_def = new_definition
-  `good_ctMap ctMap <=>
-     ctMap_ok ctMap /\
-     ctMap_has_bools ctMap /\
-     ctMap_has_exns ctMap /\
-     ctMap_has_lists ctMap`;;
+(* HOL4 typeSoundInvariantsScript.sml:198-204: the definition *)
 
 (* HOL4 typeSoundInvariantsScript.sml:206-227: code that the source has in a
    comment *)
 
-let consistent_ctMap_def = new_definition
-  `consistent_ctMap st type_ids ctMap <=>
-     (DISJOINT type_ids (FRANGE ((SND o SND) o_f ctMap))) /\
-     (!cn id.
-       (TypeStamp cn id IN FDOM ctMap ==> id <
-         semanticPrimitives_state_next_type_stamp st) /\
-       (ExnStamp id IN FDOM ctMap ==> id <
-         semanticPrimitives_state_next_exn_stamp st))`;;
+(* HOL4 typeSoundInvariantsScript.sml:229-235: the definition *)
 
 (* HOL4 typeSoundInvariantsScript.sml:237-241: code that the source has in a
    comment *)
 
-let type_all_env_def = new_definition
-  `type_all_env ctMap tenvS env tenv <=>
-     nsAll2 (type_ctor ctMap) (sem_env_c env) (type_env_c tenv) /\
-     nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (sem_env_v env)
-       (type_env_v tenv)`;;
+(* HOL4 typeSoundInvariantsScript.sml:243-247: the definition *)
 
-let type_sound_invariant_def = new_definition
-  `type_sound_invariant st env ctMap tenvS type_idents tenv <=>
-     tenv_ok tenv /\
-     good_ctMap ctMap /\
-     consistent_ctMap st type_idents ctMap /\
-     type_all_env ctMap tenvS env tenv /\
-     type_s ctMap (semanticPrimitives_state_refs st) tenvS`;;
+(* HOL4 typeSoundInvariantsScript.sml:249-256: the definition *)
 
 (* and the interface *)
 let _ = unhide_overloads ();;

@@ -217,10 +217,7 @@ let line_ok_light_def = new_definition
      | (c,lab_LabAsm a w bytes l) ->
         asm_ok (lab_inst w a) c`;;
 
-let sec_ok_light_def = define_general
-  `sec_ok_light c (Section k ls) <=>
-     ALL (line_ok_light c) ls`;;
-add_simp sec_ok_light_def;;
+(* HOL4 lab_to_targetScript.sml:183-186: the definition *)
 
 (* HOL4 lab_to_targetScript.sml:188: the overload all_enc_ok_light, which
    the port expands *)

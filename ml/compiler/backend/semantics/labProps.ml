@@ -15,7 +15,6 @@ needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -110,9 +109,7 @@ let get_code_labels_cons = prove
   labProps_get_code_labels secs`,
   CHEAT_TAC);;
 
-let sec_ends_with_label_def = define_general
-  `sec_ends_with_label (Section _ ls) <=>
-     ~(NULL ls) /\ is_Label (LAST ls)`;;
+(* HOL4 labPropsScript.sml:81-84: the definition *)
 
 let reg_imm_with_clock = prove
  (`labSem_reg_imm r (labSem_state_clock_fupd (K z) s) = labSem_reg_imm r s`,
@@ -813,16 +810,9 @@ let implements_align_sdm = prove
 
 
 (* asm_ok checks coming into lab_to_target *)
-let line_ok_pre_def = new_definition
-  `line_ok_pre c x2 =
-     match (c,x2) with
-       ((c:'a asm_config),lab_Asm b bytes l) -> asm_ok (cbw_to_asm b) c
-     | (c,_) -> T`;;
+(* HOL4 labPropsScript.sml:1247-1250: the definition *)
 
-let sec_ok_pre_def = define_general
-  `sec_ok_pre c (Section k ls) <=>
-     ALL (line_ok_pre c) ls`;;
-add_simp sec_ok_pre_def;;
+(* HOL4 labPropsScript.sml:1252-1255: the definition *)
 
 (* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which the port
    expands *)
@@ -830,15 +820,13 @@ add_simp sec_ok_pre_def;;
 (* invariant: labels have correct section number and are non-zero *)
 
 let sec_label_ok_def = new_definition
-  `sec_label_ok k x2' =
-     match x2' with
+  `sec_label_ok k x2 =
+     match x2 with
        lab_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
      | _ -> T`;;
 add_simp sec_label_ok_def;;
 
-let sec_labels_ok_def = define_general
-  `sec_labels_ok (Section k ls) <=> ALL (sec_label_ok k) ls`;;
-add_simp sec_labels_ok_def;;
+(* HOL4 labPropsScript.sml:1266-1268: the definition *)
 
 let sec_label_ok_extract_labels = prove
  (`ALL (sec_label_ok n1) lines /\

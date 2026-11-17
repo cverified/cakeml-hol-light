@@ -43,14 +43,7 @@ let ptree_head_def = define_cases
    (ptree_head (Nd (nt,l) children) = grammar_NT nt)`;;
 add_simp ptree_head_def;;
 
-let valid_ptree_def,valid_ptree_ind = define_shaped_rec
-  "nested"
-  `(valid_ptree G (Lf _) <=> T) /\
-   (valid_ptree G (Nd (nt,l) children) <=>
-        nt IN FDOM (grammar_rules G) /\ MAP ptree_head children IN FAPPLY
-            (grammar_rules G) nt /\
-        (!pt. pt IN set_of_list children ==> valid_ptree G pt))`;;
-add_simp valid_ptree_def;;
+(* HOL4 grammarScript.sml:50-55: the definition *)
 
 let ptree_fringe_def,ptree_fringe_ind = define_shaped_rec
   "nested"
@@ -71,8 +64,7 @@ let valid_locs_def,valid_locs_ind = define_shaped_rec
          (!pt. MEM pt children ==> valid_locs pt))`;;
 add_simp valid_locs_def;;
 
-let valid_lptree_def = new_definition
-  `valid_lptree G pt <=> valid_locs pt /\ valid_ptree G pt`;;
+(* HOL4 grammarScript.sml:116-118: the definition *)
 
 let derive_def = new_definition
   `derive G sf1 sf2 <=>

@@ -1251,13 +1251,7 @@ let source_to_flatProof_invariant_def = new_definition
            s))`;;
 
 (* subsequent oracle config will still have the previous envs in store *)
-let orac_config_envs_subspt_def = new_definition
-  `orac_config_envs_subspt interp es1 es2 <=>
-     OPTREL (\c c'. subspt (environment_store_env_gens
-       (source_to_flat_config_envs c)) (environment_store_env_gens
-       (source_to_flat_config_envs c')))
-     (src_orac_next_cfg interp es1)
-     (src_orac_next_cfg interp es2)`;;
+(* HOL4 source_to_flatProofScript.sml:2327-2332: the definition *)
 
 let orac_config_envs_subspt_trans = prove
  (`orac_config_envs_subspt interp es1 es2 /\

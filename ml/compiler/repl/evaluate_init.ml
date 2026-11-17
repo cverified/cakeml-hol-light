@@ -43,43 +43,13 @@ let evaluate_init_NOT_NIL_CONS = prove
  *
  * ------------------------------------------------------------------------- *)
 
-let evaluate_init_state_ok_def = new_definition
-  `evaluate_init_state_ok (s:'ffi semanticPrimitives_state) <=>
-     evaluate_skip_state_rel (LENGTH (semanticPrimitives_state_refs s))
-       (FUN_FMAP I (count (LENGTH (semanticPrimitives_state_refs s))))
-                              (FUN_FMAP I (count
-                                (semanticPrimitives_state_next_type_stamp s)))
-                              (FUN_FMAP I (count
-                                (semanticPrimitives_state_next_exn_stamp
-                                s))) s s`;;
+(* HOL4 evaluate_initScript.sml:32-37: the definition *)
 
-let env_ok_def = new_definition
-  `evaluate_init_env_ok (s:'ffi semanticPrimitives_state) env <=>
-     evaluate_skip_env_rel (FUN_FMAP I (count (LENGTH
-       (semanticPrimitives_state_refs s))))
-             (FUN_FMAP I (count (semanticPrimitives_state_next_type_stamp
-               s)))
-             (FUN_FMAP I (count (semanticPrimitives_state_next_exn_stamp
-               s)))
-             env env`;;
+(* HOL4 evaluate_initScript.sml:39-45: the definition *)
 
-let v_ok_def = new_definition
-  `evaluate_init_v_ok (s:'ffi semanticPrimitives_state) v <=>
-     evaluate_skip_v_rel (FUN_FMAP I (count (LENGTH
-       (semanticPrimitives_state_refs s))))
-           (FUN_FMAP I (count (semanticPrimitives_state_next_type_stamp s)))
-           (FUN_FMAP I (count (semanticPrimitives_state_next_exn_stamp s)))
-           v v`;;
+(* HOL4 evaluate_initScript.sml:47-53: the definition *)
 
-let evaluate_init_ref_ok_def = new_definition
-  `evaluate_init_ref_ok (s:'ffi semanticPrimitives_state) v <=>
-     evaluate_skip_ref_rel (evaluate_skip_v_rel (FUN_FMAP I (count (LENGTH
-       (semanticPrimitives_state_refs s))))
-                    (FUN_FMAP I (count
-                      (semanticPrimitives_state_next_type_stamp s)))
-                    (FUN_FMAP I (count
-                      (semanticPrimitives_state_next_exn_stamp s))))
-                    v v`;;
+(* HOL4 evaluate_initScript.sml:55-61: the definition *)
 
 let ref_ok_thm = prove
  (`evaluate_init_ref_ok s (semanticPrimitives_Refv v) = evaluate_init_v_ok s v
@@ -91,12 +61,7 @@ let ref_ok_thm = prove
      evaluate_init_v_ok s v`,
   CHEAT_TAC);;
 
-let stamp_ok_def = new_definition
-  `stamp_ok (s:'ffi semanticPrimitives_state) st <=>
-     stamp_rel (FUN_FMAP I (count (semanticPrimitives_state_next_type_stamp
-       s)))
-               (FUN_FMAP I (count
-                 (semanticPrimitives_state_next_exn_stamp s))) st st`;;
+(* HOL4 evaluate_initScript.sml:72-76: the definition *)
 
 let evaluate_v_ok_mono = prove
  (`evaluate s env xs = (t,res) /\

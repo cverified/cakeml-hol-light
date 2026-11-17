@@ -30,24 +30,7 @@ let _ = do_list hide_constant ["mem"];;
 (* HOL4 holExtensionScript.sml:19: the ML values that the definitions below
    antiquote *)
 
-let sound_update_def = new_definition
-  `sound_update0 (mem':'U->'U->bool) ctxt upd <=>
-     (!i. models0 mem' i ((\(ctxt:holSyntax_update list).
-       ((\(ctxt:holSyntax_update list). ((\ctxt. alist_to_fmap ((\ctxt. FLAT
-       (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT
-       (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ctxt,(\ctxt. set_of_list
-       ((\ctxt. FLAT (MAP (\upd. APPEND (axexts_of_upd upd) (conexts_of_upd
-       upd)) ctxt)) ctxt)) ctxt)) ctxt) ==>
-       (?i'. equal_on ((\(ctxt:holSyntax_update list). ((\ctxt.
-         alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt))
-         ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt))
-         ctxt)) ctxt)) ctxt) i i' /\ models0 mem' i'
-         ((\(ctxt:holSyntax_update list). ((\(ctxt:holSyntax_update list).
-         ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
-         ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
-         ctxt)) ctxt)) ctxt)) ctxt,(\ctxt. set_of_list ((\ctxt. FLAT (MAP
-         (\upd. APPEND (axexts_of_upd upd) (conexts_of_upd upd)) ctxt))
-         ctxt)) ctxt)) (CONS upd ctxt))))`;;
+(* HOL4 holExtensionScript.sml:21-26: the definition *)
 
 
 (* HOL4 holExtensionScript.sml:29: the overload sound_update, which the port

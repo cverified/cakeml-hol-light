@@ -104,8 +104,7 @@ let openFile_truncate_def = new_definition
                              fsys))))))`;;
 
 (* checks if a descriptor index is in infds *)
-let validFD_def = new_definition
-  `validFD fd fs <=> fd IN FDOM (alist_to_fmap (IO_fs_infds fs))`;;
+(* HOL4 fsFFIScript.sml:102-104: the definition *)
 
 (* increase by n the position in file descriptor and dump numchar's head *)
 let bumpFD_def = new_definition

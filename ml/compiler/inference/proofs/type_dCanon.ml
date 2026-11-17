@@ -101,12 +101,7 @@ let type_pe_determ_tenv_equiv = prove
 (* -- *)
 
 (* all the tids used in a tenv *)
-let set_tids_tenv_def = new_definition
-  `set_tids_tenv tids tenv <=>
-   nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
-   nsAll (\i (ls,ts,tid). ALL (\t. set_tids_subset tids t) ts /\ tid IN
-     tids) (type_env_c tenv) /\
-   nsAll (\i (n,t). set_tids_subset tids t) (type_env_v tenv)`;;
+(* HOL4 type_dCanonScript.sml:147-152: the definition *)
 
 let type_pe_determ_canon_def = new_definition
   `type_pe_determ_canon n tenv tenvE p e <=>

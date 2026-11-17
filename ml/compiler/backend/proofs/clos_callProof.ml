@@ -90,13 +90,7 @@ let is_Recclosure_def = new_definition
    | _ -> F`;;
 add_simp is_Recclosure_def;;
 
-let every_refv_def = new_definition
-  `every_refv P x2 =
-     match x2 with
-       closSem_ValueArray vs -> ALL P vs
-     | closSem_Thunk m v -> P v
-     | _ -> T`;;
-add_simp every_refv_def;;
+(* HOL4 clos_callProofScript.sml:74-78: the definition *)
 
 (* [local] *)
 let IMP_EXISTS_IFF = prove
@@ -131,10 +125,7 @@ let subg_trans = prove
  (`!g1 g2 g3. subg g1 g2 /\ subg g2 g3 ==> subg g1 g3`,
   CHEAT_TAC);;
 
-let wfg'_def = new_definition
-  `wfg' g <=>
-     set_of_list (MAP FST (SND g)) SUBSET IMAGE SUC (sptree_domain (FST
-       g))`;;
+(* HOL4 clos_callProofScript.sml:146-149: the definition *)
 
 let wfg_def = new_definition
   `wfg g <=>
@@ -178,13 +169,7 @@ let make_g_IMP_subg = prove
     subg (r1,APPEND progs1 (SND g0)) g1`,
   CHEAT_TAC);;
 
-let recclosure_wf_def = new_definition
-  `recclosure_wf loc fns <=>
-     every_Fn_SOME (MAP SND fns) /\
-     every_Fn_vs_NONE (MAP SND fns) /\
-     DISJOINT (set_of_list (list_of_seq (\i. 2 * i + loc) (LENGTH fns)))
-       (set_of_list (code_locs (MAP SND fns))) /\
-     ALL_DISTINCT (code_locs (MAP SND fns))`;;
+(* HOL4 clos_callProofScript.sml:253-259: the definition *)
 
 let code_includes_def = new_definition
   `code_includes al code <=>
@@ -274,27 +259,7 @@ let clos_callProof_v_rel_def,clos_callProof_v_rel_ind =
 
 (* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 
-(* the termination relation that HOL4 gives, with
-   the names that the port gives the constants *)
-(* HOL4 clos_callProofScript.sml:350-353: the tactic that proves the
-   termination *)
-let wfv_def,wfv_ind = define_wf
-  `MEASURE (closSem_v_size o SND o SND o SND)`
-  `wfv g l code x4 =
-     match x4 with
-       closSem_Closure NONE _ _ _ _ -> F
-     | closSem_Recclosure NONE _ _ _ _ -> F
-     | closSem_Closure (SOME loc) vs env n bod ->
-       ALL (wfv g l code) vs /\ ALL (wfv g l code) env /\
-       (?fns2.
-       recclosure_rel g l code loc [(n,bod)] fns2)
-     | closSem_Recclosure (SOME loc) vs env fns i ->
-       ALL (wfv g l code) vs /\ ALL (wfv g l code) env /\
-       (?fns2.
-       recclosure_rel g l code loc fns fns2)
-     | closSem_Block _ vs -> ALL (wfv g l code) vs
-     | _ -> T`;;
-add_simp wfv_def;;
+(* HOL4 clos_callProofScript.sml:337-353: the definition *)
 
 (* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
 
@@ -924,9 +889,7 @@ let env_rel_Op_Install = prove
    clos_callProof_env_rel r env env2 0 (MAP (\x. (0,x)) e1)`,
   CHEAT_TAC);;
 
-let syntax_ok_def = new_definition
-  `clos_callProof_syntax_ok x <=> every_Fn_SOME x /\ every_Fn_vs_NONE x
-  /\ ALL_DISTINCT (code_locs x)`;;
+(* HOL4 clos_callProofScript.sml:2029-2031: the definition *)
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)

@@ -11,7 +11,6 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "candle/syntax-lib/holSyntaxLib.ml";;
-needs "lib/sorting.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
@@ -111,8 +110,7 @@ let RACONV = cake_inductive
 
 (* Alpha-equivalence. *)
 
-let ACONV_def = new_definition
-  `ACONV t1 t2 <=> RACONV [] (t1,t2)`;;
+(* HOL4 holSyntaxScript.sml:104-106: the definition *)
 
 (* Term ordering, respecting alpha-equivalence *)
 (* TODO: use this in the inference system instead of
@@ -422,8 +420,7 @@ let holSyntax_term_ok_def,holSyntax_term_ok_ind = define_guess
 let alpha_lt_def = new_definition
   `alpha_lt t1 t2 <=> orda [] t1 t2 = LESS`;;
 
-let hypset_ok_def = new_definition
-  `hypset_ok ls <=> SORTED alpha_lt ls`;;
+(* HOL4 holSyntaxScript.sml:467-469: the definition *)
 
 (* A theory is a signature together with a set of axioms. It is well-formed if
    the types of the constants are all ok, the axioms are all ok terms of type
@@ -446,14 +443,7 @@ let is_std_sig_def = new_definition
        holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode
        "A")) (holSyntax_Tyapp (implode "bool") [])))`;;
 
-let theory_ok_def = new_definition
-  `theory_ok
-  (thy:((mlstring,num)fmap#(mlstring,type)fmap)#(holSyntax_term->bool)) <=>
-     (!ty. ty IN FRANGE (SND (FST thy)) ==> type_ok (FST (FST thy)) ty) /\
-     (!p. p IN (SND thy) ==>
-       holSyntax_term_ok (FST thy)
-       p /\ has_type p (holSyntax_Tyapp (implode "bool") [])) /\
-     is_std_sig (FST thy)`;;
+(* HOL4 holSyntaxScript.sml:490-495: the definition *)
 
 (* Sequents provable from a theory *)
 

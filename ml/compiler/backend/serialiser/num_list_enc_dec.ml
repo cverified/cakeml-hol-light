@@ -24,9 +24,7 @@ let _ = cake_theory "num_list_enc_dec"
 
 (* definitions of what good enc/dec functions are *)
 
-let dec_ok_def = new_definition
-  `dec_ok dec <=>
-     (!i. LENGTH ((SND (dec i)):num list) <= LENGTH (i:num list))`;;
+(* HOL4 num_list_enc_decScript.sml:13-16: the definition *)
 
 let enc_dec_ok_def = new_definition
   `enc_dec_ok enc dec <=>

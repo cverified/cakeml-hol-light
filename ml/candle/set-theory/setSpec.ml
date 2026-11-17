@@ -31,29 +31,17 @@ let extensional_def = new_definition
   `extensional (mem':'U->'U->bool) <=> (!x y. x = y <=> (!a. mem' a x <=>
   mem' a y))`;;
 
-let is_separation_def = new_definition
-  `is_separation (mem':'U->'U->bool) sub' <=> (!x P. !a. mem' a (sub' x P)
-  <=> mem' a x /\ P a)`;;
+(* HOL4 setSpecScript.sml:29-31: the definition *)
 
-let is_power_def = new_definition
-  `is_power (mem':'U->'U->bool) power' <=> (!x. !a. mem' a (power' x) <=>
-  (!b. mem' b a ==> mem' b x))`;;
+(* HOL4 setSpecScript.sml:33-35: the definition *)
 
-let is_union_def = new_definition
-  `is_union (mem':'U->'U->bool) union' <=> (!x. !a. mem' a (union' x) <=>
-  (?b. mem' a b /\ mem' b x))`;;
+(* HOL4 setSpecScript.sml:37-39: the definition *)
 
 let is_upair_def = new_definition
   `is_upair (mem':'U->'U->bool) upair' <=> (!x y. !a. mem' a (upair' x y)
   <=> a = x \/ a = y)`;;
 
-let is_set_theory_def = new_definition
-  `is_set_theory (mem':'U->'U->bool) <=>
-     extensional mem' /\
-     (?sub'. is_separation mem' sub') /\
-     (?power'. is_power mem' power') /\
-     (?union'. is_union mem' union') /\
-     (?upair'. is_upair mem' upair')`;;
+(* HOL4 setSpecScript.sml:45-52: the definition *)
 
 let separation_unique = prove
  (`extensional (mem:'U->'U->bool) ==>
@@ -366,11 +354,7 @@ let is_infinite_def = new_definition
   `is_infinite (mem':'U->'U->bool) s = INFINITE {a | (mem':'U->'U->bool) a
   s}`;;
 
-let is_model_def = new_definition
-  `is_model ((mem':'U->'U->bool),(indset:'U),(ch:'U->'U)) <=>
-     is_set_theory mem' /\
-     is_infinite mem' indset /\
-     is_choice mem' ch`;;
+(* HOL4 setSpecScript.sml:483-488: the definition *)
 
 let is_model_is_set_theory = prove
  (`is_model ((mem,indset,ch)) ==> is_set_theory (mem:'U->'U->bool)`,

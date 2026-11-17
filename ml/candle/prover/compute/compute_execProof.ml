@@ -122,12 +122,7 @@ let cexp_value_from_cv = prove
 let compute_execProof_cexp_vars_def = cexp_vars_def;;
 add_simp compute_execProof_cexp_vars_def;;
 
-let eqs_ok_def = new_definition
-  `eqs_ok eqs <=>
-     ALL (\(n,args,body).
-              cexp_vars body SUBSET set_of_list args /\ ALL_DISTINCT args /\
-              compute_execProof_code_rel eqs (REVERSE args) body
-                (compile_to_ce eqs (n,args,body))) eqs`;;
+(* HOL4 compute_execProofScript.sml:110-115: the definition *)
 
 let do_uop_from_cv = prove
  (`do_uop uop (from_cv a) s = (M_success (from_cv (monop uop a)),s)`,

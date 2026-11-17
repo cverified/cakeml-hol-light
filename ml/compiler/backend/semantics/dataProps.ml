@@ -1316,11 +1316,7 @@ let dataProps_get_code_labels_def,dataProps_get_code_labels_ind = define_wf
      | _ -> {}`;;
 add_simp dataProps_get_code_labels_def;;
 
-let dataProps_good_code_labels_def = new_definition
-  `dataProps_good_code_labels p elabs <=>
-     (UNIONS (set_of_list (MAP (\(n,m,pp). (dataProps_get_code_labels pp))
-       p))) SUBSET
-     (set_of_list (MAP FST p)) UNION elabs`;;
+(* HOL4 dataPropsScript.sml:2222-2226: the definition *)
 
 let get_code_labels_mk_ticks = prove
  (`!n m. dataProps_get_code_labels (mk_ticks n m) SUBSET

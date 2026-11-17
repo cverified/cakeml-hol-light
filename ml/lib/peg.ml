@@ -214,8 +214,7 @@ let gexprs_def = new_definition
   `Gexprs G = UNIONS (IMAGE subexprs (peg_start G INSERT FRANGE (peg_rules
   G)))`;;
 
-let wfG_def = new_definition
-  `wfG G <=> (!e. e IN Gexprs G ==> wfpeg G e)`;;
+(* HOL4 pegScript.sml:423-424: the definition *)
 let pegf_def = new_definition
   `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
 

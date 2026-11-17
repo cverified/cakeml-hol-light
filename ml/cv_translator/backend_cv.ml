@@ -226,8 +226,6 @@ let backend_cv_spt_enc_def = spt_enc_def;;
 (* HOL4 backend_cvScript.sml:286-290: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition const_enc_aux_def: expected ')' but found '@' at
-   36 *)
 (* HOL4 backend_cvScript.sml:292-295: the definition *)
 
 (* HOL4 backend_cvScript.sml:297: ML code, not ported *)
@@ -245,8 +243,6 @@ let const_enc_aux_thm = prove
 (* HOL4 backend_cvScript.sml:314-318: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition bvl_exp_enc_aux_def: expected ')' but found '@'
-   at 34 *)
 (* HOL4 backend_cvScript.sml:320-323: the definition *)
 
 (* HOL4 backend_cvScript.sml:325: ML code, not ported *)
@@ -266,8 +262,6 @@ let bvl_exp_enc_aux_thm = prove
 (* HOL4 backend_cvScript.sml:345-349: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition bvi_exp_enc_aux_def: expected ')' but found '@'
-   at 34 *)
 (* HOL4 backend_cvScript.sml:351-354: the definition *)
 
 (* HOL4 backend_cvScript.sml:356: ML code, not ported *)
@@ -287,8 +281,6 @@ let bvi_exp_enc_aux_thm = prove
 (* HOL4 backend_cvScript.sml:378-384: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition closLang_exp_enc_aux_def: expected ')' but found
-   '@' at 28 *)
 (* HOL4 backend_cvScript.sml:386-391: the definition *)
 
 (* HOL4 backend_cvScript.sml:393: ML code, not ported *)
@@ -314,8 +306,6 @@ let closLang_exp_enc_aux_thm = prove
 (* HOL4 backend_cvScript.sml:421-425: the ML values that the definitions
    below antiquote *)
 
-(* PORT FAILED: Definition val_approx_enc_aux_def: expected ')' but found
-   '@' at 41 *)
 (* HOL4 backend_cvScript.sml:427-430: the definition *)
 
 (* HOL4 backend_cvScript.sml:432: ML code, not ported *)

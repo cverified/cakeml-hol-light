@@ -40,12 +40,7 @@ let evaluate_ck_def = new_definition
   `evaluate_ck ck (st:'ffi cfApp_state) = evaluate
   (semanticPrimitives_state_clock_fupd (K ck) st)`;;
 
-let io_prefix_def = new_definition
-  `io_prefix (s1:'ffi semanticPrimitives_state) (s2:'ffi
-  semanticPrimitives_state) <=> ffi_state_io_events
-  (semanticPrimitives_state_ffi
-     // TODO: update io_events to an llist and use LPREFIX instead of ≼
-     s1) <<= ffi_state_io_events (semanticPrimitives_state_ffi s2)`;;
+(* HOL4 cfAppScript.sml:19-23: the definition *)
 
 let evaluate_to_heap_def = new_definition
   `evaluate_to_heap st env exp p heap (r:res) <=>

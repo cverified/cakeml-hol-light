@@ -115,10 +115,7 @@ let subapprox_Tuple = prove
   CHEAT_TAC);;
 add_simp subapprox_Tuple;;
 
-let better_definedg_def = new_definition
-  `better_definedg g1 g2 <=>
-     (!k. k IN sptree_domain g1 ==> k IN sptree_domain g2 /\ subapprox
-       (THE (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;
+(* HOL4 clos_knownPropsScript.sml:133-136: the definition *)
 
 let better_definedg_refl = prove
  (`better_definedg g g`,

@@ -55,11 +55,7 @@ let precparse1_def = new_definition
               | CONS (INL _) _ -> SOME (CONS (INR (pMachine_lift pM tok))
                 stk,strm_rest)))`;;
 
-let isFinal_def = new_definition
-  `isFinal x1 =
-     match x1 with
-       [INR _],[] -> T
-     | _ -> F`;;
+(* HOL4 precparserScript.sml:133-136: the definition *)
 
 
 (* the termination relation that HOL4 gives is

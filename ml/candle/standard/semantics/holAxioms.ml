@@ -2,7 +2,7 @@
 (*  holAxioms: ported from HOL4's
     candle/standard/semantics/holAxiomsScript.sml
     A definition theory, with 2 definitions and 6 theorems.  Needed
-    by 12 files of the port.  *)
+    by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*

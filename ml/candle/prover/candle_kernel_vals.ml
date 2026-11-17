@@ -2,7 +2,7 @@
 (*  candle_kernel_vals: ported from HOL4's
     candle/prover/candle_kernel_valsScript.sml
     A definition theory, with 17 definitions and 103 theorems.
-    Needed by 8 files of the port.  *)
+    Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -236,11 +236,9 @@ let LIST_TYPE_HEAD_def = new_definition
 let PAIR_TYPE_HEAD_def = new_definition
   `PAIR_TYPE_HEAD h1 h2 v = PAIR_TYPE (K h1) (K h2) (one,one) v`;;
 
-let STRING_TYPE_HEAD_def = new_definition
-  `STRING_TYPE_HEAD v <=> (?s. STRING_TYPE s v)`;;
+(* HOL4 candle_kernel_valsScript.sml:250-252: the definition *)
 
-let INT_HEAD_def = new_definition
-  `INT_HEAD v <=> (?n. INT n v)`;;
+(* HOL4 candle_kernel_valsScript.sml:254-256: the definition *)
 
 (* -------------------------------------------------------------------------
  * THM, TERM, TYPE lemmas

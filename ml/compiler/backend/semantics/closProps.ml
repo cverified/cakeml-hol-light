@@ -16,7 +16,6 @@ needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -206,96 +205,14 @@ let BIGUNION_MAP_code_locs_SND_SND = prove
     set_of_list (code_locs (MAP (SND o SND) xs))`,
   CHEAT_TAC);;
 
-(* the termination relation that HOL4 gives is
-     MEASURE (list_size clos_exp_size o SND)
-   which is not one that HOL Light takes here, so the
-   port lets its own machinery find one *)
-(* HOL4 closPropsScript.sml:229-232: the tactic that proves the termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let contains_App_SOME_def,contains_App_SOME_ind = define_guess_cheat
-  `contains_App_SOME max_app x2 =
-     match x2 with
-       [] -> F
-     | CONS x (CONS y xs) ->
-        contains_App_SOME max_app [x] \/
-        contains_App_SOME max_app (CONS y xs)
-     | [clos_Var _ v] -> F
-     | [clos_If _ x1 x2 x3] ->
-        contains_App_SOME max_app [x1] \/
-        contains_App_SOME max_app [x2] \/
-        contains_App_SOME max_app [x3]
-     | [clos_Let _ xs x2] ->
-        contains_App_SOME max_app [x2] \/
-        contains_App_SOME max_app xs
-     | [clos_Raise _ x1] ->
-        contains_App_SOME max_app [x1]
-     | [clos_Tick _ x1] ->
-        contains_App_SOME max_app [x1]
-     | [clos_Op _ (clos_ThunkOp ForceThunk) xs] ->
-        max_app < 1 \/
-        contains_App_SOME max_app xs
-     | [clos_Op _ op xs] ->
-        contains_App_SOME max_app xs
-     | [clos_App _ loc_opt x1 x2] ->
-        IS_SOME loc_opt \/ max_app < LENGTH x2 \/
-        contains_App_SOME max_app [x1] \/
-        contains_App_SOME max_app x2
-     | [clos_Fn _ loc vs num_args x1] ->
-        contains_App_SOME max_app [x1]
-     | [clos_Letrec _ loc vs fns x1] ->
-        contains_App_SOME max_app (MAP SND fns) \/
-        contains_App_SOME max_app [x1]
-     | [clos_Handle _ x1 x2] ->
-        contains_App_SOME max_app [x1] \/
-        contains_App_SOME max_app [x2]
-     | [clos_Call _ ticks dest xs] ->
-        contains_App_SOME max_app xs`;;
+(* HOL4 closPropsScript.sml:193-232: the definition *)
 
 let contains_App_SOME_EXISTS = prove
  (`!ls max_app. contains_App_SOME max_app ls <=> EX (\x. contains_App_SOME
   max_app [x]) ls`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
-   is exp, (exp list) and (_)list; xs is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
-let every_Fn_SOME_def,every_Fn_SOME_ind = assume_definition_rec_clauses
-  "termination (CHEAT_TAC)"
-  [`(every_Fn_SOME [] <=> T) /\
-    (every_Fn_SOME (CONS x (CONS y xs)) <=>
-         every_Fn_SOME [x] /\
-         every_Fn_SOME (CONS y xs)) /\
-    (every_Fn_SOME [clos_Var _ v] <=> T) /\
-    (every_Fn_SOME [clos_If _ x1 x2 x3] <=>
-         every_Fn_SOME [x1] /\
-         every_Fn_SOME [x2] /\
-         every_Fn_SOME [x3]) /\
-    (every_Fn_SOME [clos_Let _ xs x2] <=>
-         every_Fn_SOME [x2] /\
-         every_Fn_SOME xs) /\
-    (every_Fn_SOME [clos_Raise _ x1] <=>
-         every_Fn_SOME [x1]) /\
-    (every_Fn_SOME [clos_Tick _ x1] <=>
-         every_Fn_SOME [x1]) /\
-    (every_Fn_SOME [clos_Op _ op xs] <=>
-         every_Fn_SOME xs) /\
-    (every_Fn_SOME [clos_Fn _ loc_opt vs num_args x1] <=>
-         IS_SOME loc_opt /\
-         every_Fn_SOME [x1]) /\
-    (every_Fn_SOME [clos_Letrec _ loc_opt vs fns x1] <=>
-         IS_SOME loc_opt /\
-         every_Fn_SOME (MAP SND fns) /\
-         every_Fn_SOME [x1]) /\
-    (every_Fn_SOME [clos_Handle _ x1 x2] <=>
-         every_Fn_SOME [x1] /\
-         every_Fn_SOME [x2]) /\
-    (every_Fn_SOME [clos_Call _ ticks dest xs] <=>
-         every_Fn_SOME xs)`;
-   `every_Fn_SOME [clos_App _ loc_opt x1 x2] <=>
-         every_Fn_SOME [x1] /\
-         every_Fn_SOME x2`];;
-add_simp every_Fn_SOME_def;;
+(* HOL4 closPropsScript.sml:241-278: the definition *)
 
 let every_Fn_SOME_EVERY = prove
  (`!ls. every_Fn_SOME ls <=> ALL (\x. every_Fn_SOME [x]) ls`,
@@ -306,45 +223,7 @@ let every_Fn_SOME_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_SOME_APPEND;;
 
-(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
-   is exp, (exp list) and (_)list; xs is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
-let every_Fn_vs_NONE_def,every_Fn_vs_NONE_ind = assume_definition_rec_clauses
-  "termination (CHEAT_TAC)"
-  [`(every_Fn_vs_NONE [] <=> T) /\
-    (every_Fn_vs_NONE (CONS x (CONS y xs)) <=>
-         every_Fn_vs_NONE [x] /\
-         every_Fn_vs_NONE (CONS y xs)) /\
-    (every_Fn_vs_NONE [clos_Var _ v] <=> T) /\
-    (every_Fn_vs_NONE [clos_If _ x1 x2 x3] <=>
-         every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE [x2] /\
-         every_Fn_vs_NONE [x3]) /\
-    (every_Fn_vs_NONE [clos_Let _ xs x2] <=>
-         every_Fn_vs_NONE [x2] /\
-         every_Fn_vs_NONE xs) /\
-    (every_Fn_vs_NONE [clos_Raise _ x1] <=>
-         every_Fn_vs_NONE [x1]) /\
-    (every_Fn_vs_NONE [clos_Tick _ x1] <=>
-         every_Fn_vs_NONE [x1]) /\
-    (every_Fn_vs_NONE [clos_Op _ op xs] <=>
-         every_Fn_vs_NONE xs) /\
-    (every_Fn_vs_NONE [clos_Fn _ loc vs_opt num_args x1] <=>
-         IS_NONE vs_opt /\
-         every_Fn_vs_NONE [x1]) /\
-    (every_Fn_vs_NONE [clos_Letrec _ loc vs_opt fns x1] <=>
-         IS_NONE vs_opt /\
-         every_Fn_vs_NONE (MAP SND fns) /\
-         every_Fn_vs_NONE [x1]) /\
-    (every_Fn_vs_NONE [clos_Handle _ x1 x2] <=>
-         every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE [x2]) /\
-    (every_Fn_vs_NONE [clos_Call _ ticks dest xs] <=>
-         every_Fn_vs_NONE xs)`;
-   `every_Fn_vs_NONE [clos_App _ loc_opt x1 x2] <=>
-         every_Fn_vs_NONE [x1] /\
-         every_Fn_vs_NONE x2`];;
-add_simp every_Fn_vs_NONE_def;;
+(* HOL4 closPropsScript.sml:293-330: the definition *)
 
 let every_Fn_vs_NONE_EVERY = prove
  (`!ls. every_Fn_vs_NONE ls <=> ALL (\x. every_Fn_vs_NONE [x]) ls`,
@@ -360,45 +239,7 @@ let every_Fn_vs_NONE_APPEND = prove
   CHEAT_TAC);;
 add_simp every_Fn_vs_NONE_APPEND;;
 
-(* the clauses in two quotations: fns is ((num # exp) list) and (_#_)list; x2
-   is exp, (exp list) and (_)list; xs is (exp list) and (_)list, which one
-   quotation cannot typecheck *)
-let every_Fn_vs_SOME_def,every_Fn_vs_SOME_ind = assume_definition_rec_clauses
-  "termination (CHEAT_TAC)"
-  [`(every_Fn_vs_SOME [] <=> T) /\
-    (every_Fn_vs_SOME (CONS x (CONS y xs)) <=>
-         every_Fn_vs_SOME [x] /\
-         every_Fn_vs_SOME (CONS y xs)) /\
-    (every_Fn_vs_SOME [clos_Var _ v] <=> T) /\
-    (every_Fn_vs_SOME [clos_If _ x1 x2 x3] <=>
-         every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME [x2] /\
-         every_Fn_vs_SOME [x3]) /\
-    (every_Fn_vs_SOME [clos_Let _ xs x2] <=>
-         every_Fn_vs_SOME [x2] /\
-         every_Fn_vs_SOME xs) /\
-    (every_Fn_vs_SOME [clos_Raise _ x1] <=>
-         every_Fn_vs_SOME [x1]) /\
-    (every_Fn_vs_SOME [clos_Tick _ x1] <=>
-         every_Fn_vs_SOME [x1]) /\
-    (every_Fn_vs_SOME [clos_Op _ op xs] <=>
-         every_Fn_vs_SOME xs) /\
-    (every_Fn_vs_SOME [clos_Fn _ loc vs_opt num_args x1] <=>
-         IS_SOME vs_opt /\
-         every_Fn_vs_SOME [x1]) /\
-    (every_Fn_vs_SOME [clos_Letrec _ loc vs_opt fns x1] <=>
-         IS_SOME vs_opt /\
-         every_Fn_vs_SOME (MAP SND fns) /\
-         every_Fn_vs_SOME [x1]) /\
-    (every_Fn_vs_SOME [clos_Handle _ x1 x2] <=>
-         every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME [x2]) /\
-    (every_Fn_vs_SOME [clos_Call _ ticks dest xs] <=>
-         every_Fn_vs_SOME xs)`;
-   `every_Fn_vs_SOME [clos_App _ loc_opt x1 x2] <=>
-         every_Fn_vs_SOME [x1] /\
-         every_Fn_vs_SOME x2`];;
-add_simp every_Fn_vs_SOME_def;;
+(* HOL4 closPropsScript.sml:352-389: the definition *)
 
 let every_Fn_vs_SOME_EVERY = prove
  (`!ls. every_Fn_vs_SOME ls <=> ALL (\x. every_Fn_vs_SOME [x]) ls`,
@@ -748,13 +589,7 @@ let dest_closure_none_loc = prove
        = []) ==> l = NONE)`,
   CHEAT_TAC);;
 
-let is_closure_def = new_definition
-  `is_closure x1 =
-     match x1 with
-       closSem_Closure _ _ _ _ _ -> T
-     | closSem_Recclosure _ _ _ _ _ -> T
-     | _ -> F`;;
-add_simp is_closure_def;;
+(* HOL4 closPropsScript.sml:1021-1025: the definition *)
 
 let clo_to_loc_def = define_cases
   `(clo_to_loc (closSem_Closure l _ _ _ _) = l) /\
@@ -786,10 +621,7 @@ let clo_to_num_params_def = define_cases
    (clo_to_num_params (closSem_Recclosure _ _ _ fns i) = FST (EL i fns))`;;
 add_simp clo_to_num_params_def;;
 
-let rec_clo_ok_def = define_cases
-  `(rec_clo_ok (closSem_Recclosure _ _ _ fns i) <=> i < LENGTH fns) /\
-   (rec_clo_ok (closSem_Closure _ _ _ _ _) <=> T)`;;
-add_simp rec_clo_ok_def;;
+(* HOL4 closPropsScript.sml:1055-1058: the definition *)
 
 let dest_closure_full_length = prove
  (`!max_app l v vs e args rest.
@@ -821,10 +653,7 @@ let clo_can_apply_def = new_definition
       num_args = clo_to_num_params cl /\
       clo_to_partial_args cl = [])`;;
 
-let check_closures_def = new_definition
-  `check_closures cl cl' <=>
-     (!loc num_args.
-       clo_can_apply loc cl num_args ==> clo_can_apply loc cl' num_args)`;;
+(* HOL4 closPropsScript.sml:1122-1126: the definition *)
 
 let dest_closure_partial_is_closure = prove
  (`dest_closure max_app l v vs = SOME (Partial_app v') ==>
@@ -1221,13 +1050,7 @@ let vsgc_free_Boolv = prove
 add_simp vsgc_free_Boolv;;
 
 (* result is setglobal-closure free *)
-let rsgc_free_def = new_definition
-  `rsgc_free x1' =
-     match x1' with
-       Rval vs -> ALL vsgc_free vs
-     | Rerr (Rabort _) -> T
-     | Rerr (Rraise v) -> vsgc_free v`;;
-add_simp rsgc_free_def;;
+(* HOL4 closPropsScript.sml:1830-1834: the definition *)
 
 (* the clauses in two quotations: binds is (exp list), ((num # exp) list) and
    (_#_)list, which one quotation cannot typecheck *)
@@ -1955,48 +1778,12 @@ let evaluate_code_SUBMAP = prove
     SUBMAP_rel s1 s2))`,
   CHEAT_TAC);;
 
-(* the clauses in two quotations: es is (exp list), ((num # exp) list) and
-   (_#_)list, which one quotation cannot typecheck *)
-let obeys_max_app_def,obeys_max_app_ind = assume_definition_rec_clauses
-  "termination (CHEAT_TAC)"
-  [`(obeys_max_app m (clos_Var _ _) <=> T) /\
-    (obeys_max_app m (clos_If _ e1 e2 e3) <=> obeys_max_app m e1
-    /\ obeys_max_app m e2 /\ obeys_max_app m e3) /\
-    (obeys_max_app m (clos_Let _ es e) <=> ALL (obeys_max_app m) es
-    /\ obeys_max_app m e) /\
-    (obeys_max_app m (clos_Raise _ e) <=> obeys_max_app m e) /\
-    (obeys_max_app m (clos_Handle _ e1 e2) <=> obeys_max_app m e1
-    /\ obeys_max_app m e2) /\
-    (obeys_max_app m (clos_Tick _ e) <=> obeys_max_app m e) /\
-    (obeys_max_app m (clos_Call _ _ _ es) <=> ALL (obeys_max_app m) es) /\
-    (obeys_max_app m (clos_App _ _ e es) <=> LENGTH es <= m /\ obeys_max_app
-    m e /\ ALL (obeys_max_app m) es) /\
-    (obeys_max_app m (clos_Fn _ _ _ _ e) <=> obeys_max_app m e) /\
-    (obeys_max_app m (clos_Op _ _ es) <=> ALL (obeys_max_app m) es)`;
-   `obeys_max_app m (clos_Letrec _ _ _ es e) <=> ALL (obeys_max_app m) (MAP
-    SND es) /\ obeys_max_app m e`];;
+(* HOL4 closPropsScript.sml:3542-3560: the definition *)
 
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as the
    value of an ML expression: obeys_max_app_def *)
 
-(* the clauses in two quotations: es is (exp list), ((num # exp) list) and
-   (_#_)list, which one quotation cannot typecheck *)
-let no_Labels_def,no_Labels_ind = assume_definition_rec_clauses
-  "termination (CHEAT_TAC)"
-  [`(no_Labels (clos_Var _ _) <=> T) /\
-    (no_Labels (clos_If _ e1 e2 e3) <=> no_Labels e1 /\ no_Labels e2
-    /\ no_Labels e3) /\
-    (no_Labels (clos_Let _ es e) <=> ALL no_Labels es /\ no_Labels e) /\
-    (no_Labels (clos_Raise _ e) <=> no_Labels e) /\
-    (no_Labels (clos_Handle _ e1 e2) <=> no_Labels e1 /\ no_Labels e2) /\
-    (no_Labels (clos_Tick _ e) <=> no_Labels e) /\
-    (no_Labels (clos_Call _ _ _ es) <=> ALL no_Labels es) /\
-    (no_Labels (clos_App _ _ e es) <=> no_Labels e /\ ALL no_Labels es) /\
-    (no_Labels (clos_Fn _ _ _ _ e) <=> no_Labels e) /\
-    (no_Labels (clos_Op _ op es) <=> (!n. ~(op = clos_Label n)) /\ ALL
-    no_Labels es)`;
-   `no_Labels (clos_Letrec _ _ _ es e) <=> ALL no_Labels (MAP SND es)
-    /\ no_Labels e`];;
+(* HOL4 closPropsScript.sml:3566-3584: the definition *)
 
 (* HOL4 closPropsScript.sml:3586-3588: a theorem that HOL4 states as the
    value of an ML expression: no_Labels_def *)

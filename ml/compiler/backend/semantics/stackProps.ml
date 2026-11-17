@@ -679,14 +679,7 @@ let find_code_IMP_get_labels = prove
     stackSem_get_labels e SUBSET loc_check code`,
   CHEAT_TAC);;
 
-let addr_ok_def = define_general
-  `addr_ok op (Addr a w) c <=>
-   (reg_ok a c /\
-    (if op IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then (\c.
-      asm_offset_ok 0 (asm_config_addr_offset c)) c w
-    else if op IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32) else (\c.
-      asm_offset_ok 0 (asm_config_byte_offset c)) c w))`;;
+(* HOL4 stackPropsScript.sml:801-808: the definition *)
 
 (* TODO: This is not updated for Install, CBW and DBW *)
 (* asm_ok out of stack_names *)
@@ -718,19 +711,15 @@ let stack_asm_ok_def,stack_asm_ok_ind = define_wf
        | _ -> T)
      | _ -> T`;;
 
-let reg_name_def = new_definition
-  `reg_name r c <=>
-   r < asm_config_reg_count c - LENGTH (asm_config_avoid_regs c)`;;
+(* HOL4 stackPropsScript.sml:832-835: the definition *)
 
 (* inst requirements just before stack_names *)
 
-let reg_imm_name_def = define_cases
-  `(reg_imm_name b (asm_Reg r) c <=> reg_name r c) /\
-   (reg_imm_name b (asm_Imm w) c <=> asm_config_valid_imm c b w)`;;
+(* HOL4 stackPropsScript.sml:839-842: the definition *)
 
 let arith_name_def = new_definition
-  `arith_name x1 c =
-     match (x1,c) with
+  `arith_name x1' c =
+     match (x1',c) with
        (asm_Binop b r1 r2 ri,(c:'a asm_config)) ->
        (asm_config_two_reg_arith c ==> r1 = r2 \/ b = asm_Or /\ ri = asm_Reg
          r2) /\ reg_name r1 c /\
@@ -821,14 +810,7 @@ let fp_name_def = define_cases
    (fp_name (FPFromInt d1 d2) (c:'a asm_config) <=> fp_reg_ok d1 c
     /\ fp_reg_ok d2 c)`;;
 
-let addr_name_def = define_general
-  `addr_name m (Addr r w) c <=>
-   reg_name r c /\
-   (if m IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then (\c.
-     asm_offset_ok 0 (asm_config_addr_offset c)) c w
-    else if m IN {asm_Load16,asm_Store16} then (\c. asm_offset_ok 0
-      (asm_config_hw_offset c)) c w /\ ~(asm_config_ISA c = Ag32)
-    else (\c. asm_offset_ok 0 (asm_config_byte_offset c)) c w)`;;
+(* HOL4 stackPropsScript.sml:920-928: the definition *)
 
 let inst_name_def = new_definition
   `inst_name c x2 =
@@ -932,27 +914,11 @@ let alloc_arg_def,alloc_arg_ind = define_wf
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
-(* the termination relation that HOL4 gives is
-     MEASURE ((word_exp_size ARB) o FST)
-   which is not one that HOL Light takes here; the one
-   below is what the port found for it *)
-(* HOL4 stackPropsScript.sml:1027-1031: the tactic that proves the
-   termination *)
-let reg_bound_exp_def,reg_bound_exp_ind = define_wf
-  `MEASURE (\(x0,x1). word_exp_size (\x. 0) x0)`
-  `reg_bound_exp x1' k =
-     match x1' with
-       word_Var n -> n < k
-     | word_Load e -> reg_bound_exp e k
-     | word_Shift _ e1 e2 -> reg_bound_exp e1 k /\ reg_bound_exp e2 k
-     | word_Lookup _ -> F
-     | word_Op _ es -> ALL (\e. reg_bound_exp e k) es
-     | _ -> T`;;
-add_simp reg_bound_exp_def;;
+(* HOL4 stackPropsScript.sml:1020-1031: the definition *)
 
 let reg_bound_inst_def = new_definition
-  `reg_bound_inst x1'' k =
-     match x1'' with
+  `reg_bound_inst x1' k =
+     match x1' with
        asm_Mem _ n (Addr a _) -> n < k /\ a < k
      | asm_Const n _ -> n < k
      | asm_Arith (asm_Shift _ n r2 ri) -> r2 < k /\ n < k /\ (match ri with
@@ -982,8 +948,8 @@ add_simp reg_bound_inst_def;;
    what the port found for it *)
 let reg_bound_def,reg_bound_ind = define_wf
   `MEASURE (\(x0,x1). stack_prog_size (\x. 0) x0)`
-  `reg_bound x1''' k =
-     match x1''' with
+  `reg_bound x1'' k =
+     match x1'' with
        stack_Halt v1 ->
         v1 < k
      | stack_Raise v1 ->
@@ -1039,8 +1005,8 @@ let reg_bound_def,reg_bound_ind = define_wf
 (* Finally, stack_to_lab requires correct arguments for Call/FFI/Install calls *)
 let call_args_def,call_args_ind = assume_definition_rec
   "termination (CHEAT_TAC)"
-  `call_args x1'''' ptr len ptr2 len2 ret =
-     match x1'''' with
+  `call_args x1''' ptr len ptr2 len2 ret =
+     match x1''' with
        ((stack_Seq p1 p2):'a stack_prog) ->
         call_args p1 ptr len ptr2 len2 ret /\
         call_args p2 ptr len ptr2 len2 ret
@@ -1088,8 +1054,8 @@ add_simp stack_get_handler_labels_def;;
    what the port found for it *)
 let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
   `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
-  `stackProps_get_code_labels x1''''' =
-     match x1''''' with
+  `stackProps_get_code_labels x1'''' =
+     match x1'''' with
        stack_Call r d h ->
        (match d with INL x -> {(x,0)} | _ -> {}) UNION
        (match r with SOME (x,_,_) -> stackProps_get_code_labels x | _ -> {})
@@ -1108,30 +1074,16 @@ let stackProps_get_code_labels_def,stackProps_get_code_labels_ind = define_wf
 add_simp stackProps_get_code_labels_def;;
 
 (* elabs gives a set of existing code labels *)
-let stack_good_code_labels_def = new_definition
-  `stack_good_code_labels p elabs <=>
-   UNIONS (IMAGE stackProps_get_code_labels (set_of_list (MAP SND p)))
-     SUBSET
-   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp) p))
-     UNION
-   IMAGE (\n. n,0) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,0) elabs
-     UNION
-   IMAGE (\n. n,1) (set_of_list (MAP FST p)) UNION IMAGE (\n. n,1) elabs`;;
+(* HOL4 stackPropsScript.sml:1160-1166: the definition *)
 
-let stack_good_handler_labels_def = new_definition
-  `stack_good_handler_labels p <=>
-   restrict_nonzero (UNIONS (IMAGE stackProps_get_code_labels (set_of_list
-     (MAP SND p)))) SUBSET
-   UNIONS (set_of_list (MAP (\(n,pp). stack_get_handler_labels n pp) p))
-     UNION
-   IMAGE (\n. n,1) (set_of_list (MAP FST p))`;;
+(* HOL4 stackPropsScript.sml:1168-1173: the definition *)
 
 (* the termination relation is not in the HOL4 source; this one is
    what the port found for it *)
 let stackProps_no_install_def,stackProps_no_install_ind = define_wf
   `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
-  `stackProps_no_install x1'''''' =
-     match x1'''''' with
+  `stackProps_no_install x1''''' =
+     match x1''''' with
        stack_Call r d h ->
        ((match r with SOME (x,_,_) -> stackProps_no_install x | _ -> T) /\
         (match h with SOME (x,_,_) -> stackProps_no_install x | _ -> T))
@@ -1147,8 +1099,8 @@ let stackProps_no_install_def,stackProps_no_install_ind = define_wf
    what the port found for it *)
 let no_shmemop_def,no_shmemop_ind = define_wf
   `MEASURE (\x0. stack_prog_size (\x. 0) x0)`
-  `no_shmemop x1''''''' =
-     match x1''''''' with
+  `no_shmemop x1'''''' =
+     match x1'''''' with
        stack_Call r d h ->
        ((match r with SOME (x,_,_) -> no_shmemop x | _ -> T) /\
         (match h with SOME (x,_,_) -> no_shmemop x | _ -> T))

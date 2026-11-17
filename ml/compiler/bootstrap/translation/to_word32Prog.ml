@@ -18,7 +18,6 @@ needs "compiler/backend/word_inst.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/bootstrap/translation/basis_defProg.ml";;
 needs "lib/integer_word.ml";;
-needs "semantics/typeSystem.ml";;
 needs "translator/ml_translator.ml";;
 needs "translator/std_prelude.ml";;
 
@@ -167,29 +166,29 @@ let my_lsl_shift_def = new_definition
 (* the right hand side is the one that the ML of the source
    computes, computed the same way *)
 let int_to_words_def = new_definition
-  (mk_eq(`to_word32Prog_int_to_words c i offset`,
-   rand (concl (SPEC_ALL (el 0 (CONJUNCTS part_to_words_def))))));;
+  (cake_def_of "to_word32Prog_int_to_words" ["c"; "i"; "offset"]
+   (rand (concl (SPEC_ALL (el 0 (CONJUNCTS part_to_words_def))))));;
 
 
 (* the right hand side is the one that the ML of the source
    computes, computed the same way *)
 let con_to_words_def = new_definition
-  (mk_eq(`to_word32Prog_con_to_words c m t ns offset`,
-   rand (concl (SPEC_ALL (el 1 (CONJUNCTS part_to_words_def))))));;
+  (cake_def_of "to_word32Prog_con_to_words" ["c"; "m"; "t"; "ns"; "offset"]
+   (rand (concl (SPEC_ALL (el 1 (CONJUNCTS part_to_words_def))))));;
 
 
 (* the right hand side is the one that the ML of the source
    computes, computed the same way *)
 let w64_to_words_def = new_definition
-  (mk_eq(`to_word32Prog_w64_to_words c w offset`,
-   rand (concl (SPEC_ALL (el 2 (CONJUNCTS part_to_words_def))))));;
+  (cake_def_of "to_word32Prog_w64_to_words" ["c"; "w"; "offset"]
+   (rand (concl (SPEC_ALL (el 2 (CONJUNCTS part_to_words_def))))));;
 
 
 (* the right hand side is the one that the ML of the source
    computes, computed the same way *)
 let str_to_words_def = new_definition
-  (mk_eq(`to_word32Prog_str_to_words c s offset`,
-   rand (concl (SPEC_ALL (el 3 (CONJUNCTS part_to_words_def))))));;
+  (cake_def_of "to_word32Prog_str_to_words" ["c"; "s"; "offset"]
+   (rand (concl (SPEC_ALL (el 3 (CONJUNCTS part_to_words_def))))));;
 
 
 let to_word32Prog_part_to_words_def =

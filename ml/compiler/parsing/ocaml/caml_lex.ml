@@ -301,11 +301,9 @@ let caml_lex_symbol_INDUCT,caml_lex_symbol_RECURSION = define_datatype
  *   intn-lit  ::= int-lit "n"
  *)
 
-let isOctDigit_def = new_definition
-  `isOctDigit c <=> 48 <= ORD c /\ ORD c <= 55`;;
+(* HOL4 caml_lexScript.sml:191-193: the definition *)
 
-let isBinDigit_def = new_definition
-  `isBinDigit c <=> 48 <= ORD c /\ ORD c <= 49`;;
+(* HOL4 caml_lexScript.sml:195-197: the definition *)
 
 let oct2num_def = new_definition
   `oct2num = s2n 8 lexer_impl_unhex_alt`;;
@@ -579,8 +577,7 @@ let scan_float_or_int_thm = prove
 let isSym_def = new_definition
   `isSym c <=> MEM c "#$&*+-/=>@^|~!?%<:.;"`;;
 
-let isDelim_def = new_definition
-  `isDelim c <=> MEM c "()[]{},"`;;
+(* HOL4 caml_lexScript.sml:539-541: the definition *)
 
 (* the termination relation that HOL4 gives is
      MEASURE (LENGTH o FST)

@@ -789,8 +789,7 @@ let FOLDL_invariant_rest = prove
   (SUC n) ls) (f x (EL n ls))) ==> P [] (FOLDL f a ls)`,
   CHEAT_TAC);;
 
-let between_def = new_definition
-  `between x y z <=> (x:num) <= z /\ z < y`;;
+(* HOL4 miscScript.sml:1491-1493: the definition *)
 
 let IN_between = prove
  (`x IN between y z <=> y <= x /\ x < z`,
@@ -1684,8 +1683,7 @@ let ADD_MOD_EQ_LEMMA = prove
 let list_subset_def = new_definition
   `list_subset l1 l2 = ALL (\x. MEM x l2) l1`;;
 
-let list_set_eq_def = new_definition
-  `list_set_eq l1 l2 <=> list_subset l1 l2 /\ list_subset l2 l1`;;
+(* HOL4 miscScript.sml:3096-3098: the definition *)
 
 let list_subset_LENGTH = prove
  (`!l1 l2. ALL_DISTINCT l1 /\
@@ -2049,11 +2047,7 @@ let steps_def,steps_ind = define_rec
        let tr = steps f y js in
          (CONS (j,y) tr))`;;
 
-let steps_rel_def,steps_rel_ind = define_rec
-  `(steps_rel R' x [] <=> T) /\
-   (steps_rel R' x (CONS (j,y) tr) <=>
-        R' x j y /\
-        steps_rel R' y tr)`;;
+(* HOL4 miscScript.sml:3674-3679: the definition *)
 
 (* HOL4 miscScript.sml:3681: ML code, not ported *)
 

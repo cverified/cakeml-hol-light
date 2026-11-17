@@ -311,31 +311,7 @@ let evaluate_interp_thm = prove
    not has_install ignores compiler oracle
  * ------------------------------------------------------------------------- *)
 
-(* the clauses in two quotations: i is int and num, which one quotation
-   cannot typecheck *)
-(* the termination relation that HOL4 gives is
-     MEASURE closSem_v_size
-   which is not one that HOL Light takes here, so the
-   port lets its own machinery find one *)
-(* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves the
-   termination *)
-let clos_interpProof_v_ok_def,clos_interpProof_v_ok_ind =
-  define_shaped_rec_clauses
-  "nested"
-  [`(clos_interpProof_v_ok (closSem_Number i) <=> T) /\
-    (clos_interpProof_v_ok (closSem_Word64 w) <=> T) /\
-    (clos_interpProof_v_ok (closSem_Block n vs) <=> ALL
-    clos_interpProof_v_ok vs) /\
-    (clos_interpProof_v_ok (closSem_ByteVector ws) <=> T) /\
-    (clos_interpProof_v_ok (closSem_RefPtr b n) <=> T) /\
-    (clos_interpProof_v_ok (closSem_Closure loco vs1 env1 n bod1) <=>
-        ~(has_install bod1) /\ ALL clos_interpProof_v_ok env1 /\ ALL
-            clos_interpProof_v_ok vs1)`;
-   `clos_interpProof_v_ok (closSem_Recclosure loco vs1 env1 fns1 i) <=>
-        ALL clos_interpProof_v_ok env1 /\ ALL clos_interpProof_v_ok vs1
-            /\ i < LENGTH fns1 /\
-        ALL ((~) o has_install o SND) fns1`];;
-add_simp clos_interpProof_v_ok_def;;
+(* HOL4 clos_interpProofScript.sml:1086-1099: the definition *)
 
 let res_ok_def = new_definition
   `res_ok x1 =

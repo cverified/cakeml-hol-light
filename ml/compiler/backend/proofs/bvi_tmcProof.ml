@@ -71,8 +71,7 @@ let bvi_tmcProof_env_rel_def = new_definition
          EL 1 ys = bvlSem_Number hole_idx /\
          small_enough_int hole_idx)))`;;
 
-let no_mutcons_op_def = new_definition
-  `no_mutcons_op op <=> (!tag i. ~(op = clos_MemOp (clos_MutCons tag i)))`;;
+(* HOL4 bvi_tmcProofScript.sml:55-57: the definition *)
 
 (* the clauses in two quotations: dest is (num option) and num, which one
    quotation cannot typecheck *)
@@ -116,19 +115,9 @@ let bvi_tmcProof_code_rel_domain = prove
        c2`,
   CHEAT_TAC);;
 
-let bvi_tmcProof_free_names_def = new_definition
-  `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n + bvl_to_bvi_namespaces
-  * k = name))`;;
+(* HOL4 bvi_tmcProofScript.sml:108-110: the definition *)
 
-let bvi_tmcProof_namespace_rel_def = new_definition
-  `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
-     (!n. n IN sptree_domain c2 /\ bvl_num_stubs <= n ==> (if (\n. n MOD
-       bvl_to_bvi_namespaces = 3) n then ~(n IN sptree_domain c1) else n IN
-       sptree_domain c1)) /\
-     (!n. n IN sptree_domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
-       bvl_to_bvi_namespaces = 3) n)) /\
-     (!n. n IN sptree_domain c2 /\ n < bvl_num_stubs ==> n IN
-       sptree_domain c1)`;;
+(* HOL4 bvi_tmcProofScript.sml:112-117: the definition *)
 
 (* This should say: expression in prog satisfies no-mutblock property *)
 let bvi_tmcProof_input_condition_def = new_definition
@@ -388,14 +377,7 @@ let bvi_tmcProof_compile_each_code_rel = prove
      bvi_tmcProof_code_rel (fromAList prog) (fromAList prog2)`),
   CHEAT_TAC);;
 
-let eor_rel_def = new_definition
-  `eor_rel f x2 x3 =
-     match (x2,x3) with
-       (bviSem_Exn v1,bviSem_Exn v2) -> bvi_tmcProof_v_rel f v1 v2
-     | (bviSem_Ret vs1,bviSem_Ret vs2) -> ALL2 (bvi_tmcProof_v_rel f) vs1
-       vs2
-     | (_,_) -> F`;;
-add_simp eor_rel_def;;
+(* HOL4 bvi_tmcProofScript.sml:488-492: the definition *)
 
 let opt_res_rel_def = new_definition
   `opt_res_rel f (r1:(bvlSem_v list,exn_or_ret)semanticPrimitives_result)
@@ -539,12 +521,7 @@ let hole_not_finalised_def = new_definition
      (?tag left child right.
        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child right))`;;
 
-let holes_still_not_finalised_def = new_definition
-  `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap) (refs':('b,'c
-  bvlSem_ref)fmap) <=>
-     (!ptr. ~(ptr IN FRANGE f) /\
-       hole_not_finalised refs ptr ==>
-       hole_not_finalised refs' ptr)`;;
+(* HOL4 bvi_tmcProofScript.sml:717-723: the definition *)
 
 let holes_still_not_finalised_refl = prove
  (`!f refs.
@@ -729,8 +706,8 @@ let flookup_com_neq = prove
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let mb_rel_def,mb_rel_ind = define_guess_cheat
-  `mb_rel f x2' refs v1 v2 =
-     match (x2',v1,v2) with
+  `mb_rel f x2 refs v1 v2 =
+     match (x2,v1,v2) with
        ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),bvlSem_Block tag
          xs,bvlSem_RefPtr b ptr) ->
       (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else match

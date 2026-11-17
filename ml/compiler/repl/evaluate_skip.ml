@@ -237,14 +237,7 @@ let fmap_greatest = prove
  *
  * -------------------------------------------------------------------------- *)
 
-let match_res_rel_def = new_definition
-  `match_res_rel R' x2' x3' =
-     match (x2',x3') with
-       (Match env1,Match env2) -> R' env1 env2
-     | (No_match,No_match) -> T
-     | (Match_type_error,Match_type_error) -> T
-     | (_,_) -> F`;;
-add_simp match_res_rel_def;;
+(* HOL4 evaluate_skipScript.sml:287-292: the definition *)
 
 let pmatch_update = prove
  (`(!envC s p v ws res.
@@ -501,8 +494,8 @@ let res_rel_mono = prove
   CHEAT_TAC);;
 
 let thunk_rel_def = new_definition
-  `thunk_rel f x2'' x3'' =
-   match (x2'',x3'') with
+  `thunk_rel f x2' x3' =
+   match (x2',x3') with
      (semanticPrimitives_BadRef,semanticPrimitives_BadRef) -> T
    | (semanticPrimitives_NotThunk,semanticPrimitives_NotThunk) -> T
    | (semanticPrimitives_IsThunk m1 v1,semanticPrimitives_IsThunk m2 v2) ->

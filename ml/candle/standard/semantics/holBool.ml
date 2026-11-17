@@ -112,16 +112,12 @@ let boolrel_def = new_definition
 
 (* HOL4 holBoolScript.sml:55: the overload Boolrel, which the port expands *)
 
-let is_true_interpretation_def = new_definition
-  `is_true_interpretation0 (mem':'U->'U->bool) gamma <=> (gamma:mlstring->'U
-  list->'U) (interprets0 mem') (implode "T") on [] as K (setSpec_true mem')`;;
+(* HOL4 holBoolScript.sml:57-59: the definition *)
 
 (* HOL4 holBoolScript.sml:61: the overload is_true_interpretation, which the
    port expands *)
 
-let is_and_interpretation_def = new_definition
-  `is_and_interpretation0 (mem':'U->'U->bool) gamma <=> gamma (interprets0
-  mem') (implode "/\\") on [] as K ((Boolrel0 mem') (/\))`;;
+(* HOL4 holBoolScript.sml:63-65: the definition *)
 
 (* HOL4 holBoolScript.sml:67: the overload is_and_interpretation, which the
    port expands *)
@@ -133,90 +129,34 @@ let is_implies_interpretation_def = new_definition
 (* HOL4 holBoolScript.sml:73: the overload is_implies_interpretation, which
    the port expands *)
 
-let is_forall_interpretation_def = new_definition
-  `is_forall_interpretation0 (mem':'U->'U->bool) gamma <=> gamma
-     (interprets0 mem') (implode "!") on [(implode "A")] as
-        (\l. (abstract mem') ((funspace mem') (HD l) ((two mem'))) ((two
-          mem'))
-               (\(holSyntax_Var (implode "P") ((\s t. holSyntax_Tyapp
-                 (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-                 (holSyntax_Tyapp (implode "bool") []))). (boolean mem')
-                 (!(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-                 "A"))). (mem':'U->'U->bool) (holSyntax_Var (implode "x")
-                 (holSyntax_Tyvar (implode "A"))) (HD l) ==> (holds mem')
-                 (holSyntax_Var (implode "P") ((\s t. holSyntax_Tyapp
-                 (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-                 (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Var
-                 (implode "x") (holSyntax_Tyvar (implode "A"))))))`;;
+(* HOL4 holBoolScript.sml:75-80: the definition *)
 
 (* HOL4 holBoolScript.sml:82: the overload is_forall_interpretation, which
    the port expands *)
 
-let is_exists_interpretation_def = new_definition
-  `is_exists_interpretation0 (mem':'U->'U->bool) gamma <=> gamma
-     (interprets0 mem') (implode "?") on [(implode "A")] as
-        (\l. (abstract mem') ((funspace mem') (HD l) ((two mem'))) ((two
-          mem'))
-               (\(holSyntax_Var (implode "P") ((\s t. holSyntax_Tyapp
-                 (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-                 (holSyntax_Tyapp (implode "bool") []))). (boolean mem')
-                 (?(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-                 "A"))). (mem':'U->'U->bool) (holSyntax_Var (implode "x")
-                 (holSyntax_Tyvar (implode "A"))) (HD l) /\ (holds mem')
-                 (holSyntax_Var (implode "P") ((\s t. holSyntax_Tyapp
-                 (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-                 (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Var
-                 (implode "x") (holSyntax_Tyvar (implode "A"))))))`;;
+(* HOL4 holBoolScript.sml:84-89: the definition *)
 
 (* HOL4 holBoolScript.sml:91: the overload is_exists_interpretation, which
    the port expands *)
 
-let is_or_interpretation_def = new_definition
-  `is_or_interpretation0 (mem':'U->'U->bool) gamma <=> gamma (interprets0
-  mem') (implode "\\/") on [] as K ((Boolrel0 mem') (\/))`;;
+(* HOL4 holBoolScript.sml:93-95: the definition *)
 
 (* HOL4 holBoolScript.sml:97: the overload is_or_interpretation, which the
    port expands *)
 
-let is_false_interpretation_def = new_definition
-  `is_false_interpretation0 (mem':'U->'U->bool) gamma <=>
-  (gamma:mlstring->'U list->'U) (interprets0 mem') (implode "F") on [] as K
-  (setSpec_false mem')`;;
+(* HOL4 holBoolScript.sml:99-101: the definition *)
 
 (* HOL4 holBoolScript.sml:103: the overload is_false_interpretation, which
    the port expands *)
 
-let is_not_interpretation_def = new_definition
-  `is_not_interpretation0 (mem':'U->'U->bool) gamma <=> gamma (interprets0
-  mem') (implode "~") on [] as K ((abstract mem') ((two mem')) ((two mem'))
-  (\(holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool") [])).
-  (boolean mem') (~((holSyntax_Var (implode "p") (holSyntax_Tyapp (implode
-  "bool") [])) = (setSpec_true mem')))))`;;
+(* HOL4 holBoolScript.sml:105-107: the definition *)
 
 (* HOL4 holBoolScript.sml:109: the overload is_not_interpretation, which the
    port expands *)
 
 (* HOL4 holBoolScript.sml:111-113: ML code, not ported *)
 
-let is_bool_interpretation_def = new_definition
-  `is_bool_interpretation0 (mem':'U->'U->bool) i <=>
-     (is_std_interpretation0 mem') i /\
-     (is_true_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_and_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_implies_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_forall_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_exists_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_or_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_false_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i) /\
-     (is_not_interpretation0 mem') ((SND:(mlstring->'U
-       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i)`;;
+(* HOL4 holBoolScript.sml:115-126: the definition *)
 
 (* HOL4 holBoolScript.sml:128: the overload is_bool_interpretation, which
    the port expands *)

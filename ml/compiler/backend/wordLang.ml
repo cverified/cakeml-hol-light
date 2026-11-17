@@ -157,10 +157,7 @@ let every_var_inst_def = new_definition
      | inst -> T`;;
 (*catchall*)
 
-let every_name_def = new_definition
-  `every_name P (t:1 spt#1 spt) <=>
-   ALL P (MAP FST (toAList (FST t))) /\
-   ALL P (MAP FST (toAList (SND t)))`;;
+(* HOL4 wordLangScript.sml:127-131: the definition *)
 
 make_size "word_prog";;
 (* the termination relation is not in the HOL4 source; this one is

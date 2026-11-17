@@ -11,6 +11,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "candle/standard/semantics/holAxioms.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
@@ -30,17 +31,9 @@ let _ = hide_overloads
    "return","errorMonad_return"];;
 
 (* Edge from node x to node y, in terms of an adjacency list *)
-let has_edge_def = new_definition
-  `has_edge adjls x y <=>
-   x < LENGTH adjls /\
-   y < LENGTH adjls /\
-   MEM y (EL x adjls)`;;
+(* HOL4 reg_allocProofScript.sml:20-25: the definition *)
 
-let undirected_def = new_definition
-  `undirected adjls <=>
-   (!x y.
-     has_edge adjls x y ==>
-     has_edge adjls y x)`;;
+(* HOL4 reg_allocProofScript.sml:27-32: the definition *)
 
 (* ---
   some well-formedness properties on the state.
@@ -524,15 +517,9 @@ let mk_bij_aux_wf = prove
    the correctness
 *)
 (* the list represents a clique *)
-let is_clique_def = new_definition
-  `is_clique ls adjls <=>
-   (!x y. MEM x ls /\ MEM y ls /\ ~(x = y) ==>
-     has_edge adjls x y)`;;
+(* HOL4 reg_allocProofScript.sml:983-987: the definition *)
 
-let is_subgraph_def = new_definition
-  `is_subgraph g h <=>
-   (!x y.
-     has_edge g x y ==> has_edge h x y)`;;
+(* HOL4 reg_allocProofScript.sml:989-993: the definition *)
 
 let is_subgraph_refl = prove
  (`is_subgraph s s`,
