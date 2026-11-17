@@ -2515,16 +2515,19 @@ class Porter:
     if not e:
       self.warn.append('%s: the ML of its body: %s' % (b.name, why))
       return False
-    try:
-      lhs = self.term(m.group('lhs'), defn=True)
-    except Exception as ex:
-      self.warn.append('%s: the left hand side: %s' % (b.name, ex))
+    # the left hand side is a head applied to variables, and its
+    # variables are the ones of the right hand side (cake_def_of)
+    ws = m.group('lhs').split()
+    if not all(IDENT.match(w) for w in ws):
+      self.warn.append('%s: its left hand side is not a head applied'
+                       ' to variables' % b.name)
       return False
+    head = self.ctx.name(ws[0])
     self.out.append(
       '(* the right hand side is the one that the ML of the source\n'
       '   computes, computed the same way *)\n'
-      'let %s = new_definition\n  (mk_eq(`%s`,\n   %s));;\n'
-      % (bind, lhs, e))
+      'let %s = new_definition\n  (cake_def_of "%s" [%s]\n   (%s));;\n'
+      % (bind, head, '; '.join('"%s"' % w for w in ws[1:]), e))
     return True
 
   def definition(self, b):

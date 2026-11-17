@@ -2637,6 +2637,24 @@ let cheat_why = ref "";;
    nothing to declare, and a second new_constant of the name
    would stop the file. *)
 
+(* The equation of a definition whose right hand side the ML of a
+   source computes (to_word64Prog's int_to_words is the right hand
+   side of a clause of data_to_word's part_to_words).  The
+   variables of the left hand side are the ones of the right hand
+   side, by name, which is where HOL4's own machinery takes them:
+   writing `int_to_words c i offset' and asking for an equation
+   with it gives mk_eq two sides of two types. *)
+
+let cake_def_of name args r =
+  let fs = frees r in
+  let v n =
+    try find (fun x -> fst(dest_var x) = n) fs
+    with Failure _ ->
+      failwith ("cake_def_of: " ^ name ^ " has no " ^ n) in
+  let vs = map v args in
+  let ty = itlist (fun a t -> mk_fun_ty (type_of a) t) vs (type_of r) in
+  mk_eq(list_mk_comb(mk_var(name,ty),vs),r);;
+
 let cake_declare name ty =
   match (try Some (get_const_type name) with Failure _ -> None) with
     Some ty' when ty' = ty ->
