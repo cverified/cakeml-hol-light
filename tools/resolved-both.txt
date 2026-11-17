@@ -58,7 +58,6 @@ Closure in source_to_flatProof v_rel: flatSem semanticPrimitives
 CodeBufferWrite in word_to_stack comp_def: stackLang wordLang
 CodePtr in bvi_to_dataProof data_to_bvi_v_def: bvlSem dataSem
 CodePtr in bvi_to_dataProof data_to_bvi_v_eq: bvlSem dataSem
-collate in mlstring collate_thm: mllist mlstring
 collate in mlvector collate_thm: mllist mlvector
 compile_exp in bvl_handle compile_exp_eq: bvl_const bvl_handle
 compile in backend_passes from_stack_all_def: stack_alloc stack_names stack_rawcall stack_remove
@@ -232,9 +231,6 @@ get_vars in data_to_word_gcProof state_rel_call_env: dataSem wordSem
 get_vars in data_to_word_gcProof state_rel_CodePtr: dataSem wordSem
 get_vars in data_to_word_gcProof state_rel_get_vars_IMP: dataSem wordSem
 get_vars in data_to_word_gcProof word_ml_inv_get_vars_IMP_lemma: dataSem wordSem
-good_code_labels in bvi_to_dataProof compile_prog_good_code_labels: bviProps dataProps
-good_code_labels in data_to_wordProof data_to_word_good_code_labels: dataProps wordConvs
-good_code_labels in data_to_wordProof data_to_word_good_code_labels_incr: dataProps wordConvs
 Halt in labSem evaluate_def: labLang targetSem
 Halt in stackSem evaluate_def: stackLang stackSem
 Halt in stack_to_lab flatten_def: labLang stackLang
@@ -452,6 +448,7 @@ Tick in loop_to_word comp_def: loopLang wordLang
 Tick in word_to_stack comp_def: stackLang wordLang
 TimeOut in stack_to_labProof flatten_call_correct: stackSem targetSem
 TimeOut in word_to_stackProof compile_result_def: stackSem wordSem
+to_fmap in mlmap to_fmap_thm: balanced_map mlmap
 Unit in bvi_to_dataProof data_to_bvi_v_Unit: bvlSem dataSem
 Unit in clos_to_bvlProof v_rel_Unit: bvlSem closSem
 ValueArray in clos_to_bvlProof ref_rel_def: bvlSem closSem

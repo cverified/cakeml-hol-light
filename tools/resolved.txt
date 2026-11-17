@@ -51,6 +51,8 @@ ag32_basis_ffiProof	IMP_word_list	word_list	misc
 ag32_basis_ffiProof	ag32_fs_ok_def	fail	*lib*
 ag32_basis_ffiProof	evaluate_Halt_FUNPOW_next	Halt	targetSem
 ag32_basis_ffiProof	evaluate_Halt_FUNPOW_next	evaluate	targetSem
+ag32_basis_ffiProof	extract_fs_extract_writes	fail	*lib*
+ag32_basis_ffiProof	extract_write_def	fail	*lib*
 ag32_basis_ffiProof	get_ag32_io_event_def	fail	*lib*
 ag32_basis_ffiProof	get_output_io_event_def	fail	*lib*
 ag32_basis_ffiProof	read_bytearray_IMP_domain	fail	*lib*
