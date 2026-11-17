@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "candle/standard/monadic/holKernel.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/word_alloc.ml";;
@@ -17,6 +18,7 @@ needs "compiler/backend/word_inst.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/bootstrap/translation/basis_defProg.ml";;
 needs "lib/integer_word.ml";;
+needs "semantics/typeSystem.ml";;
 needs "translator/ml_translator.ml";;
 needs "translator/std_prelude.ml";;
 
@@ -162,21 +164,33 @@ let my_lsl_shift_def = new_definition
 
 (* HOL4 to_word32ProgScript.sml:200: ML code, not ported *)
 
-(* PORT FAILED: Definition int_to_words_def: expected ')' but found '|>' at
-   72 *)
-(* HOL4 to_word32ProgScript.sml:202-206: the definition *)
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
+let int_to_words_def = new_definition
+  (mk_eq(`to_word32Prog_int_to_words c i offset`,
+   rand (concl (SPEC_ALL (el 0 (CONJUNCTS part_to_words_def))))));;
 
-(* PORT FAILED: Definition con_to_words_def: expected ')' but found '|>' at
-   77 *)
-(* HOL4 to_word32ProgScript.sml:208-212: the definition *)
 
-(* PORT FAILED: Definition w64_to_words_def: expected ')' but found '|>' at
-   72 *)
-(* HOL4 to_word32ProgScript.sml:214-218: the definition *)
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
+let con_to_words_def = new_definition
+  (mk_eq(`to_word32Prog_con_to_words c m t ns offset`,
+   rand (concl (SPEC_ALL (el 1 (CONJUNCTS part_to_words_def))))));;
 
-(* PORT FAILED: Definition str_to_words_def: expected ')' but found '|>' at
-   72 *)
-(* HOL4 to_word32ProgScript.sml:220-224: the definition *)
+
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
+let w64_to_words_def = new_definition
+  (mk_eq(`to_word32Prog_w64_to_words c w offset`,
+   rand (concl (SPEC_ALL (el 2 (CONJUNCTS part_to_words_def))))));;
+
+
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
+let str_to_words_def = new_definition
+  (mk_eq(`to_word32Prog_str_to_words c s offset`,
+   rand (concl (SPEC_ALL (el 3 (CONJUNCTS part_to_words_def))))));;
+
 
 let to_word32Prog_part_to_words_def =
   REWRITE_RULE [GSYM int_to_words_def; GSYM con_to_words_def; GSYM

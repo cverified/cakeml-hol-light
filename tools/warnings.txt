@@ -1226,7 +1226,9 @@ DoubleProg	ML code skipped: val _ = translate twicemaxulp_def
 DoubleProg	ML code skipped: val _ = translate ffloat_ulp_def
 DoubleProg	ML code skipped: val _ = translate posinf64_def
 DoubleProg	ML code skipped: val _ = translate neginf64_def
+DoubleProg	posmin64_def: the ML of its body: a term
 DoubleProg	ML code skipped: val _ = translate posmin64_def
+DoubleProg	poszero64_def: the ML of its body: a term
 DoubleProg	ML code skipped: val _ = translate poszero64_def
 DoubleProg	ML code skipped: val _ = augment_srw_ss [     rewrites [w2n_n2w, WORD_AND_CLA
 DoubleProg	Overload abs
@@ -1869,8 +1871,8 @@ ml_hol_kernel_funsProg	ML code skipped: val _ = ml_prog_update open_local_block;
 ml_hol_kernel_funsProg	ML code skipped: val def = list_to_hypset_def |> translate
 ml_hol_kernel_funsProg	ML code skipped: val _ = ml_prog_update open_local_in_block;
 ml_hol_kernel_funsProg	ML code skipped: val def = m_translate axioms_eq; val def = m_translate types
-ml_hol_kernel_funsProg	line 110 is 100 characters
-ml_hol_kernel_funsProg	line 111 is 100 characters
+ml_hol_kernel_funsProg	line 114 is 100 characters
+ml_hol_kernel_funsProg	line 115 is 100 characters
 candle_kernelProg	ML code skipped: val _ = m_translation_extends "ml_hol_kernel_funsProg"
 candle_kernelProg	ML code skipped: val _ = (use_long_names := false);
 candle_kernelProg	ML code skipped: val _ = ml_prog_update open_local_block;
@@ -2597,14 +2599,6 @@ to_word32Prog	ML code skipped: val _ = translate (byteTheory.byte_index_def |> i
 to_word32Prog	ML code skipped: val _ = translate byteTheory.set_byte_32; val _ = translate 
 to_word32Prog	ML code skipped: val ugly_lsl_lemma =   “my_lsl_shift (w:'a word) n”   |> (RE
 to_word32Prog	ML code skipped: val _ = translate (ugly_lsl_lemma |> conv32);
-to_word32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word32Prog	Definition int_to_words_def: expected ')' but found '|>' at 72
-to_word32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 77
-to_word32Prog	Definition con_to_words_def: expected ')' but found '|>' at 77
-to_word32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word32Prog	Definition w64_to_words_def: expected ')' but found '|>' at 72
-to_word32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word32Prog	Definition str_to_words_def: expected ')' but found '|>' at 72
 to_word32Prog	ML code skipped: val _ = translate bytes_of_string_def;
 to_word32Prog	ML code skipped: val r = int_to_words_def      |> REWRITE_RULE [data_to_wordT
 to_word32Prog	ML code skipped: val r = w64_to_words_def      |> SIMP_RULE std_ss [data_to_w
@@ -3078,6 +3072,7 @@ compiler32Prog	ML code skipped: val res = translate $ panStaticTheory.primitive_
 compiler32Prog	ML code skipped: val res = translate $ panStaticTheory.check_fun_name_def; va
 compiler32Prog	ML code skipped: val res = translate $ spec32 $ panStaticTheory.static_check_
 compiler32Prog	ML code skipped: val _ = res |> hyp |> null orelse         failwith ("Unprove
+compiler32Prog	max_heap_limit_32_def: the ML of its body: rule spec32/0
 compiler32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 82
 compiler32Prog	Definition max_heap_limit_32_def: expected ')' but found '|>' at 82
 compiler32Prog	ML code skipped: val res = translate max_heap_limit_32_def
@@ -3233,14 +3228,6 @@ to_word64Prog	ML code skipped: val _ = translate (byteTheory.byte_index_def |> i
 to_word64Prog	ML code skipped: val _ = translate byteTheory.set_byte_64; val _ = translate 
 to_word64Prog	ML code skipped: val ugly_lsl_lemma =   “my_lsl_shift (w:'a word) n”   |> (RE
 to_word64Prog	ML code skipped: val _ = translate (ugly_lsl_lemma |> conv64);
-to_word64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word64Prog	Definition int_to_words_def: expected ')' but found '|>' at 72
-to_word64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 77
-to_word64Prog	Definition con_to_words_def: expected ')' but found '|>' at 77
-to_word64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word64Prog	Definition w64_to_words_def: expected ')' but found '|>' at 72
-to_word64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 72
-to_word64Prog	Definition str_to_words_def: expected ')' but found '|>' at 72
 to_word64Prog	ML code skipped: val _ = translate bytes_of_string_def;
 to_word64Prog	ML code skipped: val r = int_to_words_def      |> REWRITE_RULE [data_to_wordT
 to_word64Prog	ML code skipped: val r = w64_to_words_def      |> SIMP_RULE std_ss [data_to_w
@@ -3838,6 +3825,7 @@ compiler64Prog	ML code skipped: val res = translate $ panStaticTheory.primitive_
 compiler64Prog	ML code skipped: val res = translate $ panStaticTheory.check_fun_name_def; va
 compiler64Prog	ML code skipped: val res = translate $ spec64 $ panStaticTheory.static_check_
 compiler64Prog	ML code skipped: val _ = res |> hyp |> null orelse         failwith ("Unprove
+compiler64Prog	max_heap_limit_64_def: the ML of its body: rule spec64/0
 compiler64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 82
 compiler64Prog	Definition max_heap_limit_64_def: expected ')' but found '|>' at 82
 compiler64Prog	ML code skipped: val res = translate max_heap_limit_64_def
@@ -4637,7 +4625,7 @@ candle_prover_semantics	ML code skipped: val _ = translation_extends "candle_ker
 candle_prover_semantics	Overload basis_env
 candle_prover_semantics	Overload basis_state
 candle_prover_semantics	ML code skipped: fun prove_v_ok v_tm =   auto_prove     ("v_ok for " ^ (#1 (d
-candle_prover_semantics	derive v_ok_kernel_funs: rule concl/0
+candle_prover_semantics	derive v_ok_kernel_funs: rule pred_setSyntax.strip_set/0
 candle_prover_semantics	ML code skipped: exception EnvOkExn of term;
 candle_prover_semantics	ML code skipped: local
 candle_prover_semantics	ML code skipped: val kernel_types_term = kernel_types_def |> concl |> lhs;   
@@ -5000,6 +4988,7 @@ repl_types	ML code skipped: val ref_ok_tac =   fs[EVERY_MEM, FORALL_PROD] \\ rw[
 repl_init	ML code skipped: val _ = (max_print_depth := 12);
 repl_init	ML code skipped: val th2 = Decls_repl_prog |> REWRITE_RULE [GSYM repl_prog_de
 repl_init	Overload repl_prog_env
+repl_init	repl_prog_st_def: the ML of its body: no th2
 repl_init	several_clauses cannot read the body: expected ')' but found '|>' at 34
 repl_init	Definition repl_prog_st_def: expected ')' but found '|>' at 34
 repl_init	ML code skipped: val th2 = REWRITE_RULE [GSYM repl_prog_st_def] th2;

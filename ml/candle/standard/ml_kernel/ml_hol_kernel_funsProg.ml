@@ -92,8 +92,12 @@ let init_axioms_alt = prove
                  | (CONS _ xs) -> xs`,
   CHEAT_TAC);;
 
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
 let init_context_def = new_definition
-  `init_context = (rhs (concl (?_init_ctxt_def holSyntaxTheory)))`;;
+  (mk_eq(`init_context`,
+   rhs (concl init_ctxt_def)));;
+
 
 (* HOL4 ml_hol_kernel_funsProgScript.sml:87-94: ML code, not ported *)
 

@@ -2,7 +2,7 @@
 (*  holKernel: ported from HOL4's
     candle/standard/monadic/holKernelScript.sml
     A definition theory, with 82 definitions, 3 datatypes and 6
-    theorems.  Needed by 17 files of the port.  *)
+    theorems.  Needed by 19 files of the port.  *)
 (* ======================================================== *)
 
 (*
