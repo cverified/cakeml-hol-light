@@ -38,9 +38,28 @@ TIMEOUT=1800 repl-step $s "loadt \"$C/ml/lib/fast.ml\";;" \
 # a file to load over the abstract before the port
 [ -n "$CAKE_EXTRA" ] && TIMEOUT=900 repl-step $s \
   "loadt \"$CAKE_EXTRA\";;" > /dev/null 2>&1
+# and wait until the session really has it: repl-step reads the
+# pane until a prompt, and a clone can show the prompt it came up
+# with before the command's own output reaches the fifo, so the
+# step can return with the file still loading.  A probe that the
+# session can only answer when it is free settles it
+i=0
+while [ $i -lt 60 ]; do
+  TIMEOUT=120 repl-step $s 'cake_abstract;;' 2>/dev/null |
+    grep -q 'bool = true' && break
+  i=$((i+1))
+done
+[ $i -lt 60 ] || { echo "absfast: fast.ml never loaded"; exit 1; }
 TIMEOUT=${TIMEOUT:-7200} repl-step $s \
   "loadt \"$C/tmp/drvabs/driver.ml\";;" > tmp/abs-raw.out 2>&1
 t1=$(date +%s)
+# a whole port is 15,000 statements and takes half an hour.  A
+# report that came back in two minutes is a report of a load that
+# did not happen, and saying "0 files failed" then is worse than
+# saying nothing
+[ $((t1-t0)) -lt 600 ] && {
+  echo "absfast: the load took $((t1-t0))s, which is too fast to"\
+       "be a port of 492 files -- no report"; exit 1; }
 sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' tmp/abs-raw.out |
   python3 -I tools/absreport.py > tmp/abs.out
 n=$(grep -c . tools/load.txt)
