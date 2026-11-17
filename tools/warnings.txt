@@ -30,6 +30,10 @@ binary_ieeeProps	Overload precision
 binary_ieeeProps	Overload f2r
 binary_ieeeProps	Overload sign
 sum	Overload case
+cardinal	the overload =~ is dropped: unparsed input at 9: ')'
+cardinal	the overload ≉ is dropped: tokenize: '≈ b)'
+cardinal	the overload <<= is dropped: unparsed input at 10: ')'
+cardinal	the overload <</= is dropped: unparsed input at 9: ')'
 rat	rat_minv_def: PENDING (HOL4's fractions, which its rationals are a quotient of)
 rat	Overload expn
 rat	Overload exp
@@ -1405,6 +1409,7 @@ panPEG	ML code skipped: fun wfnt tm (t,acc) = let   val th =     Q.prove(‘wfpe
 panPEG	derive pancake_wfpeg_thm: a list of theorems
 panPEG	derive pancake_wfpeg_FunNT_thm: a list of theorems
 panPEG	line 168 is 102 characters
+panPtreeConversion	the overload ptree1_size is dropped: the auxiliary size function parsetree1_size
 panPtreeConversion	Overload lift
 panPtreeConversion	Overload ptree_size
 panPtreeConversion	Overload ptree1_size
@@ -2201,6 +2206,7 @@ camlPEG	derive coreloop_Start_total: no pegexecTheory.coreloop_total
 camlPEG	derive owhile_Start_total: no coreloop_Start_total
 camlPEG	line 1109 is 80 characters
 camlPEG	line 1110 is 81 characters
+camlPtreeConversion	the overload p1size is dropped: the auxiliary size function parsetree1_size
 camlPtreeConversion	ML code skipped: val sum_monadinfo : monadinfo = {   bind = “bind”,   ignoreb
 camlPtreeConversion	unknown monad sum
 camlPtreeConversion	Overload psize
@@ -4531,6 +4537,12 @@ perms	derive perms_ok_exp_thm: not a name
 perms	derive perms_ok_dec_thm: not a name
 perms	derive perms_ok_def: not a name
 perms	derive perms_ok_env_def: rule Once/0
+candle_kernel_vals	the overload type_ctors_set is dropped: unparsed input at 32: ';'
+candle_kernel_vals	the overload term_ctors_set is dropped: unparsed input at 32: ';'
+candle_kernel_vals	the overload thm_ctors_set is dropped: unparsed input at 31: ';'
+candle_kernel_vals	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_vals	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_vals	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_kernel_vals	ML code skipped: val _ = (max_print_depth := 10);
 candle_kernel_vals	derive kernel_funs_v_def: '=> not (mem '
 candle_kernel_vals	derive abs_v_def: no abs_v_def
@@ -4548,12 +4560,24 @@ candle_kernel_vals	Overload thm_stamp_n
 candle_kernel_vals	ML code skipped: val s = “s:α semanticPrimitives$state”
 candle_kernel_vals	ML code skipped: val safe_error_goal =     “∃k. s' = ((s:α semanticPrimitives
 candle_kernel_vals	ML code skipped: val prove_head_tac =   rewrite_tac[kernel_funs_v_def]   \\ T
+candle_prover_inv	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_inv	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_inv	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_prover_inv	derive safe_exp_simps: not a name
 candle_prover_inv	derive safe_dec_simps: not a name
 candle_prover_inv	derive v_ok_def: not a name
 candle_prover_inv	derive env_ok_def: rule Once/0
+candle_kernel_perms	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_perms	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_perms	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_kernel_perms	ML code skipped: val eval_nsLookup_tac =   rewrite_tac [ml_progTheory.nsLooku
+candle_kernel_funs	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_funs	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_kernel_funs	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_kernel_funs	ML code skipped: val p = “p:('a -> (mlstring |-> ffi)) # (mlstring list #    
+candle_prover_evaluate	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_evaluate	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_evaluate	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_prover_evaluate	ML code skipped: local   val ind_thm =     full_evaluate_ind     |> Q.SPECL [
 candle_prover_evaluate	Theorem evaluate_v_ok: the ML expression ^(evaluate_v_ok ()...), which the port cannot evaluate
 candle_prover_evaluate	ML code skipped: Resume evaluate_v_ok[Nil]:   rw [evaluate_def]   \\ first_as
@@ -4588,6 +4612,9 @@ candle_prover_evaluate	ML code skipped: Resume evaluate_v_ok[decs_Dexn]:   rw [e
 candle_prover_evaluate	ML code skipped: Resume evaluate_v_ok[decs_Dmod]:   rw [evaluate_decs_def]   
 candle_prover_evaluate	ML code skipped: Resume evaluate_v_ok[decs_Dlocal]:   rw [evaluate_decs_def] 
 candle_prover_evaluate	ML code skipped: Finalise evaluate_v_ok;
+candle_basis_evaluate	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_basis_evaluate	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_basis_evaluate	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 candle_basis_evaluate	derive simple_exp_simps: not a name
 candle_basis_evaluate	derive simple_dec_simps: not a name
 candle_basis_evaluate	ML code skipped: local   val ind_thm =     full_evaluate_ind     |> Q.SPECL [
@@ -4610,6 +4637,11 @@ candle_basis_evaluate	ML code skipped: Resume evaluate_basis_v_ok[decs_Dmod]:   
 candle_basis_evaluate	ML code skipped: Resume evaluate_basis_v_ok[decs_Dlocal]:   rw [evaluate_decs
 candle_basis_evaluate	ML code skipped: Finalise evaluate_basis_v_ok;
 candle_basis_evaluate	derive evaluate_basis_v_ok_decs: no evaluate_basis_v_ok
+candle_prover_semantics	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_semantics	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+candle_prover_semantics	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+candle_prover_semantics	the overload basis_env is dropped: expected ')' but found '|>' at 17
+candle_prover_semantics	the overload basis_state is dropped: expected ')' but found '|>' at 17
 candle_prover_semantics	ML code skipped: val _ = translation_extends "candle_kernelProg";
 candle_prover_semantics	Overload basis_env
 candle_prover_semantics	Overload basis_state
@@ -4813,6 +4845,7 @@ evaluate_init	ML code skipped: Finalise evaluate_ok;
 fmap_cv	ML code skipped: val _ = cv_trans char_lt_def; val _ = cv_trans string_lt_def
 fmap_cv	ML code skipped: val _ = cv_trans str_insert_def; val str_insert_cv_thm = fet
 fmap_cv	ML code skipped: val _ = cv_trans test_def; val res = fetch "-" "cv_test_thm"
+setSpec	the overload ≉ is dropped: tokenize: '≈ b)'
 setSpec	ML code skipped: val mem = ``mem:'U->'U->bool``
 setSpec	Overload Pow
 setSpec	Overload ∅
@@ -4833,6 +4866,7 @@ setSpec	ML code skipped: val indset = ``indset:'U`` val ch = ``ch:'U->'U`` val s
 setSpec	Overload M
 setSpec	Overload tuple
 setSpec	Overload bigcross
+holSemantics	the overload ≉ is dropped: tokenize: '≈ b)'
 holSemantics	ML code skipped: val mem = ``mem:'U->'U->bool``
 holSemantics	ML code skipped: fun type_rec_tac proj = (WF_REL_TAC(`measure (type_size o `@
 holSemantics	Overload inhabited
@@ -4855,6 +4889,7 @@ holSemantics	Overload is_std_interpretation
 holSemantics	Overload is_structure
 holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemantics	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSemanticsExtra	the overload ≉ is dropped: tokenize: '≈ b)'
 holSemanticsExtra	ML code skipped: val mem = ``mem:'U->'U->bool``
 holSemanticsExtra	Theorem typesem_inhabited: binder expected at 36: "'d"
 holSemanticsExtra	Theorem typesem_Fun: binder expected at 5: "'d"
@@ -4881,6 +4916,7 @@ holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\
 holSemanticsExtra	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holSemanticsExtra	line 289 is 80 characters
+holBool	the overload ≉ is dropped: tokenize: '≈ b)'
 holBool	ML code skipped: val mem = ``mem:'U->'U->bool``
 holBool	Overload p
 holBool	Overload FAp
@@ -4913,13 +4949,16 @@ holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+
 holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holBool	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holBool	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holSoundness	the overload ≉ is dropped: tokenize: '≈ b)'
 holSoundness	ML code skipped: val mem = ``mem:'U->'U-> bool``
 holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
 holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+sig
 holSoundness	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+holExtension	the overload ≉ is dropped: tokenize: '≈ b)'
 holExtension	ML code skipped: val mem = ``mem:'U->'U->bool``
 holExtension	Overload sound_update
 holExtension	ML code skipped: val _ = delete_const"eqsh"
+holAxioms	the overload ≉ is dropped: tokenize: '≈ b)'
 holAxioms	Overload A
 holAxioms	Overload B
 holAxioms	Overload x
@@ -4939,13 +4978,16 @@ holAxioms	Overload h
 holAxioms	Overload Exh
 holAxioms	ML code skipped: val EVAL_STRING_SORT =   CONV_TAC (DEPTH_CONV (fn tm => if c
 holAxioms	ML code skipped: val apply_abstract_tac = rpt ( (     qmatch_abbrev_tac`Abstr
+holConsistency	the overload ≉ is dropped: tokenize: '≈ b)'
 holConsistency	ML code skipped: val mem = ``mem:'U->'U->bool``
 holConsistency	ML code skipped: fun tac extends_bool unfold =   strip_tac >> gen_tac >> stri
+setModel	the overload ≉ is dropped: tokenize: '≈ b)'
 setModel	ML code skipped: val is_V_def = new_specification("is_V_def",["is_V"],REWRITE
 setModel	ML code skipped: val V_tyax = new_type_definition("V",   is_V_def |> SIMP_RUL
 setModel	ML code skipped: val V_mem_rep_def =   new_specification("V_mem_rep_def",["V_
 setModel	ML code skipped: val V_choice_def =   new_specification("V_choice_def",["V_ch
 setModel	ML code skipped: val V_indset_def =   new_specification("V_indset_def",["V_in
+holLightConsistency	the overload ≉ is dropped: tokenize: '≈ b)'
 holLightConsistency	Overload A
 holLightConsistency	Overload B
 holLightConsistency	Overload x
@@ -4962,6 +5004,15 @@ holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\
 holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holLightConsistency	FILE_PATCH matches nothing: \(\\\(ctxt:holSyntax_update\s+list\)\.\s+\(\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+types_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt,\(\\ctxt\.\s+alist_to_fmap\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+consts_of_upd\s+ctxt\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
 holLightConsistency	FILE_PATCH matches nothing: \(\\ctxt\.\s+set_of_list\s+\(\(\\ctxt\.\s+FLAT\s+\(MAP\s+\(\\upd\.\s+APPEND\s+\(axexts_of_upd\s+upd\)\s+\(conexts_of_upd\s+upd\)\)\s+ctxt\)\)\s+ctxt\)\)\s+thy
+repl_decs_allowed	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+repl_decs_allowed	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+repl_decs_allowed	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+repl_check_and_tweak	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+repl_check_and_tweak	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+repl_check_and_tweak	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+repl_init_types	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+repl_init_types	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+repl_init_types	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 repl_init_types	ML code skipped: val _ = cv_trans_deep_embedding EVAL repl_moduleProgTheory.r
 repl_init_types	ML code skipped: val _ = cv_auto_trans inferTheory.init_config_def;
 repl_init_types	ML code skipped: val eval_res_thm =   cv_eval “infertype_prog_inc (init_confi
@@ -4973,7 +5024,15 @@ repl_init_types	ML code skipped: val env = Decls_repl_prog |> concl |> rator |> 
 repl_init_types	ML code skipped: val _ = cv_trans locationTheory.unknown_loc_def
 repl_init_types	derive CommandLine_arguments_lemma: conv cv_eval
 repl_init_types	derive Repl_charsFrom_lemma: conv cv_eval
+repl_types	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+repl_types	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+repl_types	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 repl_types	ML code skipped: val ref_ok_tac =   fs[EVERY_MEM, FORALL_PROD] \\ rw[]   \\ f
+repl_init	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+repl_init	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+repl_init	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+repl_init	the overload repl_prog_env is dropped: expected ')' but found '|>' at 5
+repl_init	the overload repl_init_env is dropped: tokenize: '“Env _”)) |> rand);'
 repl_init	ML code skipped: val _ = (max_print_depth := 12);
 repl_init	ML code skipped: val th2 = Decls_repl_prog |> REWRITE_RULE [GSYM repl_prog_de
 repl_init	Overload repl_prog_env
@@ -6689,6 +6748,9 @@ ag32_basis_ffiProof	ML code skipped: val ag32_ffi_get_arg_count_entrypoint_thm =
 ag32_basis_ffiProof	ML code skipped: fun ffi_tac   ag32_ffi_interfer_xxx   ag32_ffi_xxx_code =   
 ag32_basis_ffiProof	line 449 is 85 characters
 ag32_basis_ffiProof	line 471 is 88 characters
+ag32BootstrapProof	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+ag32BootstrapProof	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+ag32BootstrapProof	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 ag32BootstrapProof	Overload cake_config
 ag32BootstrapProof	ML code skipped: val cake_io_events_def = new_specification("cake_io_events_d
 ag32BootstrapProof	ML code skipped: val (cake_sem,cake_output) = cake_io_events_def |> SPEC_ALL 
@@ -6714,6 +6776,9 @@ arm8_targetProof	ML code skipped: val ext12 = ``(11 >< 0) : word64 -> word12`` v
 arm8_configProof	ML code skipped: val names_tac =   simp[tlookup_bij_iff] \\ EVAL_TAC   \\ REW
 arm8_configProof	ML code skipped: val is_arm8_machine_config_mc = arm8_init_ok |> concl |> des
 arm8_configProof	derive arm8_compile_correct: rule ADD_ASSUM/1
+arm8BootstrapProof	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+arm8BootstrapProof	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+arm8BootstrapProof	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 arm8BootstrapProof	ML code skipped: val cake_io_events_def = new_specification("cake_io_events_d
 arm8BootstrapProof	ML code skipped: val (cake_sem,cake_output) = cake_io_events_def |> SPEC_ALL 
 arm8BootstrapProof	ML code skipped: val compile_correct_applied =   MATCH_MP compile_correct_eva
@@ -6793,6 +6858,12 @@ x64_targetProof	ML code skipped: val print_tac = asmLib.print_tac "";
 x64_configProof	ML code skipped: val names_tac =   simp[tlookup_bij_iff] \\ EVAL_TAC   \\ REW
 x64_configProof	ML code skipped: val is_x64_machine_config_mc = x64_init_ok |> concl |> dest_
 x64_configProof	derive x64_compile_correct: rule ADD_ASSUM/1
+replProof	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+replProof	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+replProof	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+replProof	the overload repl_prog_env is dropped: expected ')' but found '|>' at 5
+replProof	the overload repl_init_env is dropped: tokenize: '“Env _”)) |> rand);'
+replProof	the overload eval_res_stamp is dropped: tokenize: '“TypeStamp _ _”)) |>'
 replProof	ML code skipped: val _ = (max_print_depth := 12);
 replProof	ML code skipped: val EqualityType_LIST_TYPE_AST_DEC_TYPE =   decProgTheory.Eq
 replProof	ML code skipped: val EqualityType_BACKEND_CONFIG_TYPE =   decodeProgTheory.Eq
@@ -6807,6 +6878,14 @@ replProof	ML code skipped: val ffi_inst = type_of “basis_ffi _ _ _” |> dest_
 source_cv	ML code skipped: val res = from_to_thm_for “:location$locn”; val res = from_t
 source_cv	ML code skipped: val res = from_to_thm_for “:('n, 'm) namespace$id”; val res 
 source_cv	ML code skipped: val res = from_to_thm_for “:ast$dec”;
+x64BootstrapProof	the overload ≉ is dropped: tokenize: '≈ b)'
+x64BootstrapProof	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+x64BootstrapProof	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+x64BootstrapProof	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
+x64BootstrapProof	the overload basis_env is dropped: expected ')' but found '|>' at 17
+x64BootstrapProof	the overload basis_state is dropped: expected ')' but found '|>' at 17
+x64BootstrapProof	the overload repl_prog_env is dropped: expected ')' but found '|>' at 5
+x64BootstrapProof	the overload repl_init_env is dropped: tokenize: '“Env _”)) |> rand);'
 x64BootstrapProof	ML code skipped: val cake_io_events_def = new_specification("cake_io_events_d
 x64BootstrapProof	ML code skipped: val (cake_sem,cake_output) = cake_io_events_def |> SPEC_ALL 
 x64BootstrapProof	ML code skipped: val compile_correct_applied =   MATCH_MP compile_correct_eva
@@ -6821,6 +6900,9 @@ x64BootstrapProof	ML code skipped: local   fun cross [] xs = []     | cross (y::
 x64BootstrapProof	ML code skipped: val tac =   rewrite_tac [safe_dec_thm,EVERY_DEF,safe_dec'_de
 x64BootstrapProof	ML code skipped: val _ = print "Checking that no cheats were used in the proo
 x64BootstrapProof	line 3 is 80 characters
+x64_32BootstrapProof	the overload type_stamp_n is dropped: unparsed input at 33: ';'
+x64_32BootstrapProof	the overload term_stamp_n is dropped: unparsed input at 33: ';'
+x64_32BootstrapProof	the overload thm_stamp_n is dropped: unparsed input at 32: ';'
 x64_32BootstrapProof	ML code skipped: val cake_io_events_def = new_specification("cake_io_events_d
 x64_32BootstrapProof	ML code skipped: val (cake_sem,cake_output) = cake_io_events_def |> SPEC_ALL 
 x64_32BootstrapProof	ML code skipped: val compile_correct_applied =   MATCH_MP compile_correct_eva

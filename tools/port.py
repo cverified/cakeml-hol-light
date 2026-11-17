@@ -530,6 +530,16 @@ class Porter:
           if old is not None: self.ctx.overloads[nm] = old
         finally:
           self.ctx.qualfields = ''
+    # an overload whose body the port cannot read is dropped above
+    # and the name then falls through to a constant of the same
+    # name, which is how five files of the Candle kernel came to
+    # write ast's Fun for holSyntax's overload of it.  A silent
+    # drop is the worst kind, so it says so
+    for nm in raw:
+      if nm not in self.ctx.overloads:
+        try: self.in_thy(self.ovl_thy.get(nm), lambda: self.term(raw[nm]))
+        except Exception as ex:
+          self.warn.append('the overload %s is dropped: %s' % (nm, ex))
     self.bound = set()
 
   # -- helpers ---------------------------------------------------

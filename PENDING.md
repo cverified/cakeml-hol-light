@@ -190,14 +190,24 @@ instead.
 A resolution round will not settle it, and that is measured: the
 third round of 2026-11-17 added no key and changed no answer.
 
-Where to look is narrow.  `db.overloads_for` **does** have `Fun`
-for those theories and `holSyntax` **is** in their scope, and the
-filter in `tools/port.py` (the `raw` dict) keeps it -- so the
-overload is dropped later, in the loop that reads each overload's
-body with `in_thy`: a body that does not translate is dropped
-there and the name then falls through to the constant of the same
-name.  So the question is what `\s t. Tyapp <<fun>> [s;t]` does
-in those five theories that it does not do in holBoolSyntax.
+Where to look is narrow, and it is **not** the overload loop.
+`db.overloads_for` has `Fun` for those theories, `holSyntax` is
+in their scope, the `raw` filter of `tools/port.py` keeps it, and
+the loop that reads each body does **not** drop it -- that was
+measured by making the drop report itself, and `Fun` is not among
+the 82 it reports.  The overload is in `ctx.overloads` and the
+file writes `ast_Fun` all the same, so the loss is in the
+printer's **application** path, where a head that is both an
+overload and a renamed constant comes out as the constant.
+`hterm.py` reads `ctx.overloads` for an application in two places
+(the `fn` of an infix and `as_function` of a head); one of them
+is not reached for this shape.
+
+That reporting found a class of its own: **82 overloads are
+dropped** over the port and nothing said so before --
+`type_stamp_n`, `thm_stamp_n` and `term_stamp_n` seventeen times
+each, `<<~~>>` twelve, `repl_prog_env` three.  Each is a name
+that then falls through to whatever constant shares it.
 
 # The last two blocks the port cannot write
 
