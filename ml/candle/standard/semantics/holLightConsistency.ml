@@ -92,33 +92,31 @@ let _ = do_list hide_constant ["mem"];;
    ------------------------------------------------------------------------ *)
 
 let mk_eta_ctxt_cl_def = new_definition
-  `mk_eta_ctxt_cl ctxt = CONS (NewAxiom ((\(holSyntax_Var (implode "x")
-  (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const
-  (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
-  holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
-  "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-  (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-  "A"))) ty) p)) (implode "t") ((\s t. holSyntax_Tyapp (implode "fun") [s;
-  t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar (implode "B")))
-  ((===) (holSyntax_Abs (holSyntax_Var (implode "x") (holSyntax_Tyvar
-  (implode "A"))) (holSyntax_Comb (holSyntax_Var (implode "t") ((\s t.
+  `mk_eta_ctxt_cl ctxt = CONS (NewAxiom ((\x ty p. holSyntax_Comb
+  (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+  t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
+  (implode "bool") [])) (holSyntax_Tyapp (implode "bool") [])))
+  (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x")
+  (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "t") ((\s t.
   holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-  (holSyntax_Tyvar (implode "B")))) (holSyntax_Var (implode "x")
-  (holSyntax_Tyvar (implode "A"))))) (holSyntax_Var (implode "t") ((\s t.
-  holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-  (holSyntax_Tyvar (implode "B"))))))) ctxt`;;
+  (holSyntax_Tyvar (implode "B"))) ((===) (holSyntax_Abs (holSyntax_Var
+  (implode "x") (holSyntax_Tyvar (implode "A"))) (holSyntax_Comb
+  (holSyntax_Var (implode "t") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+  t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar (implode "B"))))
+  (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))))
+  (holSyntax_Var (implode "t") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+  t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar (implode "B")))))))
+  ctxt`;;
 
 let mk_select_ctxt_cl_def = new_definition
-  `mk_select_ctxt_cl ctxt = CONS (NewAxiom ((\(holSyntax_Var (implode "x")
-  (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const
-  (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
-  holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool")
-  [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs (holSyntax_Var
-  (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty) p))
-  (implode "P") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+  `mk_select_ctxt_cl ctxt = CONS (NewAxiom ((\x ty p. holSyntax_Comb
+  (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+  t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
+  (implode "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
+  (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
+  ty) p)) (implode "P") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
   (holSyntax_Tyvar (implode "A")) (holSyntax_Tyapp (implode "bool") []))
-                ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-                  "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "!")
+                ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!")
                   ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
                   holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
                   (implode "bool") [])) (holSyntax_Tyapp (implode "bool") [])))
@@ -151,13 +149,12 @@ let mk_select_ctxt_cl_def = new_definition
      ctxt)`;;
 
 let mk_infinity_ctxt_hl_def = new_definition
-  `mk_infinity_ctxt_hl b1 b2 ctxt = CONS (NewAxiom ((\(holSyntax_Var (implode
-  "x") (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const
-  (implode "?") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
-  holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool")
-  [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs (holSyntax_Var
-  (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty) p))
-  (implode "f") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+  `mk_infinity_ctxt_hl b1 b2 ctxt = CONS (NewAxiom ((\x ty p. holSyntax_Comb
+  (holSyntax_Const (implode "?") ((\s t. holSyntax_Tyapp (implode "fun") [s;
+  t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
+  (implode "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
+  (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
+  ty) p)) (implode "f") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
   (holSyntax_Tyapp (implode "ind") []) (holSyntax_Tyapp (implode "ind") []))
   ((\p1 p2. holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "/\\")
   ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
@@ -174,23 +171,21 @@ let mk_infinity_ctxt_hl_def = new_definition
   t]) (typeof f) (holSyntax_Tyapp (implode "bool") []))) f) (holSyntax_Var
   (implode "f") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
   (holSyntax_Tyapp (implode "ind") []) (holSyntax_Tyapp (implode "ind")
-  [])))))))) (CONS ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-  "A"))) t. ConstSpec [((holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-  "A"))),t)] ((===) (holSyntax_Var (holSyntax_Var (implode "x")
-  (holSyntax_Tyvar (implode "A"))) (typeof t)) t)) (implode "ONTO")
+  [])))))))) (CONS ((\x t. ConstSpec [((holSyntax_Var (implode "x")
+  (holSyntax_Tyvar (implode "A"))),t)] ((===) (holSyntax_Var (holSyntax_Var
+  (implode "x") (holSyntax_Tyvar (implode "A"))) (typeof t)) t)) (implode
+  "ONTO")
        (holSyntax_Abs (holSyntax_Var b2 ((\s t. holSyntax_Tyapp (implode
          "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
          (implode "B"))))
-         ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty
-           p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+         ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
            holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
            (implode "A"))) ty) p)) (implode "y") (holSyntax_Tyvar (implode
-           "B")) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-           "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "?") ((\s t.
-           holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
+           "B")) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "?") ((\s
+           t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
@@ -199,24 +194,21 @@ let mk_infinity_ctxt_hl_def = new_definition
            "B"))) (holSyntax_Comb (holSyntax_Var b2 ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
            (holSyntax_Tyvar (implode "B")))) (holSyntax_Var (implode "x")
-           (holSyntax_Tyvar (implode "A"))))))))) (CONS ((\(holSyntax_Var
-           (implode "x") (holSyntax_Tyvar (implode "A"))) t. ConstSpec
+           (holSyntax_Tyvar (implode "A"))))))))) (CONS ((\x t. ConstSpec
            [((holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))),t)]
            ((===) (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
            (implode "A"))) (typeof t)) t)) (implode "ONE_ONE")
        (holSyntax_Abs (holSyntax_Var b1 ((\s t. holSyntax_Tyapp (implode
          "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
          (implode "B"))))
-         ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty
-           p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+         ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
            holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
            (implode "A"))) ty) p)) (implode "x1") (holSyntax_Tyvar (implode
-           "A")) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-           "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
-           holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
+           "A")) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s
+           t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
@@ -396,9 +388,8 @@ let satisfies_Forall = prove
      is_forall_sig (SND sig) /\ (is_forall_interpretation0 mem)
        ((SND:(mlstring->'U list->'U)#(mlstring->'U list->'U)->mlstring->'U
        list->'U) i) /\ satisfies0 mem i (sig,[],b) ==> satisfies0 mem i
-       (sig,[],(\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-       "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
-       holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
+       (sig,[],(\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s
+       t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
        (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
        (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs (holSyntax_Var
        (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty) p))
@@ -412,8 +403,7 @@ let satisfies_Forall = prove
 (* [local] *)
 let welltyped_eta_ax = prove
  (`!nm. welltyped
-          ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
-            ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+          ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
             holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
             (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
             (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
@@ -433,12 +423,11 @@ let welltyped_eta_ax = prove
 
 (* [local] *)
 let ACONV_eta_ax = prove
- (`ACONV ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty p.
-  holSyntax_Comb (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp
-  (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
-  (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode "bool")
-  []))) (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x")
-  (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "f") ((\s t.
+ (`ACONV ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+  holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode
+  "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp
+  (implode "bool") []))) (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode
+  "x") (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "f") ((\s t.
   holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
   (holSyntax_Tyvar (implode "B"))) ((===) (holSyntax_Abs (holSyntax_Var
   (implode "x") (holSyntax_Tyvar (implode "A"))) (holSyntax_Comb (holSyntax_Var
@@ -447,8 +436,7 @@ let ACONV_eta_ax = prove
   (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))))
   (holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
   (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar (implode "B"))))))
-         ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
-           ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+         ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
            holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
@@ -506,19 +494,18 @@ let term_ok_Forall = prove
      is_std_sig sig /\ is_forall_sig (SND sig) /\ type_ok (FST sig) ty /\
      holSyntax_term_ok sig p /\ typeof p = (holSyntax_Tyapp (implode "bool")
        []) ==>
-     holSyntax_term_ok sig ((\(holSyntax_Var (implode "x")
-       (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const
+     holSyntax_term_ok sig ((\x ty p. holSyntax_Comb (holSyntax_Const
        (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
        holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
        "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
        (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-       "A"))) ty) p)) nm ty p) /\ typeof ((\(holSyntax_Var (implode "x")
-       (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const
-       (implode "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
-       holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
-       "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-       (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-       "A"))) ty) p)) nm ty p) = (holSyntax_Tyapp (implode "bool") [])`,
+       "A"))) ty) p)) nm ty p) /\ typeof ((\x ty p. holSyntax_Comb
+       (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode "fun")
+       [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
+       (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
+       "bool") []))) (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode
+       "x") (holSyntax_Tyvar (implode "A"))) ty) p)) nm ty p) =
+       (holSyntax_Tyapp (implode "bool") [])`,
   CHEAT_TAC);;
 
 (* [local] *)
@@ -544,8 +531,7 @@ let models_close_axiom = prove
        (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt. alist_to_fmap ((\ctxt.
        FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ctxt,(\ctxt. set_of_list
        ((\ctxt. FLAT (MAP (\upd. APPEND (axexts_of_upd upd) (conexts_of_upd
-       upd)) ctxt)) ctxt)) ctxt)) (CONS (NewAxiom ((\(holSyntax_Var (implode
-       "x") (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb
+       upd)) ctxt)) ctxt)) ctxt)) (CONS (NewAxiom ((\x ty p. holSyntax_Comb
        (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode "fun")
        [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
        (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
@@ -612,15 +598,13 @@ let ACONV_ONE_ONE_conext = prove
          (holSyntax_Tyapp (implode "bool") [])))
         (holSyntax_Abs (holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp
           (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-          (holSyntax_Tyvar (implode "B")))) ((\(holSyntax_Var (implode "x")
-          (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb
+          (holSyntax_Tyvar (implode "B")))) ((\x ty p. holSyntax_Comb
           (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
           (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
           "bool") []))) (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode
           "x") (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "x1")
-          (holSyntax_Tyvar (implode "A")) ((\(holSyntax_Var (implode "x")
-          (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb
+          (holSyntax_Tyvar (implode "A")) ((\x ty p. holSyntax_Comb
           (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
           (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
@@ -648,14 +632,12 @@ let ACONV_ONE_ONE_conext = prove
          (holSyntax_Tyapp (implode "bool") [])))
         (holSyntax_Abs (holSyntax_Var b ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
-          (implode "B")))) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar
-          (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "!")
-          ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
+          (implode "B")))) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode
+          "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
           holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
           "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
           (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-          "A"))) ty) p)) (implode "x1") (holSyntax_Tyvar (implode "A"))
-          ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty
+          "A"))) ty) p)) (implode "x1") (holSyntax_Tyvar (implode "A")) ((\x ty
           p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
           holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
           (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
@@ -689,15 +671,13 @@ let ACONV_ONTO_conext = prove
          (holSyntax_Tyapp (implode "bool") [])))
         (holSyntax_Abs (holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp
           (implode "fun") [s; t]) (holSyntax_Tyvar (implode "A"))
-          (holSyntax_Tyvar (implode "B")))) ((\(holSyntax_Var (implode "x")
-          (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb
+          (holSyntax_Tyvar (implode "B")))) ((\x ty p. holSyntax_Comb
           (holSyntax_Const (implode "!") ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
           (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
           "bool") []))) (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode
           "x") (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "y")
-          (holSyntax_Tyvar (implode "B")) ((\(holSyntax_Var (implode "x")
-          (holSyntax_Tyvar (implode "A"))) ty p. holSyntax_Comb
+          (holSyntax_Tyvar (implode "B")) ((\x ty p. holSyntax_Comb
           (holSyntax_Const (implode "?") ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ty
           (holSyntax_Tyapp (implode "bool") [])) (holSyntax_Tyapp (implode
@@ -715,16 +695,14 @@ let ACONV_ONTO_conext = prove
         (holSyntax_Abs (holSyntax_Var b ((\s t. holSyntax_Tyapp (implode
           "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
           (implode "B"))))
-          ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
-            ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+          ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
             holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
             (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
             (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
             (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
             (implode "A"))) ty) p)) (implode "y") (holSyntax_Tyvar (implode
-            "B")) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-            "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "?") ((\s
-            t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
+            "B")) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "?")
+            ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
             holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
             (implode "bool") [])) (holSyntax_Tyapp (implode "bool") [])))
             (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x")
@@ -1095,24 +1073,21 @@ let ONE_ONE_def_updates = prove
        alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt)) ctxt)) ctxt,(\ctxt.
        alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt))
        ctxt) /\ ~((implode "ONE_ONE") IN FDOM ((\ctxt. alist_to_fmap ((\ctxt.
-       FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ==> updates
-       ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) t.
+       FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ==> updates ((\x t.
        ConstSpec [((holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
        "A"))),t)] ((===) (holSyntax_Var (holSyntax_Var (implode "x")
        (holSyntax_Tyvar (implode "A"))) (typeof t)) t)) (implode "ONE_ONE")
        (holSyntax_Abs (holSyntax_Var b ((\s t. holSyntax_Tyapp (implode
          "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
          (implode "B"))))
-         ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty
-           p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+         ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
            holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
            (implode "A"))) ty) p)) (implode "x1") (holSyntax_Tyvar (implode
-           "A")) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-           "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
-           holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
+           "A")) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s
+           t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
@@ -1148,32 +1123,31 @@ let ONTO_def_updates = prove
        alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd ctxt)) ctxt)) ctxt))
        ctxt) /\ ~((implode "ONTO") IN FDOM ((\ctxt. alist_to_fmap ((\ctxt. FLAT
        (MAP consts_of_upd ctxt)) ctxt)) ctxt)) ==>
-       updates ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-         "A"))) t. ConstSpec [((holSyntax_Var (implode "x") (holSyntax_Tyvar
-         (implode "A"))),t)] ((===) (holSyntax_Var (holSyntax_Var (implode "x")
-         (holSyntax_Tyvar (implode "A"))) (typeof t)) t)) (implode "ONTO")
+       updates ((\x t. ConstSpec [((holSyntax_Var (implode "x")
+         (holSyntax_Tyvar (implode "A"))),t)] ((===) (holSyntax_Var
+         (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) (typeof
+         t)) t)) (implode "ONTO")
        (holSyntax_Abs (holSyntax_Var b ((\s t. holSyntax_Tyapp (implode
          "fun") [s; t]) (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar
          (implode "B"))))
-         ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A")))
-           ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
+         ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "!") ((\s t.
            holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
            (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
            (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
            (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
            (implode "A"))) ty) p)) (implode "y") (holSyntax_Tyvar (implode
-           "B")) ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-           "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "?") ((\s t.
-           holSyntax_Tyapp (implode "fun") [s; t]) ((\s t. holSyntax_Tyapp
-           (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode "bool") []))
-           (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-           (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
-           (implode "A"))) ty) p)) (implode "x") (holSyntax_Tyvar (implode
-           "A")) ((===) (holSyntax_Var (implode "y") (holSyntax_Tyvar
-           (implode "B"))) (holSyntax_Comb (holSyntax_Var b ((\s t.
-           holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyvar (implode
-           "A")) (holSyntax_Tyvar (implode "B")))) (holSyntax_Var (implode
-           "x") (holSyntax_Tyvar (implode "A"))))))))) ctxt`,
+           "B")) ((\x ty p. holSyntax_Comb (holSyntax_Const (implode "?")
+           ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
+           holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
+           (implode "bool") [])) (holSyntax_Tyapp (implode "bool") [])))
+           (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x")
+           (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "x")
+           (holSyntax_Tyvar (implode "A")) ((===) (holSyntax_Var (implode
+           "y") (holSyntax_Tyvar (implode "B"))) (holSyntax_Comb
+           (holSyntax_Var b ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
+           (holSyntax_Tyvar (implode "A")) (holSyntax_Tyvar (implode "B"))))
+           (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
+           "A"))))))))) ctxt`,
   CHEAT_TAC);;
 
 (* INFINITY_AX is well formed as soon as ind and the two constants are
@@ -1197,17 +1171,16 @@ let infinity_ax_updates = prove
        (holSyntax_Tyapp (implode "bool") [])) /\
      FLOOKUP ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP types_of_upd ctxt))
        ctxt)) ctxt) (implode "ind") = SOME 0 ==>
-       updates (NewAxiom ((\(holSyntax_Var (implode "x") (holSyntax_Tyvar
-         (implode "A"))) ty p. holSyntax_Comb (holSyntax_Const (implode "?")
-         ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
-         holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
-         "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-         (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar
-         (implode "A"))) ty) p)) (implode "f") ((\s t. holSyntax_Tyapp
-         (implode "fun") [s; t]) (holSyntax_Tyapp (implode "ind") [])
-         (holSyntax_Tyapp (implode "ind") [])) ((\p1 p2. holSyntax_Comb
-         (holSyntax_Comb (holSyntax_Const (implode "/\\") ((\s t.
+       updates (NewAxiom ((\x ty p. holSyntax_Comb (holSyntax_Const
+         (implode "?") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s
+         t. holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp
+         (implode "bool") [])) (holSyntax_Tyapp (implode "bool") [])))
+         (holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x")
+         (holSyntax_Tyvar (implode "A"))) ty) p)) (implode "f") ((\s t.
          holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
+         "ind") []) (holSyntax_Tyapp (implode "ind") [])) ((\p1 p2.
+         holSyntax_Comb (holSyntax_Comb (holSyntax_Const (implode "/\\") ((\s
+         t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
          "bool") []) ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
          (holSyntax_Tyapp (implode "bool") []) (holSyntax_Tyapp (implode
          "bool") [])))) p1) p2) ((\f. holSyntax_Comb (holSyntax_Const

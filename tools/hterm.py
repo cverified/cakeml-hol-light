@@ -743,6 +743,12 @@ class Parser:
       elif t.kind == 'id' or t.text == '_':
         self.next()
         v = Node('id', tok=t, name=t.text)
+        # a bound variable is bound: no table of the port speaks
+        # for it.  holBoolSyntax overloads the names x and p and
+        # binds them in the lambda that its Exists overload is,
+        # and expanding them there wrote a lambda whose binders
+        # were terms -- and a Var whose name was a Var
+        v.binder = True
         if self.at(':'):
           self.next()
           v = Node('typed', tok=t, e=v,
@@ -2354,6 +2360,9 @@ class Printer:
       # quotation is a variable of its own (ml/lib/wildcard.ml)
       if n == '_': return '_'
       if n in self.ctx.vars: return self.ctx.vars[n]
+      # the binder of a lambda or a quantifier is not a name to
+      # resolve (parse_binders)
+      if getattr(e, 'binder', False): return n
       if n in self.ctx.overloads:
         c = eta_contract(self.ctx.overloads[n])
         # a variable that this statement renames is renamed in the

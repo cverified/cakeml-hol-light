@@ -67,11 +67,10 @@ let eta_has_model = prove
   CHEAT_TAC);;
 
 let good_select_def = new_definition
-  `good_select0 (mem':'U->'U->bool) select = (!ty p (holSyntax_Var (implode
-  "x") (holSyntax_Tyvar (implode "A"))). (mem':'U->'U->bool) (holSyntax_Var
-  (implode "x") (holSyntax_Tyvar (implode "A"))) ty ==> (mem':'U->'U->bool)
-  (select ty p) ty /\ (p (holSyntax_Var (implode "x") (holSyntax_Tyvar
-  (implode "A"))) ==> p (select ty p)))`;;
+  `good_select0 (mem':'U->'U->bool) select = (!ty p x. (mem':'U->'U->bool)
+  (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty ==>
+  (mem':'U->'U->bool) (select ty p) ty /\ (p (holSyntax_Var (implode "x")
+  (holSyntax_Tyvar (implode "A"))) ==> p (select ty p)))`;;
 
 (* HOL4 holAxiomsScript.sml:75: the overload good_select, which the port
    expands *)
@@ -117,16 +116,13 @@ let select_has_model_gen = prove
 
 let base_select_def = new_definition
   `base_select0 (mem':'U->'U->bool) ty p =
-     if (\s. ?(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))).
-       (mem':'U->'U->bool) (holSyntax_Var (implode "x") (holSyntax_Tyvar
-       (implode "A"))) s) ty then
-       (match some (\(holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-         "A"))). (mem':'U->'U->bool) (holSyntax_Var (implode "x")
+     if (\s. ?x. (mem':'U->'U->bool) (holSyntax_Var (implode "x")
+       (holSyntax_Tyvar (implode "A"))) s) ty then
+       (match some (\x. (mem':'U->'U->bool) (holSyntax_Var (implode "x")
          (holSyntax_Tyvar (implode "A"))) ty /\ p (holSyntax_Var (implode "x")
-         (holSyntax_Tyvar (implode "A")))) with NONE -> (@(holSyntax_Var
-         (implode "x") (holSyntax_Tyvar (implode "A"))). (mem':'U->'U->bool)
-         (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode "A"))) ty) |
-         SOME v -> v)
+         (holSyntax_Tyvar (implode "A")))) with NONE -> (@x.
+         (mem':'U->'U->bool) (holSyntax_Var (implode "x") (holSyntax_Tyvar
+         (implode "A"))) ty) | SOME v -> v)
      else ARB`;;
 
 (* HOL4 holAxiomsScript.sml:203: the overload base_select, which the port
