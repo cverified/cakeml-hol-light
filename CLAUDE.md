@@ -355,7 +355,7 @@ is free, and no report is printed at all when the load took less
 than ten minutes.
 
 **Where the port stands, 2026-11-17, measured this way:** 492
-files, **50 that fail to load**, **332 statements** HOL Light
+files, **46 that fail to load**, **332 statements** HOL Light
 cannot read, and 4 `PORT FAILED` blocks in 4 files.  It began the
 night at 106, 364 and 17.
 
