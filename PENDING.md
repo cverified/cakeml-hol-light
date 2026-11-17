@@ -173,6 +173,32 @@ each.
   `tools/nohol4.py` checks that every pointer points at what it
   says.
 
+# ast_Fun: an overload that the port drops
+
+Five of the 46 files that fail say
+
+    ast_Fun has type mlstring->ast_exp->ast_exp, it cannot be
+    used with type mlstring->ast_exp->type
+
+(`ml_hol_kernel_funsProg`, `compute_syntax`, `compute_eval`,
+`compute`, `compute_syntaxProof`).  The `Fun` they mean is
+holSyntax's, which is an **Overload** -- `\s t. Tyapp <<fun>>
+[s;t]` -- and the port expands such an overload where it stands,
+as it does in holBoolSyntax.  Here it wrote `ast`'s constructor
+instead.
+
+A resolution round will not settle it, and that is measured: the
+third round of 2026-11-17 added no key and changed no answer.
+
+Where to look is narrow.  `db.overloads_for` **does** have `Fun`
+for those theories and `holSyntax` **is** in their scope, and the
+filter in `tools/port.py` (the `raw` dict) keeps it -- so the
+overload is dropped later, in the loop that reads each overload's
+body with `in_thy`: a body that does not translate is dropped
+there and the name then falls through to the constant of the same
+name.  So the question is what `\s t. Tyapp <<fun>> [s;t]` does
+in those five theories that it does not do in holBoolSyntax.
+
 # The last two blocks the port cannot write
 
 Of the seventeen `PORT FAILED` blocks of 2026-11-16 two are left,
