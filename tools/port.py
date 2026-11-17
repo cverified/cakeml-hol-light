@@ -2559,6 +2559,18 @@ class Porter:
     self.ctx.defining = set(dbmod.definition_names(body))
     if '^' in body and self.antiq_definition(b, body, bind):
       return
+    # a definition whose body is one ML value that the port does
+    # not have: HOL4's backend_enc_dec builds the encoder of each
+    # type with ML (`val (e,d) = enc_dec_for ":tra"') and writes
+    # the Definition as ^e, and the port was writing `e' -- a
+    # definition of a free variable, which says nothing and says
+    # it silently.  There is nothing to write, so the port points
+    # at the source, as it does for any ML it cannot follow
+    if '=' not in hol4.strip_comments(body):
+      self.warn.append('%s: its body is ML that the port does not'
+                       ' have' % b.name)
+      self.out.append(self.at(b, 'the definition'))
+      return
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
     self.intargs = (set(overrides.INT_ARGS.get(key, []))
