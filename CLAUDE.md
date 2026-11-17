@@ -356,7 +356,7 @@ than ten minutes.
 
 **Where the port stands, 2026-11-17, measured this way:** 492
 files, **46 that fail to load**, **332 statements** HOL Light
-cannot read, and 4 `PORT FAILED` blocks in 4 files.  It began the
+cannot read, and 2 `PORT FAILED` blocks in 2 files.  It began the
 night at 106, 364 and 17.
 
 97% of an abstract is HOL Light parsing and typechecking the

@@ -173,6 +173,29 @@ each.
   `tools/nohol4.py` checks that every pointer points at what it
   says.
 
+# The last two blocks the port cannot write
+
+Of the seventeen `PORT FAILED` blocks of 2026-11-16 two are left,
+and each is one line of grammar or one ML value away:
+
+- `holSemantics$is_std_interpretation` says
+
+      tmaof i interprets <<=>> on [<<A>>] as
+        \l. (Abstract (HD l) (Funspace (HD l) boolset) ...)
+
+  and the port stops at the `\` (`unparsed input at 137`).
+  HOL4's `interprets _ on _ as _` takes a lambda as its last
+  operand, and the port's parser will not start one after an
+  infix.  The fix is in the precedence of that operand, and it
+  wants measuring: the last change to the printer's scope rules
+  rewrote 102 files before it was narrowed to 6.
+
+- `repl_init$repl_prog_st` is `^(th2 |> concl |> rand)`, and
+  `th2` is a theorem the ML of the source builds and rebinds as
+  it goes (`repl_initScript.sml:26` rewrites it with the very
+  definition this block makes).  `tools/derive.py` can follow the
+  chain; what it has no value for is `th2`.
+
 # An overload expanded inside a binder
 
 `holBoolSyntax` heads the largest group of the files that still
