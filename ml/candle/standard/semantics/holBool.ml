@@ -103,10 +103,8 @@ let boolrel_def = new_definition
        ((abstract mem') ((two mem')) ((funspace mem') ((two mem')) ((two
          mem')))
             (\p. ((abstract mem') ((two mem')) ((two mem'))
-               (\q. (boolean mem') (R' ((holSyntax_Var (implode "p")
-                 (holSyntax_Tyapp (implode "bool") [])) = (setSpec_true
-                 mem')) ((holSyntax_Var (implode "q") (holSyntax_Tyapp
-                 (implode "bool") [])) = (setSpec_true mem')))))))`;;
+               (\q. (boolean mem') (R' (p = (setSpec_true mem')) (q =
+                 (setSpec_true mem')))))))`;;
 
 (* HOL4 holBoolScript.sml:55: the overload Boolrel, which the port expands *)
 
@@ -136,13 +134,8 @@ let is_forall_interpretation_def = new_definition
      (interprets0 mem') (implode "!") on [(implode "A")] as
         (\l. (abstract mem') ((funspace mem') (HD l) ((two mem'))) ((two
           mem'))
-               (\P. (boolean mem') (!x. (mem':'U->'U->bool)
-                 (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-                 "A"))) (HD l) ==> (holds mem') (holSyntax_Var (implode "P")
-                 ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
-                 (holSyntax_Tyvar (implode "A")) (holSyntax_Tyapp (implode
-                 "bool") []))) (holSyntax_Var (implode "x") (holSyntax_Tyvar
-                 (implode "A"))))))`;;
+               (\P. (boolean mem') (!x. (mem':'U->'U->bool) x (HD l) ==>
+                 (holds mem') P x)))`;;
 
 (* HOL4 holBoolScript.sml:82: the overload is_forall_interpretation, which
    the port expands *)
@@ -152,13 +145,8 @@ let is_exists_interpretation_def = new_definition
      (interprets0 mem') (implode "?") on [(implode "A")] as
         (\l. (abstract mem') ((funspace mem') (HD l) ((two mem'))) ((two
           mem'))
-               (\P. (boolean mem') (?x. (mem':'U->'U->bool)
-                 (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-                 "A"))) (HD l) /\ (holds mem') (holSyntax_Var (implode "P")
-                 ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
-                 (holSyntax_Tyvar (implode "A")) (holSyntax_Tyapp (implode
-                 "bool") []))) (holSyntax_Var (implode "x") (holSyntax_Tyvar
-                 (implode "A"))))))`;;
+               (\P. (boolean mem') (?x. (mem':'U->'U->bool) x (HD l)
+                 /\ (holds mem') P x)))`;;
 
 (* HOL4 holBoolScript.sml:91: the overload is_exists_interpretation, which
    the port expands *)
@@ -181,8 +169,7 @@ let is_false_interpretation_def = new_definition
 let is_not_interpretation_def = new_definition
   `is_not_interpretation0 (mem':'U->'U->bool) gamma <=> gamma (interprets0
   mem') (implode "~") on [] as K ((abstract mem') ((two mem')) ((two mem'))
-  (\p. (boolean mem') (~((holSyntax_Var (implode "p") (holSyntax_Tyapp
-  (implode "bool") [])) = (setSpec_true mem')))))`;;
+  (\p. (boolean mem') (~(p = (setSpec_true mem')))))`;;
 
 (* HOL4 holBoolScript.sml:109: the overload is_not_interpretation, which the
    port expands *)
@@ -311,25 +298,14 @@ let termsem_forall = prove
       "!") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
       holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
       "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-      (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-      "A"))) ty) (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
-      [])))) (holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp (implode
-      "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) ((\s t.
-      holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool")
-      []) (holSyntax_Tyapp (implode "bool") [])))) y b) =
-    (boolean mem) (!x. (mem:'U->'U->bool) (holSyntax_Var (implode "x")
-      (holSyntax_Tyvar (implode "A"))) (typesem ((FST:(mlstring->'U
+      (holSyntax_Var x ty) p)) f y b) =
+    (boolean mem) (!x. (mem:'U->'U->bool) x (typesem ((FST:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i)
       ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v) y) ==>
                  (termsem0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
                    consts_of_upd ctxt)) ctxt)) s) i
                    ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U)
-                   v,(((holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp
-                   (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool")
-                   []) ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
-                   (holSyntax_Tyapp (implode "bool") []) (holSyntax_Tyapp
-                   (implode "bool") [])))),y) =+ (holSyntax_Var (implode "x")
-                   (holSyntax_Tyvar (implode "A"))))
+                   v,((f,y) =+ x)
                    ((SND:(mlstring->'U)#(mlstring#type->'U)->mlstring
                    #type->'U) v)) b = (setSpec_true mem)))`,
   CHEAT_TAC);;
@@ -353,25 +329,14 @@ let termsem_exists = prove
       "?") ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) ((\s t.
       holSyntax_Tyapp (implode "fun") [s; t]) ty (holSyntax_Tyapp (implode
       "bool") [])) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Abs
-      (holSyntax_Var (holSyntax_Var (implode "x") (holSyntax_Tyvar (implode
-      "A"))) ty) (holSyntax_Var (implode "p") (holSyntax_Tyapp (implode "bool")
-      [])))) (holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp (implode
-      "fun") [s; t]) (holSyntax_Tyapp (implode "bool") []) ((\s t.
-      holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool")
-      []) (holSyntax_Tyapp (implode "bool") [])))) y b) =
-    (boolean mem) (?x. (mem:'U->'U->bool) (holSyntax_Var (implode "x")
-      (holSyntax_Tyvar (implode "A"))) (typesem ((FST:(mlstring->'U
+      (holSyntax_Var x ty) p)) f y b) =
+    (boolean mem) (?x. (mem:'U->'U->bool) x (typesem ((FST:(mlstring->'U
       list->'U)#(mlstring->'U list->'U)->mlstring->'U list->'U) i)
       ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U) v) y) /\
                  (termsem0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP
                    consts_of_upd ctxt)) ctxt)) s) i
                    ((FST:(mlstring->'U)#(mlstring#type->'U)->mlstring->'U)
-                   v,(((holSyntax_Var (implode "f") ((\s t. holSyntax_Tyapp
-                   (implode "fun") [s; t]) (holSyntax_Tyapp (implode "bool")
-                   []) ((\s t. holSyntax_Tyapp (implode "fun") [s; t])
-                   (holSyntax_Tyapp (implode "bool") []) (holSyntax_Tyapp
-                   (implode "bool") [])))),y) =+ (holSyntax_Var (implode "x")
-                   (holSyntax_Tyvar (implode "A"))))
+                   v,((f,y) =+ x)
                    ((SND:(mlstring->'U)#(mlstring#type->'U)->mlstring
                    #type->'U) v)) b = (setSpec_true mem)))`,
   CHEAT_TAC);;
@@ -420,8 +385,7 @@ let termsem_not = prove
     (termsem0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT (MAP consts_of_upd
       ctxt)) ctxt)) s) i v ((\p. holSyntax_Comb (holSyntax_Const (implode "~")
       ((\s t. holSyntax_Tyapp (implode "fun") [s; t]) (holSyntax_Tyapp (implode
-      "bool") []) (holSyntax_Tyapp (implode "bool") []))) (holSyntax_Var
-      (implode "p") (holSyntax_Tyapp (implode "bool") []))) p1) =
+      "bool") []) (holSyntax_Tyapp (implode "bool") []))) p) p1) =
     (boolean mem) (~((termsem0 mem) ((\ctxt. alist_to_fmap ((\ctxt. FLAT
       (MAP consts_of_upd ctxt)) ctxt)) s) i v p1 = (setSpec_true mem))))`,
   CHEAT_TAC);;

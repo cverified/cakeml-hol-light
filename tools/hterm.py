@@ -2143,6 +2143,31 @@ class Printer:
         self.ctx.armtys = was
     return layout(tok, s) if fresh else s
 
+  def pr_in_scope(self, vs, body):
+    """the body of a binder, printed with what the binder binds in
+       scope.  A name the file overloads may be the very variable
+       a lambda binds -- holBoolSyntax overloads x and its Exists
+       overload binds x -- and the x of the body is that variable
+       and not the overload.  ctx.vars is consulted before the
+       overload table, so putting the names there for the length
+       of the body is all it takes"""
+    names = []
+    for v in vs:
+      w = v
+      while w.kind in ('paren', 'typed'): w = w.e
+      if w.kind == 'id': names.append(w.name)
+    # a name that ctx.vars already speaks for is renamed on
+    # purpose (data_to_wordProof's start is start', because the
+    # statement renames it), and that rename stands: what the
+    # scope has to shield is only a name that would otherwise
+    # reach the overload table
+    fresh = [n for n in names if n not in self.ctx.vars]
+    for n in fresh: self.ctx.vars[n] = n
+    try:
+      return self.pr(body, 0)
+    finally:
+      for n in fresh: self.ctx.vars.pop(n, None)
+
   def paren(self, s, inner, outer):
     return '(' + s + ')' if inner < outer else s
 
@@ -2730,17 +2755,18 @@ class Printer:
     if k == 'some':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
       n = self.ctx.name(e.name)
+      body = self.pr_in_scope(e.vs, e.body)
       # where this port's name for the binder is a binder of HOL
       # Light as well (HOL4's $LEAST is minimal), it is written
       # as one: minimal x. P x and not minimal (\x. P x)
       if n in BINDERS:
-        return self.paren(n + ' ' + vs + '. ' + self.pr(e.body, 0),
-                          1, prec)
-      return self.paren(n + ' (\\' + vs + '. ' +
-                        self.pr(e.body, 0) + ')', PRE_APP, prec)
+        return self.paren(n + ' ' + vs + '. ' + body, 1, prec)
+      return self.paren(n + ' (\\' + vs + '. ' + body + ')',
+                        PRE_APP, prec)
     if k == 'quant':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
-      return self.paren(e.q + vs + '. ' + self.pr(e.body, 0), 1, prec)
+      return self.paren(e.q + vs + '. ' +
+                        self.pr_in_scope(e.vs, e.body), 1, prec)
     if k == 'cond':
       els = layout(getattr(e, 'etok', None), 'else ')
       if not els.startswith('\n'): els = ' ' + els
