@@ -1,6 +1,6 @@
-# What fails, 2026-11-17, from tools/bin/absfast (2129s)
+# What fails, 2026-11-17, from tools/bin/absfast (2420s)
 #
-# 492 files, 46 that fail to load, 332 statements unread.
+# 492 files, 46 that fail to load, 330 statements unread.
 # One line per file: the first error the file gives.
 
 lib/sptree.ml: Error: Unbound value sptree_fromList_def

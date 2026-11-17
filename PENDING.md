@@ -122,6 +122,55 @@ The general answer to both is to resolve an overload by the type,
 which is what HOL4 does and what the port's one-value-per-name
 tables cannot.  Short of that, each shape is a pattern.
 
+# Why the per-file overload scope stays
+
+`ml/lib/theorem.ml` gives every file the interface of its own
+ancestry: `cake_theory` takes out the overloads of every theory
+the source cannot see and `unhide_overloads` puts them back at
+the end of the file.  That is bookkeeping -- four refs, two
+restore paths, and a recovery call that `tools/mkdriver.py` and
+`tools/bin/checkseq` inject after every file in case the file
+died before its own -- and the obvious thought is that the port
+no longer needs it: names are resolved at conversion time, so
+the port writes `sptree_lookup` and `bvlSem_evaluate` and not a
+bare name that an interface has to decide.
+
+That is true of the words and false of the symbols, and the
+statement that settles it is `mlstring_lt_antisym`:
+
+```
+let mlstring_lt_antisym = prove
+ (`!s t. ~(s < t /\ t < s)`,
+```
+
+HOL4 writes `¬(s < t ∧ t < s)` there and means `mlstring_lt`,
+because `mlstringScript.sml` overloads `<` four lines above it.
+Nothing in the statement says a type.  The port writes the same
+`<`, because `<` is an infix HOL Light has and the printer
+writes HOL Light's infix for it -- so what the statement means
+is whatever the interface says, and it means `mlstring_lt` only
+because `hol4_overload` put that pair in **front** of the
+interface and the scope keeps it out of every later file.
+
+So the two halves hold each other up:
+
+- registering those pairs at the back (`hol4_overload_last`)
+  would let the file's own statements fall through to HOL
+  Light's `<` on numbers -- silently, because a statement of two
+  unconstrained variables typechecks either way;
+- registering them at the front without the scope would let
+  `mlstring_lt` take every later unconstrained `<` in the port.
+
+Six registrations in three files are all that is scoped
+(`mlstring`'s four comparisons, `data_space`'s `num_size`,
+`clos_knownProps`'s `◁`); the rest of the interface is the
+library layer's, which `cake_library` puts in every scope.  But
+six is not zero, and the way to be rid of the machinery is to
+resolve those six at conversion time as well -- to write
+`mlstring_lt s t` where the source writes `s < t` -- which is a
+decision about how the port reads, not a simplification to make
+on the way past.
+
 # HOL4's rationals
 
 `ml/lib/rat.ml` has the type `rat` and nine operations on it
