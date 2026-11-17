@@ -115,6 +115,11 @@ LIST_FN = {
   # a source antiquotes into the body of a definition
   # (to_word64Prog's int_to_words is the right hand side of the
   # first clause of data_to_word's part_to_words)
+  # the two helpers that every bootstrap source defines for
+  # itself: spec32 = INST_TYPE[alpha|->``:32``] (and 64), which
+  # instantiates the word width of a theorem of the backend
+  'spec32': 'INST_TYPE [`:32`,`:A`]',
+  'spec64': 'INST_TYPE [`:64`,`:A`]',
   'concl': 'concl', 'rhs': 'rhs', 'lhs': 'lhs',
   'rand': 'rand', 'rator': 'rator', 'dest_neg': 'dest_neg',
 }

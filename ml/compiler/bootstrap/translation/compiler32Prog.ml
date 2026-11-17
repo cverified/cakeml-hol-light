@@ -12,6 +12,7 @@
 
 needs "basis/basis_ffi.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "candle/standard/monadic/holKernel.ml";;
 needs "characteristic/cfApp.ml";;
 needs "characteristic/cfFFIType.ml";;
 needs "characteristic/cfHeapsBase.ml";;
@@ -70,9 +71,13 @@ let compiler32Prog_OPT_MMAP_eq_MAP = prove
 
 (* HOL4 compiler32ProgScript.sml:108-110: ML code, not ported *)
 
-(* PORT FAILED: Definition max_heap_limit_32_def: expected ')' but found
-   '|>' at 82 *)
-(* HOL4 compiler32ProgScript.sml:112-118: the definition *)
+(* the right hand side is the one that the ML of the source
+   computes, computed the same way *)
+let max_heap_limit_32_def = new_definition
+  (cake_def_of "max_heap_limit_32" ["c"]
+   (rhs (concl (SIMP_RULE [word_shift_def] (SPEC_ALL (INST_TYPE
+     [`:32`,`:A`] max_heap_limit_def))))));;
+
 
 (* HOL4 compiler32ProgScript.sml:120: ML code, not ported *)
 

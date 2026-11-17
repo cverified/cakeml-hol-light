@@ -3072,9 +3072,6 @@ compiler32Prog	ML code skipped: val res = translate $ panStaticTheory.primitive_
 compiler32Prog	ML code skipped: val res = translate $ panStaticTheory.check_fun_name_def; va
 compiler32Prog	ML code skipped: val res = translate $ spec32 $ panStaticTheory.static_check_
 compiler32Prog	ML code skipped: val _ = res |> hyp |> null orelse         failwith ("Unprove
-compiler32Prog	max_heap_limit_32_def: the ML of its body: rule spec32/0
-compiler32Prog	several_clauses cannot read the body: expected ')' but found '|>' at 82
-compiler32Prog	Definition max_heap_limit_32_def: expected ')' but found '|>' at 82
 compiler32Prog	ML code skipped: val res = translate max_heap_limit_32_def
 compiler32Prog	ML code skipped: val r = translate presLangTheory.default_tap_config_def;
 compiler32Prog	ML code skipped: val def = spec32   (backendTheory.attach_bitmaps_def    |> Q
@@ -3825,9 +3822,6 @@ compiler64Prog	ML code skipped: val res = translate $ panStaticTheory.primitive_
 compiler64Prog	ML code skipped: val res = translate $ panStaticTheory.check_fun_name_def; va
 compiler64Prog	ML code skipped: val res = translate $ spec64 $ panStaticTheory.static_check_
 compiler64Prog	ML code skipped: val _ = res |> hyp |> null orelse         failwith ("Unprove
-compiler64Prog	max_heap_limit_64_def: the ML of its body: rule spec64/0
-compiler64Prog	several_clauses cannot read the body: expected ')' but found '|>' at 82
-compiler64Prog	Definition max_heap_limit_64_def: expected ')' but found '|>' at 82
 compiler64Prog	ML code skipped: val res = translate max_heap_limit_64_def
 compiler64Prog	ML code skipped: val r = translate presLangTheory.default_tap_config_def;
 compiler64Prog	ML code skipped: val def = spec64           (backendTheory.attach_bitmaps_def
