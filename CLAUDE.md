@@ -341,7 +341,23 @@ checked, and it is worth 11% of an abstract.
 `tools/bin/absfast` is the loop with all of that in it: the whole
 port as one `loadt`, the datatypes assumed, and the same two
 reports as `tools/bin/abstractall`.  Measured end to end,
-2026-11-17: **36 minutes**, against the 47.5 of a file at a time.
+2026-11-17: **33 minutes**, against the 47.5 of a file at a time.
+
+It refuses to report a load that did not happen.  Twice it came
+back in two minutes with "492 files, 0 with a failure, 0 unread
+statements": `repl-step` reads the pane until a prompt, and a
+fresh clone can show the prompt it came up with before the output
+of the command reaches the fifo, so the step that loads
+`ml/lib/fast.ml` returns with the file still loading.  A longer
+timeout cannot fix a step that returns too *early*.  So the
+driver is sent only after a probe the session can answer when it
+is free, and no report is printed at all when the load took less
+than ten minutes.
+
+**Where the port stands, 2026-11-17, measured this way:** 492
+files, **50 that fail to load**, **332 statements** HOL Light
+cannot read, and 4 `PORT FAILED` blocks in 4 files.  It began the
+night at 106, 364 and 17.
 
 97% of an abstract is HOL Light parsing and typechecking the
 15,000 statements and making the assumed definitions.  The shell
