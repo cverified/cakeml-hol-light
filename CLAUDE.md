@@ -416,6 +416,13 @@ A plain port reads the table in `hterm.Ctx.name`, as a step of its
 own: after the rule that a block defining a name writes that name,
 and before every rule that guesses.
 
+**The round converges.**  Three were run on 2026-11-17: the first
+settled 10,274 names, the second added 79 over a port that its own
+answers had improved, and the **third added none and disagreed
+with nothing**.  So the table is saturated for what a round can
+reach, and what still fails is not a resolution failure -- which
+is worth knowing before reaching for the round again.
+
 **What a round cannot answer** is a block that means a name two
 ways -- `cfHeapsBase`'s `encode_int` writes `Num (Num (ABS i))`,
 integer's inside cfFFIType's.  The table is per block, so such a
