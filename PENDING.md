@@ -238,7 +238,15 @@ the arity: something is kept between the two, and `ctx.head_for`
 is the only thing the printer keeps across an application's head
 (`hterm.py`, the `k == 'app'` branch, which exists so that an
 inner application of the same head does not take the outer's
-place).  That is where to read next.
+place).
+
+One step further in, measured by reading: the id branch of `pr0`
+asks `ctx.overloads` **before** it looks at `head_for`, so the id
+path cannot be what loses the inner `Fun` -- whichever way the
+head reaches that branch, it expands.  So the app branch must be
+returning without printing its head through the id path in some
+sub-case, and the difference between the outer occurrence and the
+inner one is which sub-case each takes.
 
 That reporting found a class of its own: **82 overloads are
 dropped** over the port and nothing said so before --
