@@ -3574,6 +3574,38 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # HOL4 builds the encoder and the decoder of each of these
+  # six types with ML (enc_dec_for, backend_enc_decScript.sml:71)
+  # and writes the Definition as ^e, so the port has the
+  # constants and not their value -- declared, as the six
+  # encoders of the targets are (PENDING.md).  The types are
+  # the ones the ML gives them: <ty>_enc' takes the type to a
+  # num_tree and <ty>_dec' brings it back
+  ('backend_enc_dec', "backend_common_tra_enc'_def"):
+    'cake_declare "backend_common_tra_enc\'" `:tra->num_tree`;;',
+  ('backend_enc_dec', "backend_common_tra_dec'_def"):
+    'cake_declare "backend_common_tra_dec\'" `:num_tree->tra`;;',
+  ('backend_enc_dec', "closLang_const_enc'_def"):
+    'cake_declare "closLang_const_enc\'" `:const->num_tree`;;',
+  ('backend_enc_dec', "closLang_const_dec'_def"):
+    'cake_declare "closLang_const_dec\'" `:num_tree->const`;;',
+  ('backend_enc_dec', "closLang_exp_enc'_def"):
+    'cake_declare "closLang_exp_enc\'" `:clos_exp->num_tree`;;',
+  ('backend_enc_dec', "closLang_exp_dec'_def"):
+    'cake_declare "closLang_exp_dec\'" `:num_tree->clos_exp`;;',
+  ('backend_enc_dec', "bvl_exp_enc'_def"):
+    'cake_declare "bvl_exp_enc\'" `:bvl_exp->num_tree`;;',
+  ('backend_enc_dec', "bvl_exp_dec'_def"):
+    'cake_declare "bvl_exp_dec\'" `:num_tree->bvl_exp`;;',
+  ('backend_enc_dec', "bvi_exp_enc'_def"):
+    'cake_declare "bvi_exp_enc\'" `:bvi_exp->num_tree`;;',
+  ('backend_enc_dec', "bvi_exp_dec'_def"):
+    'cake_declare "bvi_exp_dec\'" `:num_tree->bvi_exp`;;',
+  ('backend_enc_dec', "clos_known_val_approx_enc'_def"):
+    'cake_declare "clos_known_val_approx_enc\'" `:val_approx->num_tree`;;',
+  ('backend_enc_dec', "clos_known_val_approx_dec'_def"):
+    'cake_declare "clos_known_val_approx_dec\'" `:num_tree->val_approx`;;',
+
   ('data_to_word_memoryProof', 'word64_alt_thm'): r"""
 
 (* the port's own: what the two lemmas about the allocation of one

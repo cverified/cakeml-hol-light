@@ -13,6 +13,8 @@ needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/serialiser/num_list_enc_dec.ml";;
 needs "compiler/backend/serialiser/num_tree_enc_dec.ml";;
 needs "misc/misc.ml";;
@@ -56,7 +58,11 @@ let _ = cake_theory "backend_enc_dec"
 
 (* HOL4 backend_enc_decScript.sml:127: ML code, not ported *)
 
+cake_declare "backend_common_tra_enc'" `:tra->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:129-131: the definition *)
+
+cake_declare "backend_common_tra_dec'" `:num_tree->tra`;;
 
 (* HOL4 backend_enc_decScript.sml:133-147: the definition *)
 
@@ -75,7 +81,11 @@ add_simp backend_common_tra_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:171: ML code, not ported *)
 
+cake_declare "closLang_const_enc'" `:const->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:173-177: the definition *)
+
+cake_declare "closLang_const_dec'" `:num_tree->const`;;
 
 (* HOL4 backend_enc_decScript.sml:179-191: the definition *)
 
@@ -95,7 +105,11 @@ add_simp closLang_const_enc'_thm;;
 (* HOL4 backend_enc_decScript.sml:228-235: a theorem whose statement the
    port cannot state yet: MEM_exp_size *)
 
+cake_declare "closLang_exp_enc'" `:clos_exp->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:237-242: the definition *)
+
+cake_declare "closLang_exp_dec'" `:num_tree->clos_exp`;;
 
 (* HOL4 backend_enc_decScript.sml:244-258: the definition *)
 
@@ -113,7 +127,11 @@ add_simp closLang_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:283: ML code, not ported *)
 
+cake_declare "bvl_exp_enc'" `:bvl_exp->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:285-290: the definition *)
+
+cake_declare "bvl_exp_dec'" `:num_tree->bvl_exp`;;
 
 (* HOL4 backend_enc_decScript.sml:292-304: the definition *)
 
@@ -131,7 +149,11 @@ add_simp bvl_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:327: ML code, not ported *)
 
+cake_declare "bvi_exp_enc'" `:bvi_exp->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:329-334: the definition *)
+
+cake_declare "bvi_exp_dec'" `:num_tree->bvi_exp`;;
 
 (* HOL4 backend_enc_decScript.sml:336-352: the definition *)
 
@@ -146,7 +168,11 @@ add_simp bvi_exp_enc'_thm;;
 
 (* HOL4 backend_enc_decScript.sml:371: ML code, not ported *)
 
+cake_declare "clos_known_val_approx_enc'" `:val_approx->num_tree`;;
+
 (* HOL4 backend_enc_decScript.sml:373-375: the definition *)
+
+cake_declare "clos_known_val_approx_dec'" `:num_tree->val_approx`;;
 
 (* HOL4 backend_enc_decScript.sml:377-390: the definition *)
 
