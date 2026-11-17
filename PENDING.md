@@ -198,6 +198,22 @@ is not a name to resolve at all.  So the fix is in the
 translation: a bound variable is bound, and no table speaks for
 it.
 
+**Half of it is fixed.**  `parse_binders` marks what it binds and
+the printer leaves a marked name alone, so the binders read
+`\x ty p.` again (six files changed, `42ff165`).  What is left is
+the **body**: `Abs (Var x ty) p` still comes out as
+`holSyntax_Abs (holSyntax_Var (holSyntax_Var (implode "x") ...) ty)
+...`, because `x` there is a *use* of the variable the lambda
+binds, and the printer expands it with the file's
+`Overload x = Var <<x>> A` all the same.
+
+So the printer has to know what is in scope, not only what is
+being bound.  The cheapest way in is `ctx.vars`, which the
+printer already consults **before** the overload table: a lambda
+or a quantifier can put its binder names into it, mapped to
+themselves, while its body is printed.  Thirteen occurrences in
+holBoolSyntax alone.
+
 What was ruled out first, so that nobody looks there again: the
 statement of `TrueDef` parses in a session that holds the whole
 port, in one that is stopped in front of the file, and under the
