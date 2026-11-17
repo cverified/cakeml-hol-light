@@ -199,9 +199,23 @@ the 82 it reports.  The overload is in `ctx.overloads` and the
 file writes `ast_Fun` all the same, so the loss is in the
 printer's **application** path, where a head that is both an
 overload and a renamed constant comes out as the constant.
-`hterm.py` reads `ctx.overloads` for an application in two places
-(the `fn` of an infix and `as_function` of a head); one of them
-is not reached for this shape.
+It is one line.  `hterm.Printer.pr0` resolves a bare identifier
+by asking `ctx.overloads` **first** (after a variable and a
+binder), but the application branch resolves its head with
+`self.ctx.name(hop.name)` and never asks `ctx.overloads` at all
+(`k == 'app'`, the line that sets `head_for`).  So a name that is
+both an overload of a theory in scope and a renamed constant of
+another comes out as the **constant** whenever it stands as the
+head of an application, and as the **overload** everywhere else.
+`Fun` of the Candle kernel is the first shape, `Fun` of
+holBoolSyntax the second, which is why one file gets the lambda
+and five get `ast_Fun`.
+
+Changing it means asking `ctx.overloads` for an application head
+too.  That is the hottest path of the translator -- every
+application of the port goes through it -- so it wants a
+`tools/dryport.py` and a reading of the diff before it is kept,
+not a one-line edit at the end of a session.
 
 That reporting found a class of its own: **82 overloads are
 dropped** over the port and nothing said so before --
