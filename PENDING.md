@@ -222,9 +222,23 @@ time the printer sees it.  The change was reverted: 46 files of
 different output for none of the intended effect is not a change
 to keep.
 
-Where to look next is the failing statement itself, not the
-printer in general: `compute_syntax`'s eleven `ast_Fun` and what
-node shape each of them sits in.
+What the statement itself shows is sharper than any of that.  In
+`compute_syntax`'s `bop2term` the **outer** `Fun` expands and the
+**inner** one does not, in one term:
+
+    (\s t. holSyntax_Tyapp (implode "fun") [s; t])
+      (holSyntax_Tyapp (implode "cval") [])
+      (ast_Fun (holSyntax_Tyapp (implode "cval") [])
+               (holSyntax_Tyapp (implode "cval") []))
+
+for HOL4's `Fun cval (Fun cval cval)`.  Same name, same two
+arguments, same statement -- one expanded, one resolved to ast's
+constructor.  So it is not the shape of the application and not
+the arity: something is kept between the two, and `ctx.head_for`
+is the only thing the printer keeps across an application's head
+(`hterm.py`, the `k == 'app'` branch, which exists so that an
+inner application of the same head does not take the outer's
+place).  That is where to read next.
 
 That reporting found a class of its own: **82 overloads are
 dropped** over the port and nothing said so before --
