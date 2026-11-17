@@ -183,12 +183,16 @@ and each is one line of grammar or one ML value away:
       tmaof i interprets <<=>> on [<<A>>] as
         \l. (Abstract (HD l) (Funspace (HD l) boolset) ...)
 
-  and the port stops at the `\` (`unparsed input at 137`).
-  HOL4's `interprets _ on _ as _` takes a lambda as its last
-  operand, and the port's parser will not start one after an
-  infix.  The fix is in the precedence of that operand, and it
-  wants measuring: the last change to the printer's scope rules
-  rewrote 102 files before it was narrowed to 6.
+  and the port stops at the `\` (`unparsed input at 137`).  It is
+  not a precedence: `interprets` is a **mixfix** that the source
+  declares itself (`holSemanticsScript.sml:185-189`,
+  `Parse.add_rule` with `pp_elements = [TOK "interprets", TM,
+  TOK "on", TM, TOK "as"]`), so `g interprets name on vs as f` is
+  one constant of five arguments written in four pieces.  The
+  port's grammar has infixes and prefixes and no mixfixes, and
+  this is the only one of the scope -- so the cheapest answer is
+  to write the block out in `overrides.REPLACE`, not to teach the
+  parser a shape it needs once.
 
 - `repl_init$repl_prog_st` is `^(th2 |> concl |> rand)`, and
   `th2` is a theorem the ML of the source builds and rebinds as
