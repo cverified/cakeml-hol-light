@@ -1,0 +1,51 @@
+# What fails, 2026-11-17, from tools/bin/absfast (2129s)
+#
+# 492 files, 46 that fail to load, 332 statements unread.
+# One line per file: the first error the file gives.
+
+lib/sptree.ml: Error: Unbound value sptree_fromList_def
+compiler/backend/word_bignum.ml: Exception: Failure "dest_let: not a let-term".
+candle/standard/semantics/holBool.ml: Exception: Failure "typechecking error (initial type assignment): gamma cannot have type mlstring->('U)list->_->_->_->_->_
+translator/ml_translator.ml: Exception: Failure "dest_var: not a variable".
+characteristic/cfApp.ml: Exception: Failure "Unparsed input following term".
+characteristic/cf.ml: Exception: Failure "typechecking error (initial type assignment): ast_Mod has type ast_arith, it cannot be used with type (io_event)llist-
+characteristic/cfDiv.ml: Exception: Failure "malformed match-with statement".
+basis/RuntimeProg.ml: Exception: Failure "typechecking error (initial type assignment): 0 cannot have type num and int simultaneously".
+basis/mlbasicsProg.ml: Exception: Failure "typechecking error (initial type assignment): implode has type (char)list->mlstring, it cannot be used with type (cha
+basis/HashtableProg.ml: Exception: Failure "typechecking error (initial type assignment): hashtable_con_stamp cannot have type (?1308303)option and (_#?1308303)
+basis/TextIOProg.ml: Exception: Failure "typechecking error (initial type assignment): instreambuffered_con_stamp cannot have type (?1310269)option and (_#?1310
+basis/fsFFI.ml: Exception: Failure "typechecking error (initial type assignment): OPTION_IGNORE_BIND has type (A)option->(B)option->(B)option, it cannot be used
+characteristic/cfLetAuto.ml: Exception: Failure "typechecking error (overload resolution)".
+translator/monadic/ml_monad_translatorBase.ml: Exception: Failure "typechecking error (overload resolution)".
+translator/monadic/ml_monad_translator.ml: Exception: Failure "typechecking error (overload resolution)".
+basis/TextIOProof.ml: Exception: Failure "typechecking error (initial type assignment): wfFS has type IO_fs->bool, it cannot be used with type IO_fs->num".
+basis/SexpProg.ml: Exception: Failure "typechecking error (initial type assignment): STRING_TYPE has type mlstring->semanticPrimitives_v->bool, it cannot be use
+basis/CommandLineProof.ml: Exception: Failure "typechecking error (initial type assignment): wfcl has type (mlstring)list->bool, it cannot be used with type (ml
+pancake/parser/panPtreeConversion.ml: Exception: Failure "typechecking error (initial type assignment): APPEND has type (A)list->(A)list->(A)list, it cannot be 
+pancake/panStatic.ml: Exception: Failure "typechecking error (initial type assignment): primop_to_str has type primop->mlstring, it cannot be used with type pri
+pancake/crep_to_loop.ml: Exception: Failure "typechecking error (initial type assignment): loop_Var has type num->('a)loop_exp, it cannot be used with type num-
+pancake/loop_to_word.ml: Exception: Failure "typechecking error (initial type assignment): loop_Var has type num->('a)loop_exp, it cannot be used with type num-
+pancake/pan_globals.ml: Exception: Failure "typechecking error (initial type assignment): asm_Call has type ('a)word->('a)asm, it cannot be used with type (?141
+pancake/pan_simp.ml: Exception: Failure "typechecking error (initial type assignment): asm_Call has type ('a)word->('a)asm, it cannot be used with type (?141716
+pancake/pan_to_crep.ml: Exception: Failure "typechecking error (initial type assignment): crep_Const has type ('a)word->('a)crep_exp, it cannot be used with typ
+pancake/pan_passes.ml: Exception: Failure "typechecking error (initial type assignment): stack_Return has type num->('a)stack_prog, it cannot be used with type 
+compiler/compiler.ml: Exception: Failure "cake_declare: basis has a value of another type already".
+candle/standard/monadic/holKernel.ml: Exception: Failure "typechecking error (initial type assignment): holKernel_Failure has type mlstring->hol_exn, it cannot 
+candle/standard/ml_kernel/ml_hol_kernel_funsProg.ml: Exception: Failure "typechecking error (initial type assignment): ast_Fun has type mlstring->ast_exp->ast_e
+candle/prover/compute/compute_syntax.ml: Exception: Failure "typechecking error (initial type assignment): ast_Fun has type mlstring->ast_exp->ast_exp, it canno
+candle/prover/compute/compute_eval.ml: Exception: Failure "typechecking error (initial type assignment): ast_Fun has type mlstring->ast_exp->ast_exp, it cannot 
+candle/prover/compute/compute_exec.ml: Exception: Failure "typechecking error (initial type assignment): GEN%PVAR%18800 cannot have type ast_arith and compute_s
+candle/prover/compute/compute.ml: Exception: Failure "typechecking error (initial type assignment): ast_Fun has type mlstring->ast_exp->ast_exp, it cannot be us
+compiler/parsing/ocaml/camlPtreeConversion.ml: Exception: Failure "typechecking error (initial type assignment): OPTION_BIND has type (A)option->(A->(B)option)-
+compiler/parsing/ocaml/caml_parser.ml: Exception: Failure "typechecking error (initial type assignment): caml_lex_LexErrorT has type caml_lex_token, it cannot b
+basis/basis_ffi.ml: Exception: Failure "typechecking error (initial type assignment): T has type bool, it cannot be used with type num".
+compiler/backend/ag32/ag32_memory.ml: Exception: Failure "typechecking error (initial type assignment): ag32_Reg has type (6)word->reg_immT, it cannot be used w
+compiler/backend/cv_compute/backend_asm.ml: Exception: Failure "typechecking error (initial type assignment): bvi_to_data_compile_part has type num#num#bvi_exp-
+cv_translator/to_data_cv.ml: Exception: Failure "typechecking error (initial type assignment): ast_Pany cannot have type flat_pat and ast_pat simultaneously".
+cv_translator/backend_cv.ml: Exception: Failure "typechecking error (initial type assignment): v cannot have type (mlstring,mlstring)namespace_id and ast_pat si
+candle/prover/compute/compute_syntaxProof.ml: Exception: Failure "typechecking error (initial type assignment): ast_Fun has type mlstring->ast_exp->ast_exp, it 
+candle/prover/compute/compute_execProof.ml: Exception: Failure "typechecking error (initial type assignment): holSyntax_Tyapp has type mlstring->(type)list->typ
+compiler/repl/repl_types.ml: Exception: Failure "typechecking error (initial type assignment): extend_dec_tenv has type type_env->type_env->type_env, it cannot 
+compiler/repl/repl_init.ml: Exception: Failure "typechecking error (initial type assignment): repl_types_Str has type simple_type, it cannot be used with type t
+compiler/backend/proofs/data_to_word_assignProof.ml: Error: Unbound value generated_bignum_stubs_eq
+compiler/bootstrap/compilation/x64/64/proofs/x64BootstrapProof.ml: Exception: Failure "typechecking error (initial type assignment): SOME has type A->(A)option,
